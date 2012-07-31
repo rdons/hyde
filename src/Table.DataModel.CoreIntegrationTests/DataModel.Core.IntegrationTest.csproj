@@ -130,5 +130,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Import Project="$(MSBuildProjectDirectory)\..\..\..\..\..\BuildProcessTemplates\BuildTargets\TransformConfigs.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\TransformConfigs.targets" />
 </Project>
