@@ -84,9 +84,7 @@ namespace TechSmith.CloudServices.DataModel.Core
       {
          // The object returned from AsTableServiceQuery doesn't play nicely with
          // LINQ; you'll get an exception if you call Select() on it.
-// ReSharper disable LoopCanBeConvertedToQuery
          foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
-// ReSharper restore LoopCanBeConvertedToQuery
          {
             yield return entity.CreateInstanceFromProperties<T>();
          }
