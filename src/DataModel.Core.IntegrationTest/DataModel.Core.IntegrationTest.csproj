@@ -113,15 +113,6 @@
     <None Include="Configs\App.Local.config">
       <DependentUpon>App.config</DependentUpon>
     </None>
-    <None Include="Configs\App.Dev1.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="Configs\App.Stage.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
-    <None Include="Configs\App.Live.config">
-      <DependentUpon>App.config</DependentUpon>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
