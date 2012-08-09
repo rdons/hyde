@@ -9,7 +9,7 @@ Object to Entity mapper for Windows Azure (Think ORM for table storage)
  * Automatically batches large reads & writes to optimize common operations.
  * Handles quirks of your local Azure emulator for you. (Upserts work locally!)
 
-### Example
+### Basic Example
 
 ```csharp
 public class Color
