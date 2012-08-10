@@ -27,6 +27,8 @@ var color = tableStorage.Get<Color>( "MyColorsTable", "Red", "Crimson" );
 
 ```
 
+More examples and getting started help can be found [on the wiki](https://github.com/TechSmith/tsc-tablestorage-wrapper/wiki)
+
 License: BSD 3-Clause, see http://www.opensource.org/licenses/BSD-3-Clause
 
 ### Submission guidelines
