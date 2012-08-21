@@ -20,7 +20,7 @@ namespace TechSmith.Hyde
          _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
       }
 
-      public MemoryTable GetTable( string tableName )
+      private static MemoryTable GetTable( string tableName )
       {
          if ( !_memoryTables.ContainsKey( tableName ) )
          {
@@ -32,9 +32,8 @@ namespace TechSmith.Hyde
 
       public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
       {
-         var keyValidator = new AzureKeyValidator();
-         keyValidator.ValidatePartitionKey( partitionKey );
-         keyValidator.ValidateRowKey( rowKey );
+         AzureKeyValidator.ValidatePartitionKey( partitionKey );
+         AzureKeyValidator.ValidateRowKey( rowKey );
 
          // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
          GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
@@ -84,7 +83,7 @@ namespace TechSmith.Hyde
          return HydrateItemFromData<T>( tableEntry.EntryProperties( _instanceId ) );
       }
 
-      private T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
+      private static T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
       {
          var result = new T();
          var typeToHydrate = result.GetType();

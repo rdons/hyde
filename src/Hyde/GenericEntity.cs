@@ -16,7 +16,24 @@ namespace TechSmith.Hyde
 
       private readonly Dictionary<string, EntityPropertyInfo> _properties = new Dictionary<string, EntityPropertyInfo>();
 
-      private static readonly Dictionary<Type, Func<string, object>> _typeToConverterFunction = new Dictionary<Type, Func<string, object>>();
+      private static readonly Dictionary<Type, Func<string, object>> _typeToConverterFunction = new Dictionary<Type, Func<string, object>>
+      {
+         { typeof( string ), i => i },
+         { typeof( int ), i => Int32.Parse( i ) },
+         { typeof( int? ), i => Int32.Parse( i ) },
+         { typeof( double ), i => Double.Parse( i ) },
+         { typeof( double? ), i => Double.Parse( i ) },
+         { typeof( byte[] ), Convert.FromBase64String },
+         { typeof( Guid ), i => Guid.Parse( i ) },
+         { typeof( Guid? ), i => Guid.Parse( i ) },
+         { typeof( DateTime ), i => DateTime.Parse( i, CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal ) },
+         { typeof( DateTime? ), i => DateTime.Parse( i, CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal ) },
+         { typeof( bool ), i => Boolean.Parse( i ) },
+         { typeof( bool? ), i => Boolean.Parse( i ) },
+         { typeof( long ), i => Int64.Parse( i ) },
+         { typeof( long? ), i => Int64.Parse( i ) },
+         { typeof( Uri ), i => new Uri( i ) },
+      };
 
       internal EntityPropertyInfo this[string key]
       {
@@ -39,25 +56,6 @@ namespace TechSmith.Hyde
       public override string ToString()
       {
          return string.Empty;
-      }
-
-      static GenericEntity()
-      {
-         _typeToConverterFunction.Add( typeof( string ), i => i );
-         _typeToConverterFunction.Add( typeof( int ), i => Int32.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( int? ), i => Int32.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( double ), i => Double.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( double? ), i => Double.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( byte[] ), Convert.FromBase64String );
-         _typeToConverterFunction.Add( typeof( Guid ), i => Guid.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( Guid? ), i => Guid.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( DateTime ), i => DateTime.Parse( i, CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal ) );
-         _typeToConverterFunction.Add( typeof( DateTime? ), i => DateTime.Parse( i, CultureInfo.CurrentCulture, DateTimeStyles.AdjustToUniversal ) );
-         _typeToConverterFunction.Add( typeof( bool ), i => Boolean.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( bool? ), i => Boolean.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( long ), i => Int64.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( long? ), i => Int64.Parse( i ) );
-         _typeToConverterFunction.Add( typeof( Uri ), i => new Uri( i ) );
       }
 
       public T CreateInstanceFromProperties<T>() where T : new()

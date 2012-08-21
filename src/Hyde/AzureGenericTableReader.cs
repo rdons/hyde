@@ -6,19 +6,17 @@ namespace TechSmith.Hyde
 {
    internal class AzureGenericTableReader
    {
-      private static readonly Dictionary<string, Type> _edmToTypeMapping = new Dictionary<string, Type>();
-
-      static AzureGenericTableReader()
+      private static readonly Dictionary<string, Type> _edmToTypeMapping = new Dictionary<string, Type>
       {
-         _edmToTypeMapping.Add( "Edm.Int32", typeof( int ) );
-         _edmToTypeMapping.Add( "Edm.Double", typeof( double ) );
-         _edmToTypeMapping.Add( "Edm.Binary", typeof( byte[] ) );
-         _edmToTypeMapping.Add( "Edm.Guid", typeof( Guid ) );
-         _edmToTypeMapping.Add( "Edm.DateTime", typeof( DateTime ) );
-         _edmToTypeMapping.Add( "Edm.Boolean", typeof( bool ) );
-         _edmToTypeMapping.Add( "Edm.Int64", typeof( long ) );
-         _edmToTypeMapping.Add( "Edm.String", typeof( string ) );
-      }
+         {"Edm.Int32", typeof( int ) },
+         {"Edm.Double", typeof( double ) },
+         { "Edm.Binary", typeof( byte[] ) },
+         {"Edm.Guid", typeof( Guid ) },
+         {"Edm.DateTime", typeof( DateTime )},
+         {"Edm.Boolean", typeof( bool ) },
+         {"Edm.Int64", typeof( long ) },
+         {"Edm.String", typeof( string ) },
+      };
 
       // Taken from: http://msdn.microsoft.com/en-us/library/dd894027.aspx
 

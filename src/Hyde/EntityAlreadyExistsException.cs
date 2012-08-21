@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 
 namespace TechSmith.Hyde
 {
+   [Serializable]
    public class EntityAlreadyExistsException : Exception
    {
       public EntityAlreadyExistsException()

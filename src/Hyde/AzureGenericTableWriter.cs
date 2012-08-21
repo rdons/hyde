@@ -8,35 +8,35 @@ namespace TechSmith.Hyde
 {
    internal class AzureGenericTableWriter
    {
-      private static readonly Dictionary<Type, string> _typeToEdmMapping = new Dictionary<Type, string>();
-      private static readonly Dictionary<Type, Func<object, string>> _typeToXmlConverterFunction = new Dictionary<Type, Func<object, string>>();
-
-      static AzureGenericTableWriter()
+      private static readonly Dictionary<Type, string> _typeToEdmMapping = new Dictionary<Type, string>
       {
-         _typeToEdmMapping.Add( typeof( int ), "Edm.Int32" );
-         _typeToEdmMapping.Add( typeof( double ), "Edm.Double" );
-         _typeToEdmMapping.Add( typeof( byte[] ), "Edm.Binary" );
-         _typeToEdmMapping.Add( typeof( Guid ), "Edm.Guid" );
-         _typeToEdmMapping.Add( typeof( DateTime ), "Edm.DateTime" );
-         _typeToEdmMapping.Add( typeof( bool ), "Edm.Boolean" );
-         _typeToEdmMapping.Add( typeof( long ), "Edm.Int64" );
-         _typeToEdmMapping.Add( typeof( string ), "Edm.String" );
-         _typeToEdmMapping.Add( typeof( int? ), "Edm.Int32" );
-         _typeToEdmMapping.Add( typeof( double? ), "Edm.Double" );
-         _typeToEdmMapping.Add( typeof( Guid? ), "Edm.Guid" );
-         _typeToEdmMapping.Add( typeof( DateTime? ), "Edm.DateTime" );
-         _typeToEdmMapping.Add( typeof( bool? ), "Edm.Boolean" );
-         _typeToEdmMapping.Add( typeof( long? ), "Edm.Int64" );
-         _typeToEdmMapping.Add( typeof( Uri ), "Edm.String" );
+        { typeof( int ), "Edm.Int32" },
+        { typeof( double ), "Edm.Double" },
+        { typeof( byte[] ), "Edm.Binary" },
+        { typeof( Guid ), "Edm.Guid" },
+        { typeof( DateTime ), "Edm.DateTime" },
+        { typeof( bool ), "Edm.Boolean" },
+        { typeof( long ), "Edm.Int64" },
+        { typeof( string ), "Edm.String" },
+        { typeof( int? ), "Edm.Int32" },
+        { typeof( double? ), "Edm.Double" },
+        { typeof( Guid? ), "Edm.Guid" },
+        { typeof( DateTime? ), "Edm.DateTime"},
+        { typeof( bool? ), "Edm.Boolean" },
+        { typeof( long? ), "Edm.Int64" },
+        { typeof( Uri ), "Edm.String"  }
+      };
 
-         _typeToXmlConverterFunction.Add( typeof( byte[] ), i => i == null ? null : Convert.ToBase64String( (byte[]) i ) );
-         _typeToXmlConverterFunction.Add( typeof( DateTime ), i => DateTimeToString( (DateTime) i ) );
-         _typeToXmlConverterFunction.Add( typeof( DateTime? ), i => i == null ? null : DateTimeToString( (DateTime) i ) );
-         _typeToXmlConverterFunction.Add( typeof( bool ), i => XmlConvert.ToString( (bool) i ) );
-         _typeToXmlConverterFunction.Add( typeof( bool? ), i => i == null ? null : XmlConvert.ToString( (bool) i ) );
-         _typeToXmlConverterFunction.Add( typeof( double ), i => XmlConvert.ToString( (double) i ) );
-         _typeToXmlConverterFunction.Add( typeof( Uri ), i => i == null ? null : ( (Uri) i ).AbsoluteUri );
-      }
+      private static readonly Dictionary<Type, Func<object, string>> _typeToXmlConverterFunction = new Dictionary<Type, Func<object, string>>()
+      {
+         { typeof( byte[] ), i => i == null ? null : Convert.ToBase64String( (byte[]) i ) },
+         { typeof( DateTime ), i => DateTimeToString( (DateTime) i ) },
+         { typeof( DateTime? ), i => i == null ? null : DateTimeToString( (DateTime) i ) },
+         { typeof( bool ), i => XmlConvert.ToString( (bool) i ) },
+         { typeof( bool? ), i => i == null ? null : XmlConvert.ToString( (bool) i ) },
+         { typeof( double ), i => XmlConvert.ToString( (double) i ) },
+         { typeof( Uri ), i => i == null ? null : ( (Uri) i ).AbsoluteUri },
+      };
 
       private static string DateTimeToString( DateTime value )
       {

@@ -4,13 +4,13 @@ namespace TechSmith.Hyde
 {
    internal class AzureKeyValidator
    {
-      public void ValidatePartitionKey( string partitionKey )
+      public static void ValidatePartitionKey( string partitionKey )
       {
          ValidateKeyLength( partitionKey );
          ValidateKeyCharacters( partitionKey );
       }
 
-      public void ValidateRowKey( string rowKey )
+      public static void ValidateRowKey( string rowKey )
       {
          ValidateKeyLength( rowKey );
          ValidateKeyCharacters( rowKey );
