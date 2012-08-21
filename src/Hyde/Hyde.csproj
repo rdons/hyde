@@ -63,9 +63,7 @@
     <Compile Include="AzureGenericTableReader.cs" />
     <Compile Include="AzureGenericTableWriter.cs" />
     <Compile Include="AzureKeyValidator.cs" />
-    <Compile Include="AzureQueueAdapter.cs" />
     <Compile Include="AzureNamespaceProvider.cs" />
-    <Compile Include="AzureQueueMessageAdapter.cs" />
     <Compile Include="AzureTableStorageProvider.cs" />
     <Compile Include="CloudStorageAccountAdapter.cs" />
     <Compile Include="DontSerializeAttribute.cs" />
@@ -77,13 +75,8 @@
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />
     <Compile Include="EntityDoesNotExistExceptions.cs" />
     <Compile Include="GenericEntity.cs" />
-    <Compile Include="GenericPoisonLimitProvider.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="InMemoryTableStorageProvider.cs" />
-    <Compile Include="IPoisonLimitProvider.cs" />
-    <Compile Include="AbstractQueue.cs" />
-    <Compile Include="IQueueMessage.cs" />
-    <Compile Include="IQueueNameProvider.cs" />
     <Compile Include="ITableContext.cs" />
     <Compile Include="MemoryTable.cs" />
     <Compile Include="MemoryTableContext.cs" />

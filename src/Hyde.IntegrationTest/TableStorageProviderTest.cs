@@ -385,9 +385,24 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void GetCollection_MultiplePartitions_ItemsFromAllPartitionsReturned()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "1", Name = "Jill", Age = 27 } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "2", Name = "Jim", Age = 32 } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "3", Name = "Jackie", Age = 12 } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "1",
+            Name = "Jill",
+            Age = 27
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "2",
+            Name = "Jim",
+            Age = 32
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "3",
+            Name = "Jackie",
+            Age = 12
+         } );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName );
@@ -790,12 +805,14 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 1100, result.Count() );
       }
 
-      [TestCategory( "Integration"), TestMethod]
+      [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
                                                 {
-                                                   Id = "foo", Name = "bar", Age = 42
+                                                   Id = "foo",
+                                                   Name = "bar",
+                                                   Age = 42
                                                 } );
          _tableStorageProvider.Save();
 
@@ -808,7 +825,12 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name= "Kovacs", Age = 142, } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "48823",
+            Name = "Kovacs",
+            Age = 142,
+         } );
          _tableStorageProvider.Save();
 
          var tableServiceContext = _client.GetDataServiceContext();
@@ -825,7 +847,12 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          try
          {
-            _tableStorageProvider.Add( _tableName, new RowPointer { Id = "12367", PartitionKey = "abba", RowKey = "acac" } );
+            _tableStorageProvider.Add( _tableName, new RowPointer
+            {
+               Id = "12367",
+               PartitionKey = "abba",
+               RowKey = "acac"
+            } );
             Assert.Fail( "Should have thrown exception" );
          }
          catch ( InvalidEntityException )
@@ -857,15 +884,25 @@ namespace TechSmith.Hyde.IntegrationTest
 
          Assert.AreEqual( itemToUpsert.FirstType, itemInTable.FirstType );
       }
-      
+
       [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
       {
-         var item = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 42 };
+         var item = new DecoratedItem
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 42
+         };
          _tableStorageProvider.Add( _tableName, item );
          _tableStorageProvider.Save();
 
-         var upsertedItem = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 34 };
+         var upsertedItem = new DecoratedItem
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 34
+         };
          _tableStorageProvider.Upsert( _tableName, upsertedItem );
          _tableStorageProvider.Save();
 
@@ -895,11 +932,21 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
       {
-         var item = new DecoratedItem { Id = "foo", Name = "bar", Age = 42 };
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
          _tableStorageProvider.Add( _tableName, item );
          _tableStorageProvider.Save();
 
-         var updatedItem = new DecoratedItem { Id = "foo", Name = "bar", Age = 34 };
+         var updatedItem = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 34
+         };
          _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
 
@@ -951,7 +998,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
-      [TestMethod]
+      [TestMethod, TestCategory( "Integration" )]
       public void Insert_ItemWithDateTimeField_DateTimeFieldStaysUtc()
       {
          const string partitionKey = "DONTCARE1";
