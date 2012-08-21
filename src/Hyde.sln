@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyde.Test", "Hyde.Test\Hyde.Test.csproj", "{60A8E03C-D2F0-4C42-92C1-F9C9C574F9DB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A975622-5F1E-48AA-9DEE-12FC1183D3A6}"
+	ProjectSection(SolutionItems) = preProject
+		Hyde.vsmdi = Hyde.vsmdi
+		Local.testsettings = Local.testsettings
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyde", "Hyde\Hyde.csproj", "{0B041603-6219-44C7-B9EF-3BBCFF33487E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyde.IntegrationTest", "Hyde.IntegrationTest\Hyde.IntegrationTest.csproj", "{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}"
+EndProject
+Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Hyde.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{60A8E03C-D2F0-4C42-92C1-F9C9C574F9DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60A8E03C-D2F0-4C42-92C1-F9C9C574F9DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60A8E03C-D2F0-4C42-92C1-F9C9C574F9DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60A8E03C-D2F0-4C42-92C1-F9C9C574F9DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B041603-6219-44C7-B9EF-3BBCFF33487E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B041603-6219-44C7-B9EF-3BBCFF33487E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B041603-6219-44C7-B9EF-3BBCFF33487E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B041603-6219-44C7-B9EF-3BBCFF33487E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.0\lib\NET35
+	EndGlobalSection
+EndGlobal
