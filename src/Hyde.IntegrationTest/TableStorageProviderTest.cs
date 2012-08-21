@@ -3,6 +3,8 @@ using System.Configuration;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.StorageClient;
+using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.IntegrationTest
 {
