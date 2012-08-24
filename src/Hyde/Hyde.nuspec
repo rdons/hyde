@@ -11,4 +11,7 @@
     <releaseNotes>Initial release of Hyde, a library for generic access to Windows Azure Storage.</releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
   </metadata>
+  <files>
+    <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
+  </files>
 </package>
