@@ -26,13 +26,15 @@ public class Color
 
 var storageAccount = new ConnectionStringCloudStorageAccount( "YourConnectionStringHere" );
 var tableStorage = new AzureTableStorageProvider( storageAccount );
+
 var color = tableStorage.Get<Color>( "MyColorsTable", "Red", "Crimson" );
 
 ```
 
 More examples and getting started help can be found [on the wiki](https://github.com/TechSmith/hyde/wiki/Getting-Started)
 
-License: BSD 3-Clause, see http://www.opensource.org/licenses/BSD-3-Clause
+###License
+BSD 3-Clause, see http://www.opensource.org/licenses/BSD-3-Clause
 
 ### Submission guidelines
 Follow these guidelines, in no particular order, to improve your chances of having a pull request merged in.
