@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle( "TechSmith.Hyde" )]
-[assembly: AssemblyDescription( "Provides generic access to Azure Table Storage" )]
+[assembly: AssemblyDescription( "Object to Entity mapper for Windows Azure" )]
 [assembly: AssemblyConfiguration( "" )]
 [assembly: AssemblyCompany( "TechSmith Corporation" )]
 [assembly: AssemblyProduct( "TechSmith.Hyde" )]
