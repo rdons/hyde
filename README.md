@@ -1,7 +1,7 @@
 TechSmith Hyde
 ========================
 
-Object to Entity mapper for Windows Azure (Think ORM for table storage).
+Object to Entity mapper for Windows Azure, it **hy**drates and **de**hydrates objects to and from storage (Think ORM for table storage).
 
 ### Features
  * Super simple access to Azure Table Storage. Use your existing POCO C# objects and map Table Storage entities to them.
