@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Hyde by TechSmith</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/TechSmith/hyde">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/TechSmith/hyde/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/TechSmith/hyde/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Hyde</h1>
+          <p>Simple Object to Entity mapper for Windows Azure Storage</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/TechSmith">TechSmith</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h3>Features</h3>
+
+<ul>
+<li>Super simple access to Azure Table Storage. Use your existing POCO C# objects and map Table Storage entities to them.</li>
+<li>Easily unit test your code that accesses Table Storage with an in-memory test double. No complicated mocks or stubs required!</li>
+<li>Automatically batches large reads &amp; writes to optimize common operations.</li>
+<li>Handles quirks of your local Azure emulator for you. (Upserts work locally!)</li>
+</ul><h3>Example</h3>
+
+<div class="highlight"><pre><span class="k">using</span> <span class="nn">TechSmith.Hyde</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">TechSmith.Hyde.Table</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Color</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">HexColorCode</span>
+  <span class="p">{</span>
+    <span class="k">get</span><span class="p">;</span>
+    <span class="k">set</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">var</span> <span class="n">account</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ConnectionStringCloudStorageAccount</span><span class="p">(</span> <span class="s">"ConnStr"</span> <span class="p">);</span>
+<span class="kt">var</span> <span class="n">tableStorage</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AzureTableStorageProvider</span><span class="p">(</span> <span class="n">account</span> <span class="p">);</span>
+
+<span class="kt">var</span> <span class="n">color</span> <span class="p">=</span> <span class="n">tableStorage</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">Color</span><span class="p">&gt;(</span> <span class="s">"MyColorsTable"</span><span class="p">,</span> <span class="s">"Red"</span><span class="p">,</span> <span class="s">"Crimson"</span> <span class="p">);</span>
+
+</pre></div>
+
+<p>More examples and getting started help can be found <a href="https://github.com/TechSmith/hyde/wiki/Getting-Started">on the wiki</a></p>
+
+<h3>License</h3>
+
+<p>BSD 3-Clause, see <a href="http://www.opensource.org/licenses/BSD-3-Clause">http://www.opensource.org/licenses/BSD-3-Clause</a></p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
