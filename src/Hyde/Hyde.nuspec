@@ -6,10 +6,13 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
+    <licenseUrl>https://raw.github.com/TechSmith/hyde/master/LICENSE.txt</licenseUrl>
+    <projectUrl>http://techsmith.github.com/hyde</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>Initial release of Hyde, a library for generic access to Windows Azure Storage.</releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
+    <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
   </metadata>
   <files>
     <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
