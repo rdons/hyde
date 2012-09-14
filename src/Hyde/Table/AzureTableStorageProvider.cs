@@ -1,3 +1,5 @@
+using System;
+using System.Net;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table
@@ -9,6 +11,9 @@ namespace TechSmith.Hyde.Table
       public AzureTableStorageProvider( ICloudStorageAccount cloudStorageAccount )
       {
          _cloudStorageAccount = cloudStorageAccount;
+         ServicePoint servicePoint = ServicePointManager.FindServicePoint( new Uri( _cloudStorageAccount.TableEndpoint ) );
+         servicePoint.Expect100Continue = false;
+         servicePoint.ConnectionLimit = 48;
       }
 
       protected override ITableContext GetContext()
