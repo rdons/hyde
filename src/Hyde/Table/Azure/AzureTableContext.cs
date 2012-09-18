@@ -98,6 +98,16 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
+      public IEnumerable<dynamic> GetCollection( string tableName )
+      {
+         // The object returned from AsTableServiceQuery doesn't play nicely with
+         // LINQ; you'll get an exception if you call Select() on it.
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
+         {
+            yield return entity.CreateInstanceFromProperties();
+         }
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return CreateQuery<GenericEntity>( tableName )
@@ -105,6 +115,15 @@ namespace TechSmith.Hyde.Table.Azure
             .AsTableServiceQuery()
             .ToArray()
             .Select( g => g.CreateInstanceFromProperties<T>() );
+      }
+
+      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      {
+         return CreateQuery<GenericEntity>( tableName )
+            .Where( p => p.PartitionKey == partitionKey )
+            .AsTableServiceQuery()
+            .ToArray()
+            .Select( g => g.CreateInstanceFromProperties() );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -123,6 +142,16 @@ namespace TechSmith.Hyde.Table.Azure
             .Select( g => g.CreateInstanceFromProperties<T>() );
       }
 
+      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      {
+         return CreateQuery<GenericEntity>( tableName )
+            .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
+                         p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
+            .AsTableServiceQuery()
+            .ToArray()
+            .Select( g => g.CreateInstanceFromProperties() );
+      }
+
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          return CreateQuery<GenericEntity>( tableName )
@@ -131,6 +160,16 @@ namespace TechSmith.Hyde.Table.Azure
             .AsTableServiceQuery()
             .ToArray()
             .Select( g => g.CreateInstanceFromProperties<T>() );
+      }
+
+      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      {
+         return CreateQuery<GenericEntity>( tableName )
+            .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
+                         p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
+            .AsTableServiceQuery()
+            .ToArray()
+            .Select( g => g.CreateInstanceFromProperties() );
       }
 
       public void Save()

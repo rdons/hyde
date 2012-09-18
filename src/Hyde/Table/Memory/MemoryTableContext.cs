@@ -145,10 +145,21 @@ namespace TechSmith.Hyde.Table.Memory
          return GetTable( tableName ).TableEntries.Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
 
+      public IEnumerable<dynamic> GetCollection( string tableName )
+      {
+         return GetTable( tableName ).TableEntries.Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return GetTable( tableName ).Where( partitionKey, _instanceId )
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
+      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      {
+         return GetTable( tableName ).Where( partitionKey, _instanceId )
+                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ) ) );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -162,11 +173,23 @@ namespace TechSmith.Hyde.Table.Memory
          return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
+      
+      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      {
+         return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
+                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ) ) );
+      }
 
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
+      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      {
+         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
+                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ) ) );
       }
 
       public void Save()
