@@ -133,6 +133,12 @@ namespace TechSmith.Hyde.Table.Memory
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
 
+      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      {
+         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
+                   .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
       public void Save()
       {
          foreach ( KeyValuePair<string, MemoryTable> table in _memoryTables )

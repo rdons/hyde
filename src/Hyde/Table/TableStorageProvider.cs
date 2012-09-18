@@ -74,6 +74,13 @@ namespace TechSmith.Hyde.Table
          return context.GetRange<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
+      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      {
+         var context = GetContext( tableName );
+
+         return context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
+      }
+
       private ITableContext GetContext( string tableName )
       {
          lock ( _syncObject )

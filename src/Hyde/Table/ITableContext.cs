@@ -9,6 +9,7 @@ namespace TechSmith.Hyde.Table
       IEnumerable<T> GetCollection<T>( string tableName ) where T : new();
       IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new();
       IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();
+      IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new();
       void Save();
       void Upsert<T>( string tableName, T itemToUpsert, string partitionKey, string rowKey ) where T : new();
       void Update<T>( string tableName, T item, string partitionKey, string rowKey ) where T : new();

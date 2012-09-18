@@ -870,6 +870,54 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "first", result.FirstType );
       }
 
+      [TestMethod]
+      public void GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
+      {
+         var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 0, result.Count() );
+      }
+
+      [TestMethod]
+      public void GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
+      {
+         var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
+
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item, _partitionKey, "there" );
+         var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 0, result.Count() );
+      }
+
+      [TestMethod]
+      public void GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
+      {
+         var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
+
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item, _partitionKey, "hithere" );
+         var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 1, result.Count() );
+      }
+
+      [TestMethod]
+      public void GetRangeByRowKey_ManyItemsInStore_EnumerableWithAppropriateItemsReturned()
+      {
+         var item1 = new SimpleDataItem { FirstType = "a", SecondType = 1 };
+         var item2 = new SimpleDataItem { FirstType = "b", SecondType = 2 };
+         var item3 = new SimpleDataItem { FirstType = "c", SecondType = 3 };
+         var item4 = new SimpleDataItem { FirstType = "d", SecondType = 4 };
+
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item1, _partitionKey, "asdf" );
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item2, _partitionKey, "hithere" );
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item3, _partitionKey, "jklh" );
+         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item4, _partitionKey, "hi" );
+
+         var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
       private void EnsureOneItemInContext( TableStorageProvider tableStorageProvider )
       {
          var item = new SimpleDataItem
