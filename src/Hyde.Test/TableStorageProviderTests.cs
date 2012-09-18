@@ -8,7 +8,7 @@ using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
 {
-   public static class SimpleNodeExtensions
+   public static class SimpleDataItemExtensions
    {
       public static bool ComesBefore( this SimpleDataItem thisNode, IEnumerable<SimpleDataItem> listOfDataItems, SimpleDataItem laterNode )
       {
