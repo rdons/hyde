@@ -416,15 +416,15 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void GetRange_ZeroItemsInStore_EnumerableWithNoItemsReturned()
+      public void GetRangeByPartitionKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
       {
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, _partitionKey, _partitionKey );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKey, _partitionKey );
 
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestMethod]
-      public void GetRange_OneItemsInStoreWithinRange_EnumerableWithOneItemReturned()
+      public void GetRangeByPartitionKey_OneItemsInStoreWithinRange_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
          {
@@ -432,13 +432,13 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          }, _partitionKeyForRangeLow, _rowKey );
 
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestMethod]
-      public void GetRange_TwoItemsInStoreWithinRange_EnumerableWithTwoItemReturned()
+      public void GetRangeByPartitionKey_TwoItemsInStoreWithinRange_EnumerableWithTwoItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
          {
@@ -452,13 +452,13 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          }, _partitionKeyForRangeHigh, _rowKey );
 
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestMethod]
-      public void GetRange_OneItemInStoreWithinRangeOneItemOutsideRange_EnumerableWithOneItemReturned()
+      public void GetRangeByPartitionKey_OneItemInStoreWithinRangeOneItemOutsideRange_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
          {
@@ -472,13 +472,13 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          }, "0", "b" );
 
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestMethod]
-      public void GetRange_OneItemInStoreWithinRangeTwoItemsOutsideRange_EnumerableWithOneItemReturned()
+      public void GetRangeByPartitionKey_OneItemInStoreWithinRangeTwoItemsOutsideRange_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
          {
@@ -498,13 +498,13 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          }, "2012_01_10_11_28", "b" );
 
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
 
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestMethod]
-      public void GetRange_TwoItemInStoreWithinRangeTwoItemsOutsideRange_EnumerableWithTwoItemReturned()
+      public void GetRangeByPartitionKey_TwoItemInStoreWithinRangeTwoItemsOutsideRange_EnumerableWithTwoItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
          {
@@ -530,7 +530,7 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          }, "2012_01_10_11_28", _rowKey );
 
-         var result = _tableStorageProvider.GetRange<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
 
          Assert.AreEqual( 2, result.Count() );
       }

@@ -46,7 +46,7 @@ namespace TechSmith.Hyde.Table.Memory
          return TableEntries.Where( p => p.Key.PartitionKey == partitionKey && p.Value.IsVisibleTo( callerInstanceId ) );
       }
 
-      public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> WhereRange( string partitionKeyLow, string partitionKeyHigh, Guid callerInstanceId )
+      public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> WhereRangeByPartitionKey( string partitionKeyLow, string partitionKeyHigh, Guid callerInstanceId )
       {
          return TableEntries.Where( p => p.Key.PartitionKey.CompareTo( partitionKeyLow ) >= 0 && p.Key.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 && p.Value.IsVisibleTo( callerInstanceId ) );
       }

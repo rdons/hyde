@@ -398,14 +398,14 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_NothingInStore_EmptyIEnumerableReturned()
+      public void GetRangeByPartitionKey_NothingInStore_EmptyIEnumerableReturned()
       {
-         var result = _tableStorageProvider.GetRange<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_OneItemInStore_EnumerableWithOneItemReturned()
+      public void GetRangeByPartitionKey_OneItemInStore_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -413,12 +413,12 @@ namespace TechSmith.Hyde.IntegrationTest
          }, _partitionKey, "a" );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.GetRange<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
+      public void GetRangeByPartitionKey_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -434,7 +434,8 @@ namespace TechSmith.Hyde.IntegrationTest
          }, "0", "c" );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKey );
+
          Assert.AreEqual( 2, result.Count() );
       }
 
