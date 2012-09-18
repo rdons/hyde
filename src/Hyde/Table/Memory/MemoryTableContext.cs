@@ -127,7 +127,7 @@ namespace TechSmith.Hyde.Table.Memory
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
 
-      [Obsolete( "Use GetRangeByPartitionKey instead.")]
+      [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );

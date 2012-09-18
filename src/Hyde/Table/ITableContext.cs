@@ -17,7 +17,7 @@ namespace TechSmith.Hyde.Table
       void DeleteItem( string tableName, string partitionKey, string rowKey );
       void DeleteCollection( string tableName, string partitionKey );
 
-      [Obsolete( "Use GetRangeByPartitionKey instead.")]
+      [Obsolete( "Use GetRangeByPartitionKey instead." )]
       IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();
    }
 }
