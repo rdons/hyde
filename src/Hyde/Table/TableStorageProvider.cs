@@ -47,6 +47,12 @@ namespace TechSmith.Hyde.Table
          return context.GetItem<T>( tableName, partitionKey, rowKey );
       }
 
+      public dynamic Get( string tableName, string partitionKey, string rowKey )
+      {
+         var context = GetContext( tableName );
+         return context.GetItem( tableName, partitionKey, rowKey );
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          var context = GetContext( tableName );

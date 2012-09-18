@@ -56,12 +56,19 @@ namespace TechSmith.Hyde.Table.Azure
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         var valueAsGeneric = GetItemAsGenericEntity<T>( tableName, partitionKey, rowKey );
+         var valueAsGeneric = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
 
          return valueAsGeneric.CreateInstanceFromProperties<T>();
       }
 
-      private GenericEntity GetItemAsGenericEntity<T>( string tableName, string partitionKey, string rowKey ) where T : new()
+      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
+      {
+         var valueAsGeneric = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
+
+         return valueAsGeneric.CreateInstanceFromProperties();
+      }
+
+      private GenericEntity GetItemAsGenericEntity( string tableName, string partitionKey, string rowKey )
       {
          GenericEntity valueAsGeneric;
          try
@@ -169,7 +176,7 @@ namespace TechSmith.Hyde.Table.Azure
          try
          {
             var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
-            var genericInStorage = GetItemAsGenericEntity<T>( tableName, partitionKey, rowKey );
+            var genericInStorage = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
             if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
             {
                Detach( genericInStorage );

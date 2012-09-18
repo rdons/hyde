@@ -7,6 +7,7 @@ namespace TechSmith.Hyde.Table
    {
       void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new();
       T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new();
+      dynamic GetItem( string tableName, string partitionKey, string rowKey );
       IEnumerable<T> GetCollection<T>( string tableName ) where T : new();
       IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new();
       IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();

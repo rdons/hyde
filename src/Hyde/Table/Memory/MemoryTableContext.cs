@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
@@ -84,6 +85,29 @@ namespace TechSmith.Hyde.Table.Memory
          }
 
          return HydrateItemFromData<T>( tableEntry.EntryProperties( _instanceId ) );
+      }
+
+      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
+      {
+         var tableEntry = GetTable( tableName ).Where( partitionKey, rowKey, _instanceId ).FirstOrDefault().Value;
+
+         if ( tableEntry == null )
+         {
+            throw new EntityDoesNotExistException();
+         }
+
+         return HydrateItemFromData( tableEntry.EntryProperties( _instanceId ) );
+      }
+
+      private static dynamic HydrateItemFromData( Dictionary<string, object> dataForItem )
+      {
+         dynamic result = new ExpandoObject();
+         foreach ( var property in dataForItem )
+         {
+            ( (IDictionary<string, object>) result ).Add( property.Key, property.Value );
+         }
+
+         return result;
       }
 
       private static T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
