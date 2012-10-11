@@ -3,9 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-using Microsoft.CSharp.RuntimeBinder;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table.Azure;
@@ -15,10 +12,6 @@ namespace TechSmith.Hyde.Table.Memory
    internal class MemoryTableContext : ITableContext
    {
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
-
-      // We store partition/row keys using the following dictionary keys.
-      private const string _partitionKeyName = "PartitionKey";
-      private const string _rowKeyName = "RowKey";
 
       private readonly Guid _instanceId = Guid.NewGuid();
 
