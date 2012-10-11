@@ -21,6 +21,24 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      {
+         dynamic item = new DynamicPropertyBag();
+         item.Foo = "test";
+         item.Bar = 1;
+
+         string partitionKey = "partitionKey";
+         string rowKey = "rowKey";
+         _tableStorageProvider.Add( _tableName, item, partitionKey, rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic result = _tableStorageProvider.Get( _tableName, partitionKey, rowKey );
+
+         Assert.AreEqual( item.Foo, result.Foo );
+         Assert.AreEqual( item.Bar, result.Bar );
+      }
+
+      [TestMethod]
       public void Get_ObjectInsertedWithClassAndRetrievedViaDynamic_ShouldReturnFullyHydratedObject()
       {
          var simpleEntity = new DecoratedItem
@@ -73,7 +91,7 @@ namespace TechSmith.Hyde.Test
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.AddDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
 
          _tableStorageProvider.Save();
 
@@ -90,7 +108,7 @@ namespace TechSmith.Hyde.Test
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.UpsertDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
@@ -105,10 +123,10 @@ namespace TechSmith.Hyde.Test
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.AddDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
          dyn.FirstItem = "this text is changed.";
-         _tableStorageProvider.UpsertDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
@@ -123,10 +141,10 @@ namespace TechSmith.Hyde.Test
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.AddDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
          dyn.FirstItem = "this text is changed.";
-         _tableStorageProvider.UpdateDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
@@ -142,7 +160,7 @@ namespace TechSmith.Hyde.Test
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.UpdateDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
 
          Assert.Fail( "Should have thrown EntityDoesNotExistException" );
       }

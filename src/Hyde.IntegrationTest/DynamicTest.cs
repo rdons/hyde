@@ -1,11 +1,6 @@
 ﻿using System;
-<<<<<<< HEAD
-using System.Collections.Generic;
-using System.Configuration;
-=======
 using System.Configuration;
 using System.Dynamic;
->>>>>>> tony/addDynamics
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.StorageClient;
@@ -47,6 +42,24 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             client.DeleteTableIfExist( orphanedTableName );
          }
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      {
+         dynamic item = new DynamicPropertyBag();
+         item.Foo = "test";
+         item.Bar = 1;
+
+         string partitionKey = "partitionKey";
+         string rowKey = "rowKey";
+         _tableStorageProvider.Add( _tableName, item, partitionKey, rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic result = _tableStorageProvider.Get( _tableName, partitionKey, rowKey );
+
+         Assert.AreEqual( item.Foo, result.Foo );
+         Assert.AreEqual( item.Bar, result.Bar );
       }
 
       [TestMethod, TestCategory( "Integration" )]
@@ -99,7 +112,7 @@ namespace TechSmith.Hyde.IntegrationTest
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.AddDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
 
          _tableStorageProvider.Save();
 
@@ -116,7 +129,7 @@ namespace TechSmith.Hyde.IntegrationTest
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.UpsertDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
@@ -131,10 +144,10 @@ namespace TechSmith.Hyde.IntegrationTest
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
-         _tableStorageProvider.AddDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
          dyn.FirstItem = "this text is changed.";
-         _tableStorageProvider.UpsertDynamic( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );

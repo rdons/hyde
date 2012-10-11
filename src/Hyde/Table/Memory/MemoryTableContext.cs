@@ -3,6 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+using Microsoft.CSharp.RuntimeBinder;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table.Azure;
@@ -34,15 +37,10 @@ namespace TechSmith.Hyde.Table.Memory
          return _memoryTables[tableName];
       }
 
-      public void AddNewDynamicItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
+      public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
          AzureKeyValidator.ValidatePartitionKey( partitionKey );
          AzureKeyValidator.ValidateRowKey( rowKey );
-
-         //var itemAsDictionary = itemToAdd as IDictionary<string, object>;
-
-         // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
-         //GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
 
          var table = GetTable( tableName );
 
@@ -56,51 +54,31 @@ namespace TechSmith.Hyde.Table.Memory
          table.Add( partitionKey, rowKey, _instanceId, dataToStore );
       }
 
-      public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
-      {
-         AzureKeyValidator.ValidatePartitionKey( partitionKey );
-         AzureKeyValidator.ValidateRowKey( rowKey );
-
-         // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
-         GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
-
-         var table = GetTable( tableName );
-
-         if ( table.HasEntity( partitionKey, rowKey ) )
-         {
-            throw new EntityAlreadyExistsException();
-         }
-
-         var dataToStore = SerializeItemToData( itemToAdd );
-
-         table.Add( partitionKey, rowKey, _instanceId, dataToStore );
-      }
-
       private static Dictionary<string, object> SerializeDynamicItemToData( dynamic itemToAdd )
       {
          var dataToStore = new Dictionary<string, object>();
 
-         //if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
-         //{
-            //dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>() );
-         //}
-
-         //if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
-         //{
-            //dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute, string>() );
-         //}
-
-         //foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
-         //{
-            //dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
-         //}
-         //return dataToStore;
-
-         var dictionary = itemToAdd as IDictionary<string, object>;
-
-         foreach ( var keyValuePair in dictionary )
+         if ( itemToAdd is IDictionary<string, object> )
          {
-            dataToStore[keyValuePair.Key] = keyValuePair.Value;
+            var dictionary = itemToAdd as IDictionary<string, object>;
+
+            foreach ( var keyValuePair in dictionary )
+            {
+               dataToStore[keyValuePair.Key] = keyValuePair.Value;
+            }
+         }
+         else if( itemToAdd is IDynamicMetaObjectProvider)
+         {
+            IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( itemToAdd ); 
+            foreach ( var memberName in memberNames )
+            {
+               dynamic result = ImpromptuInterface.Impromptu.InvokeGet( itemToAdd, memberName );
+               dataToStore[memberName] = result;
+            }
+         }
+         else
+         { 
+            return SerializeItemToData( itemToAdd );
          }
 
          return dataToStore;
@@ -184,10 +162,6 @@ namespace TechSmith.Hyde.Table.Memory
          }
 
          // TODO: Play with IgnoreMissingProperties == false here... In other words, get mad if properties are missing.
-         //foreach ( var property in typeToHydrate.GetProperties() )
-         //{
-         //   property.SetValue( result, dataForItem[property.Name], null );
-         //}
 
          return result;
       }
@@ -225,7 +199,7 @@ namespace TechSmith.Hyde.Table.Memory
          return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
-      
+
       public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
          return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
@@ -273,28 +247,13 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      public void UpsertDynamic( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
          var table = GetTable( tableName );
 
          if ( table.HasEntity( partitionKey, rowKey ) )
          {
             var serializedData = SerializeDynamicItemToData( itemToUpsert );
-            table.Update( partitionKey, rowKey, _instanceId, serializedData );
-         }
-         else
-         {
-            AddNewDynamicItem( tableName, itemToUpsert, partitionKey, rowKey );
-         }
-      }
-
-      public void Upsert<T>( string tableName, T itemToUpsert, string partitionKey, string rowKey ) where T : new()
-      {
-         var table = GetTable( tableName );
-
-         if ( table.HasEntity( partitionKey, rowKey ) )
-         {
-            var serializedData = SerializeItemToData( itemToUpsert );
             table.Update( partitionKey, rowKey, _instanceId, serializedData );
          }
          else
@@ -329,16 +288,9 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      public void UpdateDynamic( string tableName, dynamic item, string partitionKey, string rowKey )
+      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
          GetItem( tableName, partitionKey, rowKey );
-
-         UpsertDynamic( tableName, item, partitionKey, rowKey );
-      }
-
-      public void Update<T>( string tableName, T item, string partitionKey, string rowKey ) where T : new()
-      {
-         GetItem<T>( tableName, partitionKey, rowKey );
 
          Upsert( tableName, item, partitionKey, rowKey );
       }

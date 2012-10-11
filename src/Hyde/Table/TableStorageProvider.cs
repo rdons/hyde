@@ -26,25 +26,19 @@ namespace TechSmith.Hyde.Table
       /// the partition and row keys for instance.
       /// </remarks>
       /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
-      public void Add<T>( string tableName, T instance ) where T : new()
-      {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-         Add( tableName, instance, partitionKey, rowKey );
-      }
-
-      public void Add<T>( string tableName, T instance, string partitionKey, string rowKey ) where T : new()
+      public void Add( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
          var context = GetContext( tableName );
 
          context.AddNewItem( tableName, instance, partitionKey, rowKey );
       }
 
-      public void AddDynamic( string tableName, dynamic instance, string partitionKey, string rowKey )
+      public void Add( string tableName, dynamic instance )
       {
-         var context = GetContext( tableName );
+         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
 
-         context.AddNewDynamicItem( tableName, instance, partitionKey, rowKey );
+         Add( tableName, instance, partitionKey, rowKey );
       }
 
       public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -147,25 +141,19 @@ namespace TechSmith.Hyde.Table
          }
       }
 
-      public void UpsertDynamic( string tableName, dynamic instance, string partitionKey, string rowKey )
-      {
-         var context = GetContext();
-         context.UpsertDynamic( tableName, instance, partitionKey, rowKey );
-         _contextsToSave.Add( context );
-      }
-
-      public void Upsert<T>( string tableName, T instance ) where T : new()
-      {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-         Upsert( tableName, instance, partitionKey, rowKey );
-      }
-
-      public void Upsert<T>( string tableName, T instance, string partitionKey, string rowKey ) where T : new()
+      public void Upsert( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
          var context = GetContext();
          context.Upsert( tableName, instance, partitionKey, rowKey );
          _contextsToSave.Add( context );
+      }
+
+      public void Upsert( string tableName, dynamic instance )
+      {
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+
+         Upsert( tableName, instance, partitionKey, rowKey );
       }
 
       public void Delete<T>( string tableName, T instance )
@@ -188,25 +176,19 @@ namespace TechSmith.Hyde.Table
          context.DeleteCollection( tableName, partitionKey );
       }
 
-      public void UpdateDynamic( string tableName, dynamic item, string partitionKey, string rowKey )
-      {
-         var context = GetContext();
-         context.UpdateDynamic( tableName, item, partitionKey, rowKey );
-         _contextsToSave.Add( context );
-      }
-
-      public void Update<T>( string tableName, T item ) where T : new()
-      {
-         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-         Update( tableName, item, partitionKey, rowKey );
-      }
-
-      public void Update<T>( string tableName, T item, string partitionKey, string rowKey ) where T : new()
+      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
          var context = GetContext();
          context.Update( tableName, item, partitionKey, rowKey );
          _contextsToSave.Add( context );
+      }
+
+      public void Update( string tableName, dynamic item )
+      {
+         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+
+         Update( tableName, item, partitionKey, rowKey );
       }
    }
 }
