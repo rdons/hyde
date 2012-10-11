@@ -99,7 +99,7 @@ namespace TechSmith.Hyde.Test
          itemToSave.FirstType = "foo";
          itemToSave.SecondType = "bar";
 
-         var genericItemToTest = GenericEntity.HydrateFromDynamic( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
          var wereCool = true;
 

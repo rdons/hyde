@@ -46,7 +46,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          try
          {
-            AddObject( tableName, GenericEntity.HydrateFromDynamic( itemToAdd, partitionKey, rowKey ) );
+            AddObject( tableName, GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey ) );
          }
          catch ( InvalidOperationException ex )
          {
@@ -213,7 +213,7 @@ namespace TechSmith.Hyde.Table.Azure
          }
          else
          {
-            var genericToUpsert = GenericEntity.HydrateFromDynamic( itemToUpsert, partitionKey, rowKey );
+            var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             AttachTo( tableName, genericToUpsert );
             UpdateObject( genericToUpsert );
          }
@@ -223,7 +223,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          try
          {
-            var genericToUpsert = GenericEntity.HydrateFromDynamic( itemToUpsert, partitionKey, rowKey );
+            var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             var genericInStorage = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
             if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
             {
@@ -300,7 +300,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void Update( string tableName, dynamic updatedItem, string partitionKey, string rowKey )
       {
-         var genericToUpdate = GenericEntity.HydrateFromDynamic( updatedItem, partitionKey, rowKey );
+         var genericToUpdate = GenericEntity.HydrateFrom( updatedItem, partitionKey, rowKey );
 
          const string eTagThatSpecifiesWeShouldNotAddIfDoesNotExist = "*";
          AttachTo( tableName, genericToUpdate, eTagThatSpecifiesWeShouldNotAddIfDoesNotExist );

@@ -42,5 +42,10 @@ namespace TechSmith.Hyde.IntegrationTest
          }
          return message.ToString();
       }
+
+      public override IEnumerable<string> GetDynamicMemberNames()
+      {
+         return _storage.Keys;
+      }
    }
 }

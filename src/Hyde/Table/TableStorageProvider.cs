@@ -28,7 +28,7 @@ namespace TechSmith.Hyde.Table
       /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
       public void Add( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         var context = GetContext( tableName );
+         ITableContext context = GetContext( tableName );
 
          context.AddNewItem( tableName, instance, partitionKey, rowKey );
       }
@@ -150,12 +150,13 @@ namespace TechSmith.Hyde.Table
 
       public void Upsert( string tableName, dynamic instance )
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
 
          Upsert( tableName, instance, partitionKey, rowKey );
       }
 
+      //TODO: Make sure we can call delete with dynamics
       public void Delete<T>( string tableName, T instance )
       {
          var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
@@ -185,8 +186,8 @@ namespace TechSmith.Hyde.Table
 
       public void Update( string tableName, dynamic item )
       {
-         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         var partitionKey = ((object)item).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = ((object)item).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
 
          Update( tableName, item, partitionKey, rowKey );
       }

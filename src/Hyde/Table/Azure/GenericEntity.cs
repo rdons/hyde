@@ -112,22 +112,28 @@ namespace TechSmith.Hyde.Table.Azure
 
          return funcToCall( itemToConvert.Value.ToString() );
       }
-      
-      public static GenericEntity HydrateFromDynamic( dynamic sourceItem, string partitionKey, string rowKey )
+
+      public static GenericEntity HydrateFrom( dynamic sourceItem )
       {
-         var itemAsDictionary = sourceItem as IDictionary<string, object>;
+         string partitionKey = ((object)sourceItem).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         string rowKey = ((object)sourceItem).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         return HydrateFrom( sourceItem, partitionKey, rowKey );
+      }
+
+      public static GenericEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
+      {
+         Dictionary<string, EntityPropertyInfo> properties = GetProperties( sourceItem );
 
          var genericEntity = new GenericEntity();
-         if ( itemAsDictionary != null )
+         if ( properties != null )
          {
-            foreach ( var keyValuePair in itemAsDictionary )
+            foreach ( KeyValuePair<string, EntityPropertyInfo> keyValuePair in properties )
             {
                if ( InvalidPropertyNames.Contains( keyValuePair.Key ) )
                {
                   throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
                }
-               var valueOfProperty = keyValuePair.Value;
-               genericEntity[keyValuePair.Key] = new EntityPropertyInfo( valueOfProperty, keyValuePair.Value.GetType(), valueOfProperty == null );
+               genericEntity[keyValuePair.Key] = keyValuePair.Value;
             }
          }
 
@@ -137,32 +143,78 @@ namespace TechSmith.Hyde.Table.Azure
          return genericEntity;
       }
 
-      public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
+      private static Dictionary<string, EntityPropertyInfo> GetProperties( dynamic item )
       {
-         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-
-         return HydrateFrom( sourceItem, partitionKey, rowKey );
+         if ( item is IDictionary<string, object> )
+         {
+            return GetPropertiesFromDictionary( item );
+         }
+         if ( item is IDynamicMetaObjectProvider )
+         {
+            return GetPropertiesFromDynamicMetaObject( item );
+         }
+         return GetPropertiesFromType( item );
       }
 
-      public static GenericEntity HydrateFrom<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
+      private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromDictionary( IEnumerable<KeyValuePair<string, object>> dictionary )
       {
-         var genericEntity = new GenericEntity();
-         foreach ( var property in sourceItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         var properties = new Dictionary<string, EntityPropertyInfo>();
+         foreach ( var keyValuePair in dictionary )
+         {
+            Type objectType = keyValuePair.Value == null ? typeof(object) : keyValuePair.Value.GetType();
+            properties[keyValuePair.Key] = new EntityPropertyInfo( keyValuePair.Value, objectType, keyValuePair.Value == null );
+         }
+         return properties;
+      }
+
+      private static Dictionary<string, EntityPropertyInfo>GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
+      {
+         var properties = new Dictionary<string, EntityPropertyInfo>();
+         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
+         foreach ( var memberName in memberNames )
+         {
+            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
+            Type objectType = result == null ? typeof(object) : result.GetType();
+            properties[memberName] = new EntityPropertyInfo( result, objectType, result == null );
+         }
+         return properties;
+      }
+
+      private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromType<T>( T item )
+      {
+         var properties = new Dictionary<string, EntityPropertyInfo>();
+         foreach ( var property in item.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
             if ( InvalidPropertyNames.Contains( property.Name ) )
             {
                throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
             }
-            var valueOfProperty = property.GetValue( sourceItem, null );
-            genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
+            var valueOfProperty = property.GetValue( item, null );
+            properties[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
          }
-
-         genericEntity.PartitionKey = partitionKey;
-         genericEntity.RowKey = rowKey;
-
-         return genericEntity;
+         return properties;
       }
+
+      //private static Dictionary<string, object> SerializeItemToData<T>( T itemToAdd ) where T : new()
+      //{
+      //   var dataToStore = new Dictionary<string, object>();
+
+      //   if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
+      //   {
+      //      dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>() );
+      //   }
+
+      //   if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
+      //   {
+      //      dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute, string>() );
+      //   }
+
+      //   foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+      //   {
+      //      dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
+      //   }
+      //   return dataToStore;
+      //}
 
       public bool AreTheseEqual( GenericEntity rightSide )
       {

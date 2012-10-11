@@ -159,7 +159,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Add_EntityHasPartitionAndRowKeyAttributes_PartitionAndRowKeysSetCorrectly()
       {
-         var expected = new DecoratedItem { Id = "foo", Name = "bar" };
+         var expected = new DecoratedItem { Id = "foo", Name = "bar", Age = 1 };
          _tableStorageProvider.Add( _tableName, expected );
          _tableStorageProvider.Save();
 
