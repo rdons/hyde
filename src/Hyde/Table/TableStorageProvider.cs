@@ -156,11 +156,10 @@ namespace TechSmith.Hyde.Table
          Upsert( tableName, instance, partitionKey, rowKey );
       }
 
-      //TODO: Make sure we can call delete with dynamics
-      public void Delete<T>( string tableName, T instance )
+      public void Delete( string tableName, dynamic instance )
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          Delete( tableName, partitionKey, rowKey );
       }
 
