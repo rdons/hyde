@@ -15,9 +15,22 @@ namespace TechSmith.Hyde.Table
       protected abstract ITableContext GetContext();
 
       /// <summary>
+      /// Add entity to the given table
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="entity">Entity to store</param>
+      /// <param name="partitionKey">The partition key to use when storing the entity</param>
+      /// <param name="rowKey">The row key to use when storing the entity</param>
+      public void Add( string tableName, dynamic entity, string partitionKey, string rowKey )
+      {
+         ITableContext context = GetContext( tableName );
+
+         context.AddNewItem( tableName, entity, partitionKey, rowKey );
+      }
+
+      /// <summary>
       /// Add instance to the given table
       /// </summary>
-      /// <typeparam name="T">type of the instance to store</typeparam>
       /// <param name="tableName">name of the table</param>
       /// <param name="instance">instance to store</param>
       /// <remarks>
@@ -26,13 +39,6 @@ namespace TechSmith.Hyde.Table
       /// the partition and row keys for instance.
       /// </remarks>
       /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
-      public void Add( string tableName, dynamic instance, string partitionKey, string rowKey )
-      {
-         ITableContext context = GetContext( tableName );
-
-         context.AddNewItem( tableName, instance, partitionKey, rowKey );
-      }
-
       public void Add( string tableName, dynamic instance )
       {
          var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
