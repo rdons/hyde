@@ -145,26 +145,11 @@ namespace TechSmith.Hyde.Table.Azure
 
       private static Dictionary<string, EntityPropertyInfo> GetProperties( dynamic item )
       {
-         if ( item is IDictionary<string, object> )
-         {
-            return GetPropertiesFromDictionary( item );
-         }
          if ( item is IDynamicMetaObjectProvider )
          {
             return GetPropertiesFromDynamicMetaObject( item );
          }
          return GetPropertiesFromType( item );
-      }
-
-      private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromDictionary( IEnumerable<KeyValuePair<string, object>> dictionary )
-      {
-         var properties = new Dictionary<string, EntityPropertyInfo>();
-         foreach ( var keyValuePair in dictionary )
-         {
-            Type objectType = keyValuePair.Value == null ? typeof(object) : keyValuePair.Value.GetType();
-            properties[keyValuePair.Key] = new EntityPropertyInfo( keyValuePair.Value, objectType, keyValuePair.Value == null );
-         }
-         return properties;
       }
 
       private static Dictionary<string, EntityPropertyInfo>GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
