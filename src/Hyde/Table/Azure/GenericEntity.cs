@@ -180,27 +180,6 @@ namespace TechSmith.Hyde.Table.Azure
          return properties;
       }
 
-      //private static Dictionary<string, object> SerializeItemToData<T>( T itemToAdd ) where T : new()
-      //{
-      //   var dataToStore = new Dictionary<string, object>();
-
-      //   if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
-      //   {
-      //      dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>() );
-      //   }
-
-      //   if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
-      //   {
-      //      dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute, string>() );
-      //   }
-
-      //   foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
-      //   {
-      //      dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
-      //   }
-      //   return dataToStore;
-      //}
-
       public bool AreTheseEqual( GenericEntity rightSide )
       {
          return GetProperties()
