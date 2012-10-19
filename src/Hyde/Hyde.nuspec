@@ -10,7 +10,11 @@
     <projectUrl>http://techsmith.github.com/hyde</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Adding support for retrieving dynamic objects and ability to query RowKeys by a range</releaseNotes>
+    <releaseNotes>
+    Adding support for Adding/Updating/Deleting dynamic objects. NOTE: This is a breaking interface change, those methods are no longer templated.
+    Updated DontSerializeAttribute to work on classes as well as properties.
+    Increased the number of HTTP connections that can be made concurrently to table storage.
+    </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
   </metadata>
