@@ -193,7 +193,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          try
          {
-            SaveChangesWithRetries( SaveChangesOptions.ReplaceOnUpdate );
+            SaveChangesWithRetries( SaveChangesOptions.ReplaceOnUpdate, new TableRequestOptions { RetryPolicy = RetryPolicy } );
          }
          catch ( StorageException ex )
          {
