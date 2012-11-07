@@ -90,6 +90,7 @@
     <Compile Include="Common\EntityDoesNotExistExceptions.cs" />
     <Compile Include="Table\Azure\GenericEntity.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
+    <Compile Include="Table\Azure\GenericTableEntity.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
     <Compile Include="Table\ITableContext.cs" />
     <Compile Include="Table\Memory\MemoryTable.cs" />
