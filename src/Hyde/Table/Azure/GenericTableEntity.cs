@@ -14,13 +14,9 @@ namespace TechSmith.Hyde.Table.Azure
    {
       private IDictionary<string, EntityProperty> _properties;
 
-      private static readonly HashSet<string> _invalidPropertyNames = new HashSet<string>
-                                                                     {
-                                                                        "PartitionKey",
-                                                                        "RowKey",
-                                                                     };
+      private static readonly HashSet<string> _invalidPropertyNames = new HashSet<string> { "PartitionKey", "RowKey", "Timestamp", "ETag" };
 
-      private static readonly Dictionary<Type, Func<EntityProperty, object>> _typeToConverterFunction = new Dictionary<Type, Func<EntityProperty, object>>
+      private static readonly Dictionary<Type, Func<EntityProperty, object>> _typeToValueFunctions = new Dictionary<Type, Func<EntityProperty, object>>
         {
            { typeof( string ), p => p.StringValue },
            { typeof( int ), p => p.Int32Value },
@@ -37,6 +33,25 @@ namespace TechSmith.Hyde.Table.Azure
            { typeof( long ), p => p.Int64Value },
            { typeof( long? ), p => p.StringValue == null ? (long?) null : p.Int64Value },
            { typeof( Uri ), p => p.StringValue == null ? null : new Uri( p.StringValue ) },
+        };
+
+      private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunctions = new Dictionary<Type, Func<object, EntityProperty>>
+        {
+           { typeof( string ), o => new EntityProperty( (string) o) },
+           { typeof( int ), o => new EntityProperty( (int) o) },
+           { typeof( int? ), o => o == null ? new EntityProperty( (string) null ) : new EntityProperty( (int) o) },
+           { typeof( double ), o => new EntityProperty((double) o) },
+           { typeof( double? ), o => o == null ? new EntityProperty((string) null ) : new EntityProperty((double) o) },
+           { typeof( byte[] ), o => new EntityProperty((byte[]) o) },
+           { typeof( Guid ), o => new EntityProperty((Guid) o)},
+           { typeof( Guid? ), o => o== null ? new EntityProperty((string) null) : new EntityProperty((Guid) o)},
+           { typeof( DateTime ), o => new EntityProperty( (DateTime) o)  },
+           { typeof( DateTime? ), o => new EntityProperty( (DateTime?) o)  },
+           { typeof( bool ), o => new EntityProperty((bool) o)},
+           { typeof( bool? ), o => o== null ? new EntityProperty((string) null): new EntityProperty((bool) o) },
+           { typeof( long ), o => new EntityProperty((long) o)},
+           { typeof( long? ), o => o == null ? new EntityProperty((string) null):new EntityProperty((long) o ) },
+           { typeof( Uri ), o => o == null ? new EntityProperty((string) null) : new EntityProperty( ((Uri)o).AbsoluteUri) },
         };
 
       private static readonly Dictionary<EdmType, Func<EntityProperty, object>> _edmTypeToConverterFunction = new Dictionary<EdmType, Func<EntityProperty, object>>
@@ -75,6 +90,11 @@ namespace TechSmith.Hyde.Table.Azure
          set;
       }
 
+      public GenericTableEntity()
+      {
+         _properties = new Dictionary<string, EntityProperty>();
+      }
+
       public void ReadEntity( IDictionary<string, EntityProperty> properties, OperationContext operationContext )
       {
          _properties = properties;
@@ -82,68 +102,69 @@ namespace TechSmith.Hyde.Table.Azure
 
       public IDictionary<string, EntityProperty> WriteEntity( OperationContext operationContext )
       {
-         throw new NotImplementedException();
+         return _properties;
       }
 
-      //public static GenericTableEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
-      //{
-      //   Dictionary<string, EntityPropertyInfo> properties = GetProperties( sourceItem );
+      public static GenericTableEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
+      {
+         Dictionary<string, EntityProperty> properties = GetProperties( sourceItem );
 
-      //   var genericEntity = new GenericTableEntity();
-      //   if ( properties != null )
-      //   {
-      //      foreach ( KeyValuePair<string, EntityPropertyInfo> keyValuePair in properties )
-      //      {
-      //         if ( _invalidPropertyNames.Contains( keyValuePair.Key ) )
-      //         {
-      //            throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
-      //         }
-      //         genericEntity[keyValuePair.Key] = keyValuePair.Value;
-      //      }
-      //   }
+         var genericEntity = new GenericTableEntity();
+         if ( properties != null )
+         {
+            foreach ( KeyValuePair<string, EntityProperty> keyValuePair in properties )
+            {
+               if ( _invalidPropertyNames.Contains( keyValuePair.Key ) )
+               {
+                  throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
+               }
+               genericEntity._properties.Add( keyValuePair.Key, keyValuePair.Value );
+            }
+         }
 
-      //   genericEntity.PartitionKey = partitionKey;
-      //   genericEntity.RowKey = rowKey;
+         genericEntity.PartitionKey = partitionKey;
+         genericEntity.RowKey = rowKey;
 
-      //   return genericEntity;
-      //}
+         return genericEntity;
+      }
 
-      //private static Dictionary<string, EntityPropertyInfo> GetProperties( dynamic item )
-      //{
-      //   if ( item is IDynamicMetaObjectProvider )
-      //   {
-      //      return GetPropertiesFromDynamicMetaObject( item );
-      //   }
-      //   return GetPropertiesFromType( item );
-      //}
+      private static Dictionary<string, EntityProperty> GetProperties( dynamic item )
+      {
+         if ( item is IDynamicMetaObjectProvider )
+         {
+            return GetPropertiesFromDynamicMetaObject( item );
+         }
+         return GetPropertiesFromType( item );
+      }
 
-      //private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
-      //{
-      //   var properties = new Dictionary<string, EntityPropertyInfo>();
-      //   IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
-      //   foreach ( var memberName in memberNames )
-      //   {
-      //      dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
-      //      Type objectType = result == null ? typeof( object ) : result.GetType();
-      //      properties[memberName] = new EntityPropertyInfo( result, objectType, result == null );
-      //   }
-      //   return properties;
-      //}
+      private static Dictionary<string, EntityProperty> GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
+      {
+         var properties = new Dictionary<string, EntityProperty>();
+         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
+         foreach ( var memberName in memberNames )
+         {
+            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
+            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[result.GetType()];
+            properties[memberName] = objectToEntityPropertyConverter( result );
+         }
+         return properties;
+      }
 
-      //private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromType<T>( T item )
-      //{
-      //   var properties = new Dictionary<string, EntityPropertyInfo>();
-      //   foreach ( var property in item.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
-      //   {
-      //      if ( _invalidPropertyNames.Contains( property.Name ) )
-      //      {
-      //         throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
-      //      }
-      //      var valueOfProperty = property.GetValue( item, null );
-      //      properties[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
-      //   }
-      //   return properties;
-      //}
+      private static Dictionary<string, EntityProperty> GetPropertiesFromType<T>( T item )
+      {
+         var properties = new Dictionary<string, EntityProperty>();
+         foreach ( var property in item.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         {
+            if ( _invalidPropertyNames.Contains( property.Name ) )
+            {
+               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
+            }
+            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[property.PropertyType];
+            var valueOfProperty = property.GetValue( item, null );
+            properties[property.Name] = objectToEntityPropertyConverter( valueOfProperty );
+         }
+         return properties;
+      }
 
       public dynamic ConvertToDynamic()
       {
@@ -191,7 +212,7 @@ namespace TechSmith.Hyde.Table.Azure
             return;
          }
 
-         Func<EntityProperty, object> funcToCall = _typeToConverterFunction[typeProperty.PropertyType];
+         Func<EntityProperty, object> funcToCall = _typeToValueFunctions[typeProperty.PropertyType];
          object propertyValue = funcToCall( _properties[typeProperty.Name] );
 
          typeProperty.SetValue( newItem, propertyValue, null );

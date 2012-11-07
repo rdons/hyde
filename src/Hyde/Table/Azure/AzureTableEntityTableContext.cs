@@ -10,12 +10,12 @@ namespace TechSmith.Hyde.Table.Azure
    internal class AzureTableEntityTableContext : ITableContext
    {
       private readonly CloudStorageAccount _storageAccount;
-      private readonly List<TableOperation> _operations = new List<TableOperation>(); 
+      private readonly List<KeyValuePair<string, TableOperation>> _operations = new List<KeyValuePair<string, TableOperation>>(); 
       private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions { RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 ) };
 
       public AzureTableEntityTableContext( ICloudStorageAccount storageAccount )
       {
-         _storageAccount = new CloudStorageAccount( storageAccount.Credentials, true );
+         _storageAccount = new CloudStorageAccount( storageAccount.Credentials, false );
       }
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -108,34 +108,49 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
-         //var entity = new GenericTableEntity();
-         //entity.
-         throw new NotImplementedException();
+         GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
+         var operation = TableOperation.Insert( entity );
+         _operations.Add( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
+         var operation = TableOperation.InsertOrReplace( entity );
+         _operations.Add( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         GenericTableEntity entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
+         var operation = TableOperation.Replace( entity );
+         _operations.Add( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         var operation = TableOperation.Delete( new TableEntity( partitionKey, rowKey ) );
+         _operations.Add( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )
       {
-         throw new NotImplementedException();
+         var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
+         var getAllInPartitionQuery = new TableQuery<TableEntity>().Where( allRowsInPartitonFilter );
+         var entitiesToDelete = Table( tableName ).ExecuteQuery( getAllInPartitionQuery );
+         foreach ( var operation in entitiesToDelete.Select( TableOperation.Delete ) )
+         {
+            _operations.Add( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+         }
       }
 
       public void Save()
       {
-         throw new NotImplementedException();
+         //TODO: error handling?
+         foreach ( var operation in _operations )
+         {
+            Table( operation.Key ).Execute( operation.Value, _retriableTableRequest );
+         }
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
