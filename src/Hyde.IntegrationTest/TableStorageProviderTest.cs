@@ -1152,6 +1152,12 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 2, result.Count() );
       }
 
+      [TestMethod, TestCategory("Integration")]
+      public void Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
+      {
+         Assert.Fail("Not done");
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty
