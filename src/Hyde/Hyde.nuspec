@@ -11,9 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-    Adding support for Adding/Updating/Deleting dynamic objects. NOTE: This is a breaking interface change, those methods are no longer templated.
-    Updated DontSerializeAttribute to work on classes as well as properties.
-    Increased the number of HTTP connections that can be made concurrently to table storage.
+        Updating to support Azure Storage Client Library V2.0.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
