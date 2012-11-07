@@ -83,6 +83,7 @@
     <Compile Include="Common\EntityAlreadyExistsException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Common\InvalidEntityException.cs" />
+    <Compile Include="Table\Azure\AzureTableEntityTableContext.cs" />
     <Compile Include="Table\Azure\EntityPropertyInfo.cs" />
     <Compile Include="Table\Azure\AzureTableContext.cs" />
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />
