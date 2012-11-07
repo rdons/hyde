@@ -1,21 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
+using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table.Azure
 {
    internal class AzureTableEntityTableContext : ITableContext
    {
-      private readonly CloudStorageAccount _storageAccount;
+      private readonly ICloudStorageAccount _storageAccount;
       private readonly List<KeyValuePair<string, TableOperation>> _operations = new List<KeyValuePair<string, TableOperation>>(); 
       private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions { RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 ) };
 
       public AzureTableEntityTableContext( ICloudStorageAccount storageAccount )
       {
-         _storageAccount = new CloudStorageAccount( storageAccount.Credentials, false );
+         _storageAccount = storageAccount;
       }
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -23,6 +25,11 @@ namespace TechSmith.Hyde.Table.Azure
          var retrieveOperation = TableOperation.Retrieve<GenericTableEntity>( partitionKey, rowKey );
 
          TableResult result = Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
+
+         if( result.Result == null )
+         {
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
 
          return ( (GenericTableEntity) result.Result ).ConvertTo<T>();
       }
@@ -149,7 +156,17 @@ namespace TechSmith.Hyde.Table.Azure
          //TODO: error handling?
          foreach ( var operation in _operations )
          {
-            Table( operation.Key ).Execute( operation.Value, _retriableTableRequest );
+            try
+            {
+               Table( operation.Key ).Execute( operation.Value, _retriableTableRequest );
+            }
+            catch ( StorageException ex )
+            {
+               if( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
+               {
+                  throw new EntityAlreadyExistsException( "Entity already exists", ex );
+               }
+            }
          }
       }
 
@@ -173,7 +190,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       private CloudTable Table( string tableName )
       {
-         return _storageAccount.CreateCloudTableClient().GetTableReference( tableName );
+         return new CloudTableClient( new Uri( _storageAccount.TableEndpoint ), _storageAccount.Credentials ).GetTableReference( tableName );
       }
    }
 }
