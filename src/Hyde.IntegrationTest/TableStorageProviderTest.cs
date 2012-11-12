@@ -2,7 +2,6 @@
 using System.Configuration;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -797,24 +796,12 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      [ExpectedException( typeof( NotSupportedException ) )]
       public void AddingTypeWithUnsupportedProperty_NotSupportedExceptionThrown()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithUnsupportedProperty(), _partitionKey, _rowKey );
 
-         try
-         {
-            _tableStorageProvider.Save();
-            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
-         }
-         catch ( StorageException ex )
-         {
-            if ( ex.InnerException.GetType() == typeof( NotSupportedException ) )
-            {
-               // this is the expected exception
-               return;
-            }
-            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
-         }
+         _tableStorageProvider.Save();
       }
 
       [TestCategory( "Integration" ), TestMethod]
@@ -1152,10 +1139,10 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 2, result.Count() );
       }
 
-      [TestMethod, TestCategory("Integration")]
+      [TestMethod, TestCategory( "Integration" )]
       public void Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
       {
-         Assert.Fail("Not done");
+         Assert.Fail( "Not done" );
       }
 
       private void EnsureOneItemInTableStorage()

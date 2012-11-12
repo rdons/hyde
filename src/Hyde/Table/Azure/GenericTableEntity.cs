@@ -166,6 +166,11 @@ namespace TechSmith.Hyde.Table.Azure
             {
                throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
             }
+            if ( !_typeToEntityPropertyFunctions.ContainsKey( property.PropertyType ) )
+            {
+               throw new NotSupportedException( "The type " + property.PropertyType + " is not supported." );
+            }
+
             Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[property.PropertyType];
             var valueOfProperty = property.GetValue( item, null );
             properties[property.Name] = objectToEntityPropertyConverter( valueOfProperty );
