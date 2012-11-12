@@ -20,20 +20,27 @@ namespace TechSmith.Hyde.Table.Azure
         {
            { typeof( string ), p => p.StringValue },
            { typeof( int ), p => p.Int32Value },
-           { typeof( int? ), p => p.StringValue == null ? (int?) null : p.Int32Value },
+           { typeof( int? ), p => IsNull( p ) ? (int?) null : p.Int32Value },
            { typeof( double ), p => p.DoubleValue },
-           { typeof( double? ), p => p.StringValue == null ? (double?) null : p.DoubleValue },
+           { typeof( double? ), p => IsNull( p ) ? (double?) null : p.DoubleValue },
            { typeof( byte[] ), p => p.BinaryValue },
            { typeof( Guid ), p => p.GuidValue },
-           { typeof( Guid? ), p => p.StringValue == null ? (Guid?) null : p.GuidValue },
+           { typeof( Guid? ), p => IsNull(p)  ? (Guid?) null : p.GuidValue },
            { typeof( DateTime ), p => p.DateTimeOffsetValue.Value.UtcDateTime },
-           { typeof( DateTime? ), p => p.StringValue == null ? (DateTime?) null : p.DateTimeOffsetValue.Value.UtcDateTime },
+           { typeof( DateTime? ), p => IsNull( p )  ? (DateTime?) null : p.DateTimeOffsetValue.Value.UtcDateTime },
            { typeof( bool ), p => p.BooleanValue },
-           { typeof( bool? ), p => p.StringValue == null ? (bool?) null : p.BooleanValue },
+           { typeof( bool? ), p => IsNull( p ) ? (bool?) null : p.BooleanValue },
            { typeof( long ), p => p.Int64Value },
-           { typeof( long? ), p => p.StringValue == null ? (long?) null : p.Int64Value },
-           { typeof( Uri ), p => p.StringValue == null ? null : new Uri( p.StringValue ) },
+           { typeof( long? ), p => IsNull( p ) ? (long?) null : p.Int64Value },
+           { typeof( Uri ), p => IsNull( p ) ? null : new Uri( p.StringValue ) },
         };
+
+      private static bool IsNull( EntityProperty entityProperty )
+      {
+         // For some reason, IsNull is an internal property. Hopefully it will be made public in the future
+         PropertyInfo isNullProperty = typeof( EntityProperty ).GetProperty( "IsNull", BindingFlags.NonPublic | BindingFlags.Instance );
+         return (bool) isNullProperty.GetValue( entityProperty, null );
+      }
 
       private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunctions = new Dictionary<Type, Func<object, EntityProperty>>
         {
@@ -57,12 +64,12 @@ namespace TechSmith.Hyde.Table.Azure
       private static readonly Dictionary<EdmType, Func<EntityProperty, object>> _edmTypeToConverterFunction = new Dictionary<EdmType, Func<EntityProperty, object>>
         {
            { EdmType.Binary, p => p.BinaryValue },
-           { EdmType.Boolean, p => p.StringValue == null ? (bool?) null : p.BooleanValue },
+           { EdmType.Boolean, p => IsNull( p ) ? (bool?) null : p.BooleanValue },
            { EdmType.DateTime, p => p.DateTimeOffsetValue.HasValue ? p.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null  },
-           { EdmType.Double, p => p.StringValue == null ? (double?) null : p.DoubleValue },
-           { EdmType.Guid, p => p.StringValue == null ? (Guid?) null : p.GuidValue },
-           { EdmType.Int32, p => p.StringValue == null ? (int?) null : p.Int32Value },
-           { EdmType.Int64, p => p.StringValue == null ? (long?) null : p.Int64Value },
+           { EdmType.Double, p => IsNull( p ) ? (double?) null : p.DoubleValue },
+           { EdmType.Guid, p => IsNull( p ) ? (Guid?) null : p.GuidValue },
+           { EdmType.Int32, p => IsNull( p ) ? (int?) null : p.Int32Value },
+           { EdmType.Int64, p => IsNull( p ) ? (long?) null : p.Int64Value },
            { EdmType.String, p => p.StringValue },
         };
 
