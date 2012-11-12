@@ -124,6 +124,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
+         // Upsert does not use an ETag (If-Match header) - http://msdn.microsoft.com/en-us/library/windowsazure/hh452242.aspx
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
          var operation = TableOperation.InsertOrReplace( entity );
          _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
@@ -132,6 +133,8 @@ namespace TechSmith.Hyde.Table.Azure
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
+         entity.ETag = "*";
+
          var operation = TableOperation.Replace( entity );
          _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
@@ -170,7 +173,7 @@ namespace TechSmith.Hyde.Table.Azure
             }
             catch ( StorageException ex )
             {
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && GetOperationType( operation.Value ) == TableOperationType.Delete  )
+               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && GetOperationType( operation.Value ) == TableOperationType.Delete )
                {
                   continue;
                }
@@ -182,13 +185,17 @@ namespace TechSmith.Hyde.Table.Azure
                {
                   throw new EntityAlreadyExistsException( "Entity already exists", ex );
                }
+               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
+               {
+                  throw new EntityDoesNotExistException( "Entity does not exist", ex );
+               }
 
                throw;
             }
          }
       }
 
-      private static TableOperationType GetOperationType(TableOperation operation)
+      private static TableOperationType GetOperationType( TableOperation operation )
       {
          return (TableOperationType) _operationTypeProperty.GetValue( operation, null );
       }

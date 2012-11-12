@@ -1142,7 +1142,33 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public void Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
       {
-         Assert.Fail( "Not done" );
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 34
+         };
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         updatedItem.Age = 11;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         _tableStorageProvider.Save();
+
+         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 22, updatedItem.Age );
       }
 
       private void EnsureOneItemInTableStorage()
