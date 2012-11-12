@@ -193,6 +193,9 @@ namespace TechSmith.Hyde.Table.Azure
             ( (IDictionary<string, object>) newItem ).Add( property.Key, func( property.Value ) );
          }
 
+         ( (IDictionary<string, object>) newItem ).Add( "PartitionKey", PartitionKey );
+         ( (IDictionary<string, object>) newItem ).Add( "RowKey", RowKey );
+
          return newItem;
       }
 
