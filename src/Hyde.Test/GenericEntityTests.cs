@@ -2,6 +2,7 @@
 using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Table.Azure;
+using TechSmith.Hyde.Table.Memory;
 
 namespace TechSmith.Hyde.Test
 {
