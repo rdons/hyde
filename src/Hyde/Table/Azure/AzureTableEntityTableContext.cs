@@ -15,7 +15,10 @@ namespace TechSmith.Hyde.Table.Azure
    {
       private readonly ICloudStorageAccount _storageAccount;
       private ConcurrentQueue<KeyValuePair<string, TableOperation>> _operations = new ConcurrentQueue<KeyValuePair<string, TableOperation>>();
-      private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions { RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 ) };
+      private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions
+      {
+         RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 )
+      };
 
       private static readonly PropertyInfo _operationTypeProperty = typeof( TableOperation ).GetProperty( "OperationType", BindingFlags.NonPublic | BindingFlags.Instance );
 
@@ -141,7 +144,12 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         var operation = TableOperation.Delete( new GenericTableEntity { ETag = "*", PartitionKey = partitionKey, RowKey = rowKey } );
+         var operation = TableOperation.Delete( new GenericTableEntity
+         {
+            ETag = "*",
+            PartitionKey = partitionKey,
+            RowKey = rowKey
+         } );
          _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
@@ -158,7 +166,6 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void Save()
       {
-         //TODO: error handling?
          while ( !_operations.IsEmpty )
          {
             KeyValuePair<string, TableOperation> operation;
