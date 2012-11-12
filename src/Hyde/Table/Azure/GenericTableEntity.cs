@@ -35,11 +35,11 @@ namespace TechSmith.Hyde.Table.Azure
            { typeof( Uri ), p => IsNull( p ) ? null : new Uri( p.StringValue ) },
         };
 
+      private static readonly PropertyInfo _isNullProperty = typeof( EntityProperty ).GetProperty( "IsNull", BindingFlags.NonPublic | BindingFlags.Instance );
       private static bool IsNull( EntityProperty entityProperty )
       {
          // For some reason, IsNull is an internal property. Hopefully it will be made public in the future
-         PropertyInfo isNullProperty = typeof( EntityProperty ).GetProperty( "IsNull", BindingFlags.NonPublic | BindingFlags.Instance );
-         return (bool) isNullProperty.GetValue( entityProperty, null );
+         return (bool) _isNullProperty.GetValue( entityProperty, null );
       }
 
       private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunctions = new Dictionary<Type, Func<object, EntityProperty>>

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -14,7 +15,9 @@ namespace TechSmith.Hyde.Table.Azure
    {
       private readonly ICloudStorageAccount _storageAccount;
       private ConcurrentQueue<KeyValuePair<string, TableOperation>> _operations = new ConcurrentQueue<KeyValuePair<string, TableOperation>>();
-      private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions { RetryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(1), 4) };
+      private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions { RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 ) };
+
+      private static readonly PropertyInfo _operationTypeProperty = typeof( TableOperation ).GetProperty( "OperationType", BindingFlags.NonPublic | BindingFlags.Instance );
 
       public AzureTableEntityTableContext( ICloudStorageAccount storageAccount )
       {
@@ -135,13 +138,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         TableResult result = Get( tableName, partitionKey, rowKey );
-         if ( result.Result == null )
-         {
-            return;
-         }
-
-         var operation = TableOperation.Delete( (GenericTableEntity) result.Result );
+         var operation = TableOperation.Delete( new GenericTableEntity { ETag = "*", PartitionKey = partitionKey, RowKey = rowKey } );
          _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
       }
 
@@ -173,6 +170,11 @@ namespace TechSmith.Hyde.Table.Azure
             }
             catch ( StorageException ex )
             {
+               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && GetOperationType( operation.Value ) == TableOperationType.Delete  )
+               {
+                  continue;
+               }
+
                // Clear out all operations that were going to happen after this failed request
                _operations = new ConcurrentQueue<KeyValuePair<string, TableOperation>>();
 
@@ -180,9 +182,15 @@ namespace TechSmith.Hyde.Table.Azure
                {
                   throw new EntityAlreadyExistsException( "Entity already exists", ex );
                }
+
                throw;
             }
          }
+      }
+
+      private static TableOperationType GetOperationType(TableOperation operation)
+      {
+         return (TableOperationType) _operationTypeProperty.GetValue( operation, null );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
