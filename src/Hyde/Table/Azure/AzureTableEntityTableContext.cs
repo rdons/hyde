@@ -35,8 +35,8 @@ namespace TechSmith.Hyde.Table.Azure
 
       public IEnumerable<T> GetCollection<T>(string tableName) where T : new()
       {
-         var allRowsFilter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.GreaterThanOrEqual, "a");
-         return ExecuteFilterOnTable<T>(tableName, allRowsFilter);
+         string allPartitionAndRowsFilter = string.Empty;
+         return ExecuteFilterOnTable<T>( tableName, allPartitionAndRowsFilter );
       }
 
       public IEnumerable<T> GetCollection<T>(string tableName, string partitionKey) where T : new()
