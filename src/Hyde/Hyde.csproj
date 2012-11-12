@@ -88,6 +88,7 @@
     <Compile Include="Table\Azure\AzureTableContext.cs" />
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />
     <Compile Include="Common\EntityDoesNotExistExceptions.cs" />
+    <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="Table\Azure\GenericEntity.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="Table\Azure\GenericTableEntity.cs" />

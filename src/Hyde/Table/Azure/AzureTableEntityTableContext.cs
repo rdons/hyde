@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -14,13 +13,11 @@ namespace TechSmith.Hyde.Table.Azure
    internal class AzureTableEntityTableContext : ITableContext
    {
       private readonly ICloudStorageAccount _storageAccount;
-      private ConcurrentQueue<KeyValuePair<string, TableOperation>> _operations = new ConcurrentQueue<KeyValuePair<string, TableOperation>>();
+      private ConcurrentQueue<ExecutableTableOperation> _operations = new ConcurrentQueue<ExecutableTableOperation>();
       private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions
       {
          RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 )
       };
-
-      private static readonly PropertyInfo _operationTypeProperty = typeof( TableOperation ).GetProperty( "OperationType", BindingFlags.NonPublic | BindingFlags.Instance );
 
       public AzureTableEntityTableContext( ICloudStorageAccount storageAccount )
       {
@@ -122,7 +119,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
          var operation = TableOperation.Insert( entity );
-         _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
@@ -130,7 +127,7 @@ namespace TechSmith.Hyde.Table.Azure
          // Upsert does not use an ETag (If-Match header) - http://msdn.microsoft.com/en-us/library/windowsazure/hh452242.aspx
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
          var operation = TableOperation.InsertOrReplace( entity );
-         _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
@@ -139,7 +136,7 @@ namespace TechSmith.Hyde.Table.Azure
          entity.ETag = "*";
 
          var operation = TableOperation.Replace( entity );
-         _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
@@ -150,7 +147,7 @@ namespace TechSmith.Hyde.Table.Azure
             PartitionKey = partitionKey,
             RowKey = rowKey
          } );
-         _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )
@@ -160,7 +157,7 @@ namespace TechSmith.Hyde.Table.Azure
          var entitiesToDelete = Table( tableName ).ExecuteQuery( getAllInPartitionQuery );
          foreach ( var operation in entitiesToDelete.Select( TableOperation.Delete ) )
          {
-            _operations.Enqueue( new KeyValuePair<string, TableOperation>( tableName, operation ) );
+            _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
          }
       }
 
@@ -168,7 +165,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          while ( !_operations.IsEmpty )
          {
-            KeyValuePair<string, TableOperation> operation;
+            ExecutableTableOperation operation;
             if ( !_operations.TryDequeue( out operation ) )
             {
                continue;
@@ -176,17 +173,17 @@ namespace TechSmith.Hyde.Table.Azure
 
             try
             {
-               Table( operation.Key ).Execute( operation.Value, _retriableTableRequest );
+               Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest );
             }
             catch ( StorageException ex )
             {
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && GetOperationType( operation.Value ) == TableOperationType.Delete )
+               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && operation.OperationType == TableOperationType.Delete )
                {
                   continue;
                }
 
                // Clear out all operations that were going to happen after this failed request
-               _operations = new ConcurrentQueue<KeyValuePair<string, TableOperation>>();
+               _operations = new ConcurrentQueue<ExecutableTableOperation>();
 
                if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
                {
@@ -200,11 +197,6 @@ namespace TechSmith.Hyde.Table.Azure
                throw;
             }
          }
-      }
-
-      private static TableOperationType GetOperationType( TableOperation operation )
-      {
-         return (TableOperationType) _operationTypeProperty.GetValue( operation, null );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
