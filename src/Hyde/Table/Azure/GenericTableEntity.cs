@@ -222,7 +222,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       private void SetPropertyOnObject<T>( PropertyInfo typeProperty, T newItem ) where T : new()
       {
-         if ( typeProperty.Name == "PartitionKey" || typeProperty.Name == "RowKey" || typeProperty.Name == "Timestamp" || typeProperty.Name == "ETag" )
+         if ( _invalidPropertyNames.Contains( typeProperty.Name ) )
          {
             return;
          }

@@ -89,7 +89,6 @@
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
     <Compile Include="Table\ITableContext.cs" />
-    <Compile Include="Table\Memory\GenericEntity.cs" />
     <Compile Include="Table\Memory\MemoryTable.cs" />
     <Compile Include="Table\Memory\MemoryTableContext.cs" />
     <Compile Include="Table\Memory\MemoryTableEntry.cs" />
