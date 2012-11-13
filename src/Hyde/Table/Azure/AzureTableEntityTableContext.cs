@@ -196,6 +196,11 @@ namespace TechSmith.Hyde.Table.Azure
 
                throw;
             }
+            catch ( Exception )
+            {
+               _operations = new ConcurrentQueue<ExecutableTableOperation>();
+               throw;
+            }
          }
       }
 
