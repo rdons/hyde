@@ -104,12 +104,12 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void ReadEntity( IDictionary<string, EntityProperty> properties, OperationContext operationContext )
       {
-         _properties = properties;
+         _properties = new Dictionary<string, EntityProperty>( properties );
       }
 
       public IDictionary<string, EntityProperty> WriteEntity( OperationContext operationContext )
       {
-         return _properties;
+         return new Dictionary<string, EntityProperty>( _properties );
       }
 
       public static GenericTableEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
