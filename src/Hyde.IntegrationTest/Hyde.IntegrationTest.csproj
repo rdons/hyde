@@ -83,6 +83,7 @@
     <Compile Include="RowPointer.cs" />
     <Compile Include="TableStorageProviderTest.cs" />
     <Compile Include="DynamicTest.cs" />
+    <Compile Include="BatchTableOperationTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

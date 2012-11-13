@@ -162,9 +162,40 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void Save()
       {
-         while ( _operations.Count > 0 )
+         if ( !_operations.Any() )
          {
-            ExecutableTableOperation operation = _operations.Dequeue();
+            return;
+         }
+
+         ExecutableTableOperation firstOperation = _operations.First();
+         string partitionKey = firstOperation.PartitionKey;
+         TableOperationType operationType = firstOperation.OperationType;
+         string table = firstOperation.Table;
+
+         bool canDoEntityGroupTransaction = !_operations.Any( o => o.PartitionKey != partitionKey || o.OperationType != operationType || o.Table != table );
+
+         try
+         {
+            if ( canDoEntityGroupTransaction )
+            {
+               SaveBatch( new Queue<ExecutableTableOperation>( _operations ), table );
+            }
+            else
+            {
+               SaveIndividual( new Queue<ExecutableTableOperation>( _operations ) );
+            }
+         }
+         finally
+         {
+            _operations.Clear();
+         }
+      }
+
+      private void SaveIndividual( Queue<ExecutableTableOperation> operations )
+      {
+         while ( operations.Count > 0 )
+         {
+            ExecutableTableOperation operation = operations.Dequeue();
 
             try
             {
@@ -197,11 +228,53 @@ namespace TechSmith.Hyde.Table.Azure
 
                throw;
             }
-            catch ( Exception )
+         }
+      }
+
+      private void SaveBatch( Queue<ExecutableTableOperation> operations, string table )
+      {
+         int operationCounter = 0;
+         var batchOperation = new TableBatchOperation();
+         while ( operations.Count > 0 )
+         {
+            ExecutableTableOperation operation = operations.Dequeue();
+            batchOperation.Add( operation.Operation );
+            operationCounter++;
+
+            if ( operationCounter < 100 )
             {
-               _operations.Clear();
-               throw;
+               continue;
             }
+
+            ExecuteBatchHandlingExceptions( table, batchOperation );
+            batchOperation = new TableBatchOperation();
+            operationCounter = 0;
+         }
+
+         if ( batchOperation.Count > 0 )
+         {
+            ExecuteBatchHandlingExceptions( table, batchOperation );
+         }
+      }
+
+      private void ExecuteBatchHandlingExceptions( string table, TableBatchOperation batchOperation )
+      {
+         try
+         {
+            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest );
+         }
+         catch ( StorageException ex )
+         {
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
+            {
+               throw new EntityAlreadyExistsException( "Entity already exists", ex );
+            }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
+            {
+               throw new EntityDoesNotExistException( "Entity does not exist", ex );
+            }
+
+            throw;
          }
       }
 
