@@ -12,6 +12,7 @@ namespace TechSmith.Hyde.Table.Memory
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
       private readonly Guid _instanceId = Guid.NewGuid();
+      private readonly List<Type> _exceptionsToThrow = new List<Type>();
 
       public static void ClearTables()
       {
@@ -30,6 +31,11 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
+         if ( _exceptionsToThrow.Any() )
+         {
+            return;
+         }
+
          AzureKeyValidator.ValidatePartitionKey( partitionKey );
          AzureKeyValidator.ValidateRowKey( rowKey );
 
@@ -37,7 +43,8 @@ namespace TechSmith.Hyde.Table.Memory
 
          if ( table.HasEntity( partitionKey, rowKey ) )
          {
-            throw new EntityAlreadyExistsException();
+            _exceptionsToThrow.Add( typeof( EntityAlreadyExistsException ) );
+            return;
          }
 
          GenericTableEntity dataToStore = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
@@ -106,7 +113,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return GetTable( tableName ).Where( partitionKey, _instanceId ) .Select( ConvertTableEntryToDynamic );
+         return GetTable( tableName ).Where( partitionKey, _instanceId ).Select( ConvertTableEntryToDynamic );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -138,6 +145,13 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Save()
       {
+         if ( _exceptionsToThrow.Any() )
+         {
+            Type typeToThrow = _exceptionsToThrow.First();
+            var exception = (Exception) Activator.CreateInstance( typeToThrow );
+            throw exception;
+         }
+
          foreach ( KeyValuePair<string, MemoryTable> table in _memoryTables )
          {
             foreach ( KeyValuePair<TableServiceEntity, MemoryTableEntry> memoryTableEntry in table.Value.TableEntries.ToArray() )
@@ -167,6 +181,10 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
+         if ( _exceptionsToThrow.Any() )
+         {
+            return;
+         }
          var table = GetTable( tableName );
 
          if ( table.HasEntity( partitionKey, rowKey ) )
@@ -208,7 +226,19 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         GetItem( tableName, partitionKey, rowKey );
+         if ( _exceptionsToThrow.Any() )
+         {
+            return;
+         }
+
+         try
+         {
+            GetItem( tableName, partitionKey, rowKey );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+            _exceptionsToThrow.Add( typeof( EntityDoesNotExistException ) );
+         }
 
          Upsert( tableName, item, partitionKey, rowKey );
       }
