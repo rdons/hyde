@@ -205,7 +205,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          if ( _properties == null )
          {
-            return (T) ( objectType.IsValueType ? Activator.CreateInstance( objectType ) : null );
+            return new T();
          }
 
          var newItem = new T();
