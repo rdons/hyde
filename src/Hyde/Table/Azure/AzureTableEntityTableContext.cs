@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -13,7 +12,7 @@ namespace TechSmith.Hyde.Table.Azure
    internal class AzureTableEntityTableContext : ITableContext
    {
       private readonly ICloudStorageAccount _storageAccount;
-      private ConcurrentQueue<ExecutableTableOperation> _operations = new ConcurrentQueue<ExecutableTableOperation>();
+      private Queue<ExecutableTableOperation> _operations = new Queue<ExecutableTableOperation>();
       private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions
       {
          RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 )
@@ -163,13 +162,9 @@ namespace TechSmith.Hyde.Table.Azure
 
       public void Save()
       {
-         while ( !_operations.IsEmpty )
+         while ( _operations.Count > 0 )
          {
-            ExecutableTableOperation operation;
-            if ( !_operations.TryDequeue( out operation ) )
-            {
-               continue;
-            }
+            ExecutableTableOperation operation = _operations.Dequeue();
 
             try
             {
@@ -182,8 +177,7 @@ namespace TechSmith.Hyde.Table.Azure
                   continue;
                }
 
-               // Clear out all operations that were going to happen after this failed request
-               _operations = new ConcurrentQueue<ExecutableTableOperation>();
+               _operations.Clear();
 
                if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
                {
@@ -198,7 +192,7 @@ namespace TechSmith.Hyde.Table.Azure
             }
             catch ( Exception )
             {
-               _operations = new ConcurrentQueue<ExecutableTableOperation>();
+               _operations.Clear();
                throw;
             }
          }
