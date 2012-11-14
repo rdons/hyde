@@ -12,7 +12,7 @@ namespace TechSmith.Hyde.Table.Memory
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
       private readonly Guid _instanceId = Guid.NewGuid();
-      private readonly List<Type> _exceptionsToThrow = new List<Type>();
+      private Exception _exceptionToThrow;
 
       public static void ClearTables()
       {
@@ -31,7 +31,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
-         if ( _exceptionsToThrow.Any() )
+         if ( PendingSaveExceptionExists() )
          {
             return;
          }
@@ -43,7 +43,7 @@ namespace TechSmith.Hyde.Table.Memory
 
          if ( table.HasEntity( partitionKey, rowKey ) )
          {
-            _exceptionsToThrow.Add( typeof( EntityAlreadyExistsException ) );
+            _exceptionToThrow = new EntityAlreadyExistsException();
             return;
          }
 
@@ -145,11 +145,9 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Save()
       {
-         if ( _exceptionsToThrow.Any() )
+         if ( PendingSaveExceptionExists() )
          {
-            Type typeToThrow = _exceptionsToThrow.First();
-            var exception = (Exception) Activator.CreateInstance( typeToThrow );
-            throw exception;
+            throw _exceptionToThrow;
          }
 
          foreach ( KeyValuePair<string, MemoryTable> table in _memoryTables )
@@ -181,7 +179,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
-         if ( _exceptionsToThrow.Any() )
+         if ( PendingSaveExceptionExists() )
          {
             return;
          }
@@ -226,7 +224,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         if ( _exceptionsToThrow.Any() )
+         if ( PendingSaveExceptionExists() )
          {
             return;
          }
@@ -237,10 +235,15 @@ namespace TechSmith.Hyde.Table.Memory
          }
          catch ( EntityDoesNotExistException )
          {
-            _exceptionsToThrow.Add( typeof( EntityDoesNotExistException ) );
+            _exceptionToThrow = new EntityDoesNotExistException();
          }
 
          Upsert( tableName, item, partitionKey, rowKey );
+      }
+
+      private bool PendingSaveExceptionExists()
+      {
+         return _exceptionToThrow != null;
       }
    }
 }
