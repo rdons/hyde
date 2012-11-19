@@ -71,7 +71,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
 
 
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
 
          IEnumerable<DecoratedItem> items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, partitionKey );
@@ -92,7 +92,7 @@ namespace TechSmith.Hyde.IntegrationTest
                        };
             _tableStorageProvider.Add( _tableName, item );
          }
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
          for ( int i = 0; i < expectedCount; i++ )
          {
@@ -102,7 +102,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
 
 
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
 
          IEnumerable<DecoratedItem> items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, partitionKey ).ToList();
@@ -126,7 +126,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
 
 
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
 
          IEnumerable<DecoratedItem> items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, partitionKey ).ToList();
@@ -147,7 +147,7 @@ namespace TechSmith.Hyde.IntegrationTest
             };
             _tableStorageProvider.Add( _tableName, item );
          }
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
          for ( int i = 0; i < expectedCount; i++ )
          {
@@ -155,43 +155,11 @@ namespace TechSmith.Hyde.IntegrationTest
          }
 
 
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
 
          IEnumerable<DecoratedItem> items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, partitionKey );
          Assert.IsFalse( items.Any() );
-      }
-
-      [TestMethod]
-      [ExpectedException( typeof( InvalidOperationException ) )]
-      public void Save_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
-      {
-         // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
-
-         _tableStorageProvider.Save();
-      }
-
-      [TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Inserts_TwoRowsInPartitionAndOneAlreadyExists_NeitherRowInserted()
-      {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake" } );
-         _tableStorageProvider.Save();
-
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jane" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake" } );
-         try
-         {
-            _tableStorageProvider.Save();
-            Assert.Fail( "Should have thrown exception" );
-         }
-         catch ( EntityAlreadyExistsException e )
-         {
-         }
-
-         _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Jane" );
       }
    }
 }

@@ -237,6 +237,16 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Save()
       {
+         Save( Execute.Individually );
+      }
+
+      public void Save( Execute executeMethod )
+      {
+         if ( executeMethod == Execute.Atomically )
+         {
+            // TODO: In-memory atomic executions.
+            throw new NotImplementedException();
+         }
          foreach ( var action in _pendingActions )
          {
             action( _tables );

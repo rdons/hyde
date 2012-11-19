@@ -135,9 +135,14 @@ namespace TechSmith.Hyde.Table
 
       public void Save()
       {
+         Save( Execute.Individually );
+      }
+
+      public void Save( Execute executeMethod )
+      {
          foreach ( var tableContext in _tableNameToContext )
          {
-            tableContext.Value.Save();
+            tableContext.Value.Save( executeMethod );
          }
       }
 

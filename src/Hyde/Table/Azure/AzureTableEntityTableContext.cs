@@ -160,7 +160,7 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      public void Save()
+      public void Save( Execute executeMethod )
       {
          if ( !_operations.Any() )
          {
@@ -174,15 +174,33 @@ namespace TechSmith.Hyde.Table.Azure
 
          bool canDoEntityGroupTransaction = !_operations.Any( o => o.PartitionKey != partitionKey || o.OperationType != operationType || o.Table != table );
 
+         if ( executeMethod == Execute.InBatches && !canDoEntityGroupTransaction )
+         {
+            executeMethod = Execute.Individually;
+         }
+
          try
          {
-            if ( canDoEntityGroupTransaction )
+            switch ( executeMethod )
             {
-               SaveBatch( new Queue<ExecutableTableOperation>( _operations ), table );
-            }
-            else
-            {
-               SaveIndividual( new Queue<ExecutableTableOperation>( _operations ) );
+               case Execute.Individually:
+               {
+                  SaveIndividual( new Queue<ExecutableTableOperation>( _operations ) );
+                  break;
+               }
+               case Execute.InBatches:
+               {
+                  SaveBatch( new Queue<ExecutableTableOperation>( _operations ), table );
+                  break;
+               }
+               case Execute.Atomically:
+               {
+                  throw new NotImplementedException();
+               }
+               default:
+               {
+                  throw new ArgumentException( "Unsupported execution method: " + executeMethod );
+               }
             }
          }
          finally
