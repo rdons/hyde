@@ -11,7 +11,7 @@ using TechSmith.Hyde.Table;
 namespace TechSmith.Hyde.IntegrationTest
 {
    [TestClass]
-   public class BatchTableOperationTest
+   public class SaveInBatchesTest
    {
       private static readonly string _baseTableName = "BatchTestTable";
       private AzureTableStorageProvider _tableStorageProvider;
