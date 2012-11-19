@@ -273,6 +273,10 @@ namespace TechSmith.Hyde.Table.Azure
             {
                throw new EntityDoesNotExistException( "Entity does not exist", ex );
             }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
+            {
+               throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
+            }
 
             throw;
          }

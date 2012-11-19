@@ -163,19 +163,12 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      [ExpectedException( typeof( EntityAlreadyExistsException ) )]
-      public void Insert_EntityAlreadyExists_ShouldSucceed()
+      [ExpectedException( typeof( InvalidOperationException ) )]
+      public void Save_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
       {
-         string partitionKey = "123";
-         string rowKey = "abc";
-         var decoratedItem = new DecoratedItem
-                             {
-                                Id = partitionKey,
-                                Name = rowKey
-                             };
-         _tableStorageProvider.Add( _tableName, decoratedItem );
-         _tableStorageProvider.Add( _tableName, decoratedItem );
-
+         // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
 
          _tableStorageProvider.Save();
       }
