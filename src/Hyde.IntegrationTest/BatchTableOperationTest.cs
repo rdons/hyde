@@ -172,5 +172,26 @@ namespace TechSmith.Hyde.IntegrationTest
 
          _tableStorageProvider.Save();
       }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void Inserts_TwoRowsInPartitionAndOneAlreadyExists_NeitherRowInserted()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake" } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jane" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake" } );
+         try
+         {
+            _tableStorageProvider.Save();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException e )
+         {
+         }
+
+         _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Jane" );
+      }
    }
 }
