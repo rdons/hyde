@@ -161,5 +161,57 @@ namespace TechSmith.Hyde.IntegrationTest
          IEnumerable<DecoratedItem> items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, partitionKey );
          Assert.IsFalse( items.Any() );
       }
+
+      [TestMethod]
+      public void Save_AllInsertsOnSamePartition_ShouldExecuteInEntityGroupTransaction()
+      {
+         // We can't tell directly whether an EGT is used, but we can infer it by setting up
+         // an EGT to fail, and verifying that no actions were committed.
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "zero" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         Assert.AreEqual( 1, _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).Count() );
+      }
+
+      [TestMethod]
+      public void Save_MultipleOperationTypesOnSamePartition_ShouldExecuteInDifferentEntityGroupTransactions()
+      {
+         // As in the previous test, we can tell the operations were executed in different requests by
+         // setting one up to fail and verifying that the other completed.
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         var results = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+         Assert.AreEqual( 2, results.Count() );
+         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
+         Assert.IsFalse( results.Any( i => i.Name == "three" ) );
+      }
    }
 }
