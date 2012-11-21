@@ -118,7 +118,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
          var operation = TableOperation.Insert( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey, rowKey ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
@@ -126,7 +126,7 @@ namespace TechSmith.Hyde.Table.Azure
          // Upsert does not use an ETag (If-Match header) - http://msdn.microsoft.com/en-us/library/windowsazure/hh452242.aspx
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
          var operation = TableOperation.InsertOrReplace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey, rowKey ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
@@ -135,7 +135,7 @@ namespace TechSmith.Hyde.Table.Azure
          entity.ETag = "*";
 
          var operation = TableOperation.Replace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey, rowKey ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
@@ -146,7 +146,7 @@ namespace TechSmith.Hyde.Table.Azure
             PartitionKey = partitionKey,
             RowKey = rowKey
          } );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, rowKey ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )
@@ -154,9 +154,10 @@ namespace TechSmith.Hyde.Table.Azure
          var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
          var getAllInPartitionQuery = new TableQuery<TableEntity>().Where( allRowsInPartitonFilter );
          var entitiesToDelete = Table( tableName ).ExecuteQuery( getAllInPartitionQuery );
-         foreach ( var operation in entitiesToDelete.Select( TableOperation.Delete ) )
+         foreach ( var entity in entitiesToDelete )
          {
-            _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
+            var operation = TableOperation.Delete( entity );
+            _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, entity.RowKey ) );
          }
       }
 
@@ -253,20 +254,32 @@ namespace TechSmith.Hyde.Table.Azure
       {
          int operationCounter = 0;
          var batchOperation = new TableBatchOperation();
+         var opKeys = new HashSet<Tuple<string, string, TableOperationType>>();
+
          while ( operations.Count > 0 )
          {
             ExecutableTableOperation operation = operations.Dequeue();
-            batchOperation.Add( operation.Operation );
-            operationCounter++;
 
-            if ( operationCounter < 100 )
+            bool isAtMaxBatchSize = ( operationCounter == 100 );
+
+            // Operations with the same partition key, row key, and operation type cannot be executed in the same
+            // entity group transaction -- Table Storage will return a 400 bad request. We use the operation keys
+            // below to detect conflicts and start a new batch if necessary.
+            var opKey = new Tuple<string, string, TableOperationType>( operation.PartitionKey, operation.RowKey, operation.OperationType );
+            bool nextOpConflictsWithBatch = ( opKeys.Contains( opKey ) );
+
+            bool saveAndStartNewBatch = isAtMaxBatchSize || nextOpConflictsWithBatch;
+            if ( saveAndStartNewBatch )
             {
-               continue;
+               ExecuteBatchHandlingExceptions( table, batchOperation );
+               batchOperation = new TableBatchOperation();
+               operationCounter = 0;
+               opKeys.Clear();
             }
 
-            ExecuteBatchHandlingExceptions( table, batchOperation );
-            batchOperation = new TableBatchOperation();
-            operationCounter = 0;
+            batchOperation.Add( operation.Operation );
+            opKeys.Add( opKey );
+            operationCounter++;
          }
 
          if ( batchOperation.Count > 0 )

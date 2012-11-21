@@ -213,5 +213,70 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
          Assert.IsFalse( results.Any( i => i.Name == "three" ) );
       }
+
+      [TestMethod]
+      public void Save_SameRowInsertedTwice_InsertsDoneInSeparateTransactions()
+      {
+         // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         Assert.AreEqual( 1, _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).Count() );
+      }
+
+      [TestMethod]
+      public void Save_SameRowUpdatedTwice_UpdatesDoneInDifferentTransactions()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 40 } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 50 } );
+         _tableStorageProvider.Save( Execute.InBatches );
+
+         Assert.AreEqual( 50, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ).Age );
+      }
+
+      [TestMethod]
+      public void Save_SameRowDeletedTwice_DeletesDoneInDifferentTransactions()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+         _tableStorageProvider.Save( Execute.InBatches );
+
+         Assert.IsNull( _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ) );
+      }
+
+      [TestMethod]
+      public void Save_SameRowAddedAndUpdated_OperationsDoneInDifferentTransactions()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 40 } );
+         // next operation will be done in same transaction with previous update will fail. If previous operations were
+         // correctly done in different transactions, the add will have completed.
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "not found", Age = 40 } );
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+
+         Assert.IsNotNull(  _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ) );
+      }
    }
 }
