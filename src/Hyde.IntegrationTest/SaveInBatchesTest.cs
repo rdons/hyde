@@ -247,6 +247,15 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void Save_BatchDeletesRowThatDoesNotExist_ThrowsEntityDoesNotExist()
+      {
+         // TODO: Is this behavior acceptable? It seems quite confusing, but would be difficult to code around.
+         _tableStorageProvider.Delete( _tableName, "not", "found" );
+         _tableStorageProvider.Save( Execute.InBatches );
+      }
+
+      [TestMethod]
       public void Save_SameRowDeletedTwice_DeletesDoneInDifferentTransactions()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
@@ -254,9 +263,22 @@ namespace TechSmith.Hyde.IntegrationTest
 
          _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
          _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
-         _tableStorageProvider.Save( Execute.InBatches );
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
 
-         Assert.IsNull( _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ) );
+         try
+         {
+            _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" );
+            Assert.Fail( "Deletes not performed in different transactions" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
       }
 
       [TestMethod]
