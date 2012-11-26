@@ -216,37 +216,46 @@ namespace TechSmith.Hyde.Table.Azure
          {
             ExecutableTableOperation operation = operations.Dequeue();
 
-            try
+            HandleTableStorageExceptions( TableOperationType.Delete == operation.OperationType, () =>
+               Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest ) );
+         }
+      }
+
+      private static void HandleTableStorageExceptions( bool isUnbatchedDelete, Action action )
+      {
+         try
+         {
+            action();
+         }
+         catch ( StorageException ex )
+         {
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && isUnbatchedDelete )
             {
-               Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest );
+               return;
             }
-            catch ( StorageException ex )
+
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest &&
+                 isUnbatchedDelete &&
+                 ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
             {
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && operation.OperationType == TableOperationType.Delete )
-               {
-                  continue;
-               }
-
-               _operations.Clear();
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest && 
-                    operation.OperationType == TableOperationType.Delete &&
-                    ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
-               {
-                  // The table does not exist.
-                  continue;
-               }
-
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
-               {
-                  throw new EntityAlreadyExistsException( "Entity already exists", ex );
-               }
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
-               {
-                  throw new EntityDoesNotExistException( "Entity does not exist", ex );
-               }
-
-               throw;
+               // The table does not exist.
+               return;
             }
+
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
+            {
+               throw new EntityAlreadyExistsException( "Entity already exists", ex );
+            }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
+            {
+               throw new EntityDoesNotExistException( "Entity does not exist", ex );
+            }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
+            {
+               throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
+            }
+
+            throw;
          }
       }
 
@@ -290,27 +299,8 @@ namespace TechSmith.Hyde.Table.Azure
 
       private void ExecuteBatchHandlingExceptions( string table, TableBatchOperation batchOperation )
       {
-         try
-         {
-            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest );
-         }
-         catch ( StorageException ex )
-         {
-            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
-            {
-               throw new EntityAlreadyExistsException( "Entity already exists", ex );
-            }
-            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
-            {
-               throw new EntityDoesNotExistException( "Entity does not exist", ex );
-            }
-            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
-            {
-               throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
-            }
-
-            throw;
-         }
+         HandleTableStorageExceptions( false, () =>
+            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
