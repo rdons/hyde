@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -168,18 +169,6 @@ namespace TechSmith.Hyde.Table.Azure
             return;
          }
 
-         ExecutableTableOperation firstOperation = _operations.First();
-         string partitionKey = firstOperation.PartitionKey;
-         TableOperationType operationType = firstOperation.OperationType;
-         string table = firstOperation.Table;
-
-         bool canDoEntityGroupTransaction = !_operations.Any( o => o.PartitionKey != partitionKey || o.OperationType != operationType || o.Table != table );
-
-         if ( executeMethod == Execute.InBatches && !canDoEntityGroupTransaction )
-         {
-            executeMethod = Execute.Individually;
-         }
-
          try
          {
             switch ( executeMethod )
@@ -191,7 +180,7 @@ namespace TechSmith.Hyde.Table.Azure
                }
                case Execute.InBatches:
                {
-                  SaveBatch( new Queue<ExecutableTableOperation>( _operations ), table );
+                  SaveBatch( new Queue<ExecutableTableOperation>( _operations ) );
                   break;
                }
                case Execute.Atomically:
@@ -211,12 +200,11 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      private void SaveIndividual( Queue<ExecutableTableOperation> operations )
+      private void SaveIndividual( IEnumerable<ExecutableTableOperation> operations )
       {
-         while ( operations.Count > 0 )
+         foreach ( var op in operations )
          {
-            ExecutableTableOperation operation = operations.Dequeue();
-
+            var operation = op;
             HandleTableStorageExceptions( TableOperationType.Delete == operation.OperationType, () =>
                Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest ) );
          }
@@ -260,40 +248,47 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      private void SaveBatch( Queue<ExecutableTableOperation> operations, string table )
+      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
       {
-         int operationCounter = 0;
-         var batchOperation = new TableBatchOperation();
-         var opKeys = new HashSet<Tuple<string, string, TableOperationType>>();
+         // For two operations to appear in the same batch...
+         Func<ExecutableTableOperation, ExecutableTableOperation, bool> canBatch = ( op1, op2 ) =>
+            // they must be on the same table
+            op1.Table == op2.Table
+               // and the same partition
+            && op1.PartitionKey == op2.PartitionKey
+               // and neither can be a delete,
+            && !( op1.OperationType == TableOperationType.Delete || op2.OperationType == TableOperationType.Delete )
+               // and the row keys must be different.
+            && op1.RowKey != op2.RowKey;
 
-         while ( operations.Count > 0 )
+         // Group consecutive batchable operations
+         var batches = new List<List<ExecutableTableOperation>> { new List<ExecutableTableOperation>() };
+         foreach ( var nextOp in operations )
          {
-            ExecutableTableOperation operation = operations.Dequeue();
-
-            bool isAtMaxBatchSize = ( operationCounter == 100 );
-
-            // Operations with the same partition key, row key, and operation type cannot be executed in the same
-            // entity group transaction -- Table Storage will return a 400 bad request. We use the operation keys
-            // below to detect conflicts and start a new batch if necessary.
-            var opKey = new Tuple<string, string, TableOperationType>( operation.PartitionKey, operation.RowKey, operation.OperationType );
-            bool nextOpConflictsWithBatch = ( opKeys.Contains( opKey ) );
-
-            bool saveAndStartNewBatch = isAtMaxBatchSize || nextOpConflictsWithBatch;
-            if ( saveAndStartNewBatch )
+            // start a new batch if the current batch is full, or if any op in the current
+            // batch conflicts with the next op.
+            if ( batches.Last().Count == 100 || batches.Last().Any( op => !canBatch( op, nextOp ) ) )
             {
-               ExecuteBatchHandlingExceptions( table, batchOperation );
-               batchOperation = new TableBatchOperation();
-               operationCounter = 0;
-               opKeys.Clear();
+               batches.Add( new List<ExecutableTableOperation>() );
             }
-
-            batchOperation.Add( operation.Operation );
-            opKeys.Add( opKey );
-            operationCounter++;
+            batches.Last().Add( nextOp );
          }
 
-         if ( batchOperation.Count > 0 )
+         foreach ( var batch in batches )
          {
+            // We need to squelch 404s for deletes, so we just execute them individually.
+            if ( batch.Count == 1 && batch[0].OperationType == TableOperationType.Delete )
+            {
+               SaveIndividual( new [] { batch[0] } );
+               continue;
+            }
+
+            var batchOperation = new TableBatchOperation();
+            var table = batch.First().Table;
+            foreach ( var op in batch )
+            {
+               batchOperation.Add( op.Operation );
+            }
             ExecuteBatchHandlingExceptions( table, batchOperation );
          }
       }
@@ -304,8 +299,9 @@ namespace TechSmith.Hyde.Table.Azure
             Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
       }
 
-      private void SaveAtomically( Queue<ExecutableTableOperation> operations )
+      private void SaveAtomically( IEnumerable<ExecutableTableOperation> ops )
       {
+         var operations = ops.ToList();
          var partitionKeys = operations.Select( op => op.PartitionKey ).Distinct();
          if ( partitionKeys.Count() > 1 )
          {
@@ -319,9 +315,9 @@ namespace TechSmith.Hyde.Table.Azure
          }
 
          var batchOp = new TableBatchOperation();
-         while ( operations.Count > 0 )
+         foreach ( var op in operations )
          {
-            batchOp.Add( operations.Dequeue().Operation );
+            batchOp.Add( op.Operation );
          }
          if ( batchOp.Count > 0 )
          {

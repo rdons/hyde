@@ -186,35 +186,6 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      public void Save_MultipleOperationTypesOnSamePartition_ShouldExecuteInDifferentEntityGroupTransactions()
-      {
-         // As in the previous test, we can tell the operations were executed in different requests by
-         // setting one up to fail and verifying that the other completed.
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
-         _tableStorageProvider.Save();
-
-         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
-         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
-
-         try
-         {
-            _tableStorageProvider.Save( Execute.InBatches );
-            Assert.Fail( "Should have thrown exception" );
-         }
-         catch ( EntityAlreadyExistsException )
-         {
-         }
-
-         var results = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
-         Assert.AreEqual( 2, results.Count() );
-         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
-         Assert.IsFalse( results.Any( i => i.Name == "three" ) );
-      }
-
-      [TestMethod]
       public void Save_SameRowInsertedTwice_InsertsDoneInSeparateTransactions()
       {
          // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
@@ -234,6 +205,51 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      public void Save_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsShouldSucceed()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "foo" } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 42 } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItem { Id = "123", Name = "bar" } );
+
+         _tableStorageProvider.Save( Execute.InBatches );
+
+         var items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+         Assert.AreEqual( 3, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Name == "foo" ) );
+         Assert.AreEqual( 1, items.Count( i => i.Name == "bar" ) );
+         Assert.AreEqual( 1, items.Count( i => i.Name == "abc" && i.Age == 42 ) );
+      }
+
+      [TestMethod]
+      public void Save_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsExecutedInSameEGT()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 9 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "foo" } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 42 } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItem { Id = "123", Name = "bar" } );
+
+         // fail the EGT
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "not found" } );
+
+         try
+         {
+            _tableStorageProvider.Save( Execute.InBatches );
+         }
+         catch ( Exception e )
+         {
+         }
+
+         var items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+         Assert.AreEqual( 1, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Name == "abc" && i.Age == 9 ) );
+      }
+
+      [TestMethod]
       public void Save_SameRowUpdatedTwice_UpdatesDoneInDifferentTransactions()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
@@ -247,22 +263,29 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Save_BatchDeletesRowThatDoesNotExist_ThrowsEntityDoesNotExist()
+      public void Save_BatchDeletesRowThatDoesNotExist_SilentlyFails()
       {
-         // TODO: Is this behavior acceptable? It seems quite confusing, but would be difficult to code around.
          _tableStorageProvider.Delete( _tableName, "not", "found" );
          _tableStorageProvider.Save( Execute.InBatches );
       }
 
       [TestMethod]
-      public void Save_SameRowDeletedTwice_DeletesDoneInDifferentTransactions()
+      public void Save_DeletesPerformedIndividually()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
          _tableStorageProvider.Save();
 
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "bcd", Age = 80 } );
+
+         // First delete should succeed
          _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
-         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
+
+         // Second delete should fail silently
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "nope" } );
+
+         // This update should fail
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "not found", Age = 90 } );
+
          try
          {
             _tableStorageProvider.Save( Execute.InBatches );
@@ -271,14 +294,10 @@ namespace TechSmith.Hyde.IntegrationTest
          {
          }
 
-         try
-         {
-            _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" );
-            Assert.Fail( "Deletes not performed in different transactions" );
-         }
-         catch ( EntityDoesNotExistException )
-         {
-         }
+         var items = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+
+         Assert.AreEqual( 1, items.Count );
+         Assert.AreEqual( "bcd", items[0].Name );
       }
 
       [TestMethod]
