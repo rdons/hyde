@@ -115,7 +115,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertToDynamic();
       }
 
       public IEnumerable<dynamic> GetCollection( string tableName )
@@ -125,7 +125,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         throw new NotImplementedException();
+         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll().Select( e => e.ConvertToDynamic() );
       }
 
       public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
