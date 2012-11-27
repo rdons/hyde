@@ -14,16 +14,22 @@ namespace TechSmith.Hyde.Table.Memory
          public GenericTableEntity Get( string partitionKey, string rowKey )
          {
             var key = new Tuple<string, string>( partitionKey, rowKey );
-            if ( ! _entities.ContainsKey( key ) )
+            lock ( _entities )
             {
-               throw new EntityDoesNotExistException();
+               if ( ! _entities.ContainsKey( key ) )
+               {
+                  throw new EntityDoesNotExistException();
+               }
+               return _entities[key];
             }
-            return _entities[key];
          }
 
          public void Add( GenericTableEntity entity )
          {
-            _entities[new Tuple<string, string>( entity.PartitionKey, entity.RowKey )] = entity;
+            lock ( _entities )
+            {
+               _entities[new Tuple<string, string>( entity.PartitionKey, entity.RowKey )] = entity;
+            }
          }
       }
 
@@ -33,11 +39,14 @@ namespace TechSmith.Hyde.Table.Memory
 
          public Table GetTable( string tableName )
          {
-            if ( !_tables.ContainsKey( tableName ) )
+            lock ( _tables )
             {
-               _tables.Add( tableName, new Table() );
+               if ( !_tables.ContainsKey( tableName ) )
+               {
+                  _tables.Add( tableName, new Table() );
+               }
+               return _tables[tableName];
             }
-            return _tables[tableName];
          }
       }
 
