@@ -26,6 +26,8 @@ namespace TechSmith.Hyde.Table.Memory
 
          public void Add( GenericTableEntity entity )
          {
+            AzureKeyValidator.ValidatePartitionKey( entity.PartitionKey );
+            AzureKeyValidator.ValidateRowKey( entity.RowKey );
             lock ( _entities )
             {
                if ( _entities.ContainsKey( entity.RowKey ) )
@@ -90,6 +92,14 @@ namespace TechSmith.Hyde.Table.Memory
                return _partitions[partitionKey];
             }
          }
+
+         public IEnumerable<Partition> GetAllPartitions()
+         {
+            lock ( _partitions )
+            {
+               return new List<Partition>( _partitions.Values );
+            }
+         }
       }
 
       private class StorageAccount
@@ -123,24 +133,50 @@ namespace TechSmith.Hyde.Table.Memory
          return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertTo<T>();
       }
 
+      private IEnumerable<GenericTableEntity> GetEntities( string tableName )
+      {
+         return _tables.GetTable( tableName ).GetAllPartitions().SelectMany( p => p.GetAll() )
+                       .OrderBy( e => e.PartitionKey ).ThenBy( e => e.RowKey );
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
       {
-         throw new NotImplementedException();
+         return GetEntities( tableName ).Select( e => e.ConvertTo<T>() );
+      }
+
+      private IEnumerable<GenericTableEntity> GetEntities( string tableName, string partitionKey)
+      {
+         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll()
+                       .OrderBy( e => e.PartitionKey ).ThenBy( e => e.RowKey );
       }
 
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll().Select( e => e.ConvertTo<T>() );
+         return GetEntities( tableName, partitionKey)  .Select( e => e.ConvertTo<T>() );
+      }
+
+      private IEnumerable<GenericTableEntity> GetEntitiesByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      {
+         var entities = _tables.GetTable( tableName ).GetAllPartitions().SelectMany( p => p.GetAll() );
+         Func<string,bool> isInRange = pk => pk.CompareTo( partitionKeyLow ) >= 0 && pk.CompareTo( partitionKeyHigh ) <= 0;
+         return entities.Where( e => isInRange( e.PartitionKey ) ).OrderBy( e => e.PartitionKey ).ThenBy( e => e.RowKey );
       }
 
       public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         throw new NotImplementedException();
+         return GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertTo<T>() );
+      }
+
+      private IEnumerable<GenericTableEntity> GetEntitiesByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      {
+         var entities = _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll();
+         Func<string, bool> isInRange = rk => rk.CompareTo( rowKeyLow ) >= 0 && rk.CompareTo( rowKeyHigh ) <= 0;
+         return entities.Where( e => isInRange( e.RowKey ) ).OrderBy( e => e.RowKey );
       }
 
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
-         throw new NotImplementedException();
+         return GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertTo<T>() );
       }
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
@@ -150,22 +186,22 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<dynamic> GetCollection( string tableName )
       {
-         throw new NotImplementedException();
+         return GetEntities( tableName ).Select( e => e.ConvertToDynamic() );
       }
 
       public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll().Select( e => e.ConvertToDynamic() );
+         return GetEntities( tableName, partitionKey ).Select( e => e.ConvertToDynamic() );
       }
 
       public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         throw new NotImplementedException();
+         return GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertToDynamic() );
       }
 
       public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         throw new NotImplementedException();
+         return GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() );
       }
 
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
@@ -193,7 +229,10 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void DeleteCollection( string tableName, string partitionKey )
       {
-         throw new NotImplementedException();
+         foreach ( var entity in _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll() )
+         {
+            DeleteItem( tableName, partitionKey, entity.RowKey );
+         }
       }
 
       public void Save()
@@ -207,7 +246,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         throw new NotImplementedException();
+         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
    }
 }
