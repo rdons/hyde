@@ -151,5 +151,28 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( 1, result.Count( i => i.Name == items[0].Name && i.Id == items[0].Id && i.Age == items[0].Age ) );
          Assert.AreEqual( 1, result.Count( i => i.Name == items[1].Name && i.Id == items[1].Id && i.Age == items[1].Age ) );
       }
+
+      [TestMethod]
+      public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
+      {
+         _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Save();
+
+         var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+         Assert.AreEqual( 42, item.Age );
+      }
+
+      [TestMethod]
+      public void Upsert_EntityExists_EntityUpdatedOnSave()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Save();
+
+         _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
+         _context.Save();
+
+         var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+         Assert.AreEqual( 36, item.Age );
+      }
    }
 }

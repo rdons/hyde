@@ -48,6 +48,13 @@ namespace TechSmith.Hyde.Table.Memory
             }
          }
 
+         public void Upsert( GenericTableEntity entity ) {
+            lock ( _entities )
+            {
+               _entities[entity.RowKey] = entity;
+            }
+         }
+
          public IEnumerable<GenericTableEntity> GetAll()
          {
             lock ( _entities )
@@ -158,7 +165,8 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         var entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
+         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Upsert( entity ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
