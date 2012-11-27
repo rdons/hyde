@@ -83,5 +83,31 @@ namespace TechSmith.Hyde.Test
          {
          }
       }
+
+      [TestMethod]
+      public void AddNewItem_ItemAlreadyExistsAndSaveIsNotCalled_NoExceptionThrown()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.Save();
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+      }
+
+      [TestMethod]
+      public void AddNewItem_ItemAlreadyExistsAndSaveIsCalled_ThrowsEntityAlreadyExistsException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.Save();
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         try
+         {
+            _context.Save();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+      }
    }
 }

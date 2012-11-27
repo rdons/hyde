@@ -26,9 +26,14 @@ namespace TechSmith.Hyde.Table.Memory
 
          public void Add( GenericTableEntity entity )
          {
+            var key = new Tuple<string, string>( entity.PartitionKey, entity.RowKey );
             lock ( _entities )
             {
-               _entities[new Tuple<string, string>( entity.PartitionKey, entity.RowKey )] = entity;
+               if ( _entities.ContainsKey( key ) )
+               {
+                  throw new EntityAlreadyExistsException();
+               }
+               _entities[key] = entity;
             }
          }
       }
@@ -141,6 +146,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             action( _tables );
          }
+         _pendingActions.Clear();
       }
 
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
