@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table.Azure;
 
@@ -7,33 +8,56 @@ namespace TechSmith.Hyde.Table.Memory
 {
    internal class NewMemoryTableContext : ITableContext
    {
-      private class Table
+      private class Partition
       {
-         private readonly Dictionary<Tuple<string, string>, GenericTableEntity> _entities = new Dictionary<Tuple<string, string>, GenericTableEntity>();
+         private readonly Dictionary<string, GenericTableEntity> _entities = new Dictionary<string, GenericTableEntity>();
 
-         public GenericTableEntity Get( string partitionKey, string rowKey )
+         public GenericTableEntity GetEntity( string rowKey )
          {
-            var key = new Tuple<string, string>( partitionKey, rowKey );
             lock ( _entities )
             {
-               if ( ! _entities.ContainsKey( key ) )
+               if ( ! _entities.ContainsKey( rowKey ) )
                {
                   throw new EntityDoesNotExistException();
                }
-               return _entities[key];
+               return _entities[rowKey];
             }
          }
 
          public void Add( GenericTableEntity entity )
          {
-            var key = new Tuple<string, string>( entity.PartitionKey, entity.RowKey );
             lock ( _entities )
             {
-               if ( _entities.ContainsKey( key ) )
+               if ( _entities.ContainsKey( entity.RowKey ) )
                {
                   throw new EntityAlreadyExistsException();
                }
-               _entities[key] = entity;
+               _entities[entity.RowKey] = entity;
+            }
+         }
+
+         public IEnumerable<GenericTableEntity> GetAll()
+         {
+            lock ( _entities )
+            {
+               return new List<GenericTableEntity>( _entities.Values );
+            }
+         }
+      }
+
+      private class Table
+      {
+         private readonly Dictionary<string, Partition> _partitions = new Dictionary<string, Partition>();
+
+         public Partition GetPartition( string partitionKey )
+         {
+            lock ( _partitions )
+            {
+               if ( !_partitions.ContainsKey( partitionKey ) )
+               {
+                  _partitions[partitionKey] = new Partition();
+               }
+               return _partitions[partitionKey];
             }
          }
       }
@@ -66,7 +90,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         return _tables.GetTable( tableName ).Get( partitionKey, rowKey ).ConvertTo<T>();
+         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertTo<T>();
       }
 
       public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
@@ -76,7 +100,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         throw new NotImplementedException();
+         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll().Select( e => e.ConvertTo<T>() );
       }
 
       public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
@@ -117,7 +141,7 @@ namespace TechSmith.Hyde.Table.Memory
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
          var entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
-         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).Add( entity ) );
+         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Add( entity ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )

@@ -109,5 +109,32 @@ namespace TechSmith.Hyde.Test
          {
          }
       }
+
+      [TestMethod]
+      public void GetCollectionWithPartitionKey_NoItems_ReturnsEmptyEnumermation()
+      {
+         Assert.AreEqual( 0, _context.GetCollection<DecoratedItem>( "table", "empty partition" ).Count() );
+      }
+
+      [TestMethod]
+      public void GetCollectionWithPartitionKey_ItemsInMultiplePartitions_ItemsInSpecifiedPartitionReturned()
+      {
+         var items = new[]
+                     {
+                        new DecoratedItem { Id = "abc", Name = "123", Age = 42 },
+                        new DecoratedItem { Id = "abc", Name = "456", Age = 43 },
+                        new DecoratedItem { Id = "bcd", Name = "456", Age = 44 },
+                     };
+         foreach ( var item in items )
+         {
+            _context.AddNewItem( "table", item, item.Id, item.Name );
+         }
+         _context.Save();
+
+         var result = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         Assert.AreEqual( 2, result.Count );
+         Assert.AreEqual( 1, result.Count( i => i.Name == items[0].Name && i.Id == items[0].Id && i.Age == items[0].Age ) );
+         Assert.AreEqual( 1, result.Count( i => i.Name == items[1].Name && i.Id == items[1].Id && i.Age == items[1].Age ) );
+      }
    }
 }
