@@ -196,7 +196,8 @@ namespace TechSmith.Hyde.Table.Azure
                }
                case Execute.Atomically:
                {
-                  throw new NotImplementedException();
+                  SaveAtomically( new Queue<ExecutableTableOperation>( _operations ) );
+                  break;
                }
                default:
                {
@@ -301,6 +302,31 @@ namespace TechSmith.Hyde.Table.Azure
       {
          HandleTableStorageExceptions( false, () =>
             Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
+      }
+
+      private void SaveAtomically( Queue<ExecutableTableOperation> operations )
+      {
+         var partitionKeys = operations.Select( op => op.PartitionKey ).Distinct();
+         if ( partitionKeys.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on different partitions" );
+         }
+
+         var tables = operations.Select( op => op.Table ).Distinct().ToList();
+         if ( tables.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on multiple tables" );
+         }
+
+         var batchOp = new TableBatchOperation();
+         while ( operations.Count > 0 )
+         {
+            batchOp.Add( operations.Dequeue().Operation );
+         }
+         if ( batchOp.Count > 0 )
+         {
+            ExecuteBatchHandlingExceptions( tables[0], batchOp );
+         }
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
