@@ -55,6 +55,17 @@ namespace TechSmith.Hyde.Table.Memory
             }
          }
 
+         public void Delete( string rowKey )
+         {
+            lock ( _entities )
+            {
+               if ( _entities.ContainsKey( rowKey ) )
+               {
+                  _entities.Remove( rowKey );
+               }
+            }
+         }
+
          public IEnumerable<GenericTableEntity> GetAll()
          {
             lock ( _entities )
@@ -177,7 +188,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )

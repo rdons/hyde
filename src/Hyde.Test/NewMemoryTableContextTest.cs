@@ -174,5 +174,31 @@ namespace TechSmith.Hyde.Test
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( 36, item.Age );
       }
+
+      [TestMethod]
+      public void Delete_EntityExists_EntityDeletedOnSave()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Save();
+
+         _context.DeleteItem( "table", "abc", "123" );
+         _context.Save();
+
+         try
+         {
+            _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void Delete_EntityDoesNotExist_NoActionOnSave()
+      {
+         _context.DeleteItem( "table", "abc", "123" );
+         _context.Save();
+      }
    }
 }
