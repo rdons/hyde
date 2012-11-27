@@ -111,6 +111,21 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Update_EntityDoesNotExist_ThrowsExceptionOnSave()
+      {
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 12 }, "abc", "123" );
+
+         try
+         {
+            _context.Save();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+      }
+
+      [TestMethod]
       public void GetCollectionWithPartitionKey_NoItems_ReturnsEmptyEnumermation()
       {
          Assert.AreEqual( 0, _context.GetCollection<DecoratedItem>( "table", "empty partition" ).Count() );

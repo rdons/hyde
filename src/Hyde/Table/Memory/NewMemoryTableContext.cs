@@ -36,6 +36,18 @@ namespace TechSmith.Hyde.Table.Memory
             }
          }
 
+         public void Update( GenericTableEntity entity )
+         {
+            lock ( _entities )
+            {
+               if ( !_entities.ContainsKey( entity.RowKey ) )
+               {
+                  throw new EntityDoesNotExistException();
+               }
+               _entities[entity.RowKey] = entity;
+            }
+         }
+
          public IEnumerable<GenericTableEntity> GetAll()
          {
             lock ( _entities )
@@ -151,7 +163,8 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         throw new NotImplementedException();
+         var entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
+         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Update( entity ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
