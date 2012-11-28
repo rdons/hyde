@@ -201,5 +201,121 @@ namespace TechSmith.Hyde.Test
          _context.DeleteItem( "table", "abc", "123" );
          _context.Save( Execute.Individually );
       }
+
+      [TestMethod]
+      public void SaveAtomically_ManyOperations_AllOperationsPersist()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.Save( Execute.Individually );
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
+         _context.DeleteItem( "table", "abc", "789" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         Assert.AreEqual( 2, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 34 ) );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "456" && i.Age == 42 ) );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_ManyOperationsAndOneFails_NoOperationsPersist()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.Save( Execute.Individually );
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "not found", Age = 42 }, "abc", "not found" ); // should fail
+         _context.DeleteItem( "table", "abc", "789" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+
+         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         Assert.AreEqual( 2, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 42 ) );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "789" && i.Age == 42 ) );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_TwoOperationsOnSameEntity_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnDifferentPartitions_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "bcd", Name = "foo" }, "bcd", "foo" );
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnTooManyEntities_ThrowsInvalidOperationException()
+      {
+         for ( int i=0 ; i < 101; ++i )
+         {
+            _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" + i }, "abc", "foo" + i );
+         }
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnDifferentTables_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
+         _context.AddNewItem( "table2", new DecoratedItem { Id = "abc", Name = "bar" }, "abc", "bar" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
    }
 }
