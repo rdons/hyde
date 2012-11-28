@@ -276,8 +276,8 @@ namespace TechSmith.Hyde.Table.Azure
 
          foreach ( var batch in batches )
          {
-            // We need to squelch 404s for deletes, so we just execute them individually.
-            if ( batch.Count == 1 && batch[0].OperationType == TableOperationType.Delete )
+            // No need to use an EGT for a single operation.
+            if ( batch.Count == 1 )
             {
                SaveIndividual( new [] { batch[0] } );
                continue;
