@@ -240,7 +240,7 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             _tableStorageProvider.Save( Execute.InBatches );
          }
-         catch ( Exception e )
+         catch ( EntityDoesNotExistException )
          {
          }
 
