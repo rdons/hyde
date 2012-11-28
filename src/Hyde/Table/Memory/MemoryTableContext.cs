@@ -235,11 +235,6 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      public void Save()
-      {
-         Save( Execute.Individually );
-      }
-
       public void Save( Execute executeMethod )
       {
          if ( executeMethod == Execute.Atomically )
