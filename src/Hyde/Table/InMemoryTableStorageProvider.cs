@@ -6,12 +6,12 @@ namespace TechSmith.Hyde.Table
    {
       public static void ResetAllTables()
       {
-         NewMemoryTableContext.ResetAllTables();
+         MemoryTableContext.ResetAllTables();
       }
 
       protected override ITableContext GetContext()
       {
-         return new NewMemoryTableContext();
+         return new MemoryTableContext();
       }
    }
 }

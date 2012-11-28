@@ -6,7 +6,7 @@ using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
 {
-   internal class NewMemoryTableContext : ITableContext
+   internal class MemoryTableContext : ITableContext
    {
       private class Partition
       {

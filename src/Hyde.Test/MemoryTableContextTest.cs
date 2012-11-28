@@ -9,15 +9,15 @@ using TechSmith.Hyde.Table.Memory;
 namespace TechSmith.Hyde.Test
 {
    [TestClass]
-   public class NewMemoryTableContextTest
+   public class MemoryTableContextTest
    {
-      private NewMemoryTableContext _context;
+      private MemoryTableContext _context;
 
       [TestInitialize]
       public void Initialize()
       {
-         NewMemoryTableContext.ResetAllTables();
-         _context = new NewMemoryTableContext();
+         MemoryTableContext.ResetAllTables();
+         _context = new MemoryTableContext();
       }
 
       [TestMethod]
@@ -61,7 +61,7 @@ namespace TechSmith.Hyde.Test
          _context.AddNewItem( "table", addedItem, "abc", "123" );
          _context.Save();
 
-         var returnedItem = new NewMemoryTableContext().GetItem<DecoratedItem>( "table", "abc", "123" );
+         var returnedItem = new MemoryTableContext().GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( addedItem.Id, returnedItem.Id );
          Assert.AreEqual( addedItem.Name, returnedItem.Name );
          Assert.AreEqual( addedItem.Age, returnedItem.Age );
