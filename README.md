@@ -47,4 +47,3 @@ Follow these guidelines, in no particular order, to improve your chances of havi
  * No regions
  * Code must build .NET 4.
  * If you didn't write the code you must provide a reference to where you obtained it and the license. 
- * Use autocrlf=true `git config --global core.autocrlf true` http://help.github.com/dealing-with-lineendings/
