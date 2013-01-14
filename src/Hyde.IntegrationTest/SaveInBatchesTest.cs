@@ -56,6 +56,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Insert_101EntitiesInTheSamePartition_ShouldSucceed()
       {
          string partitionKey = "123";
@@ -79,6 +80,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Update_101EntitiesInTheSamePartition_ShouldSucceed()
       {
          string partitionKey = "123";
@@ -111,6 +113,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Upsert_101EntitiesInTheSamePartition_ShouldSucceed()
       {
          string partitionKey = "123";
@@ -134,6 +137,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Delete_101EntitiesInTheSamePartition_ShouldSucceed()
       {
          string partitionKey = "123";
@@ -163,6 +167,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_AllInsertsOnSamePartition_ShouldExecuteInEntityGroupTransaction()
       {
          // We can't tell directly whether an EGT is used, but we can infer it by setting up
@@ -186,6 +191,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_SameRowInsertedTwice_InsertsDoneInSeparateTransactions()
       {
          // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
@@ -205,6 +211,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsShouldSucceed()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );
@@ -224,6 +231,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsExecutedInSameEGT()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 9 } );
@@ -250,6 +258,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_SameRowUpdatedTwice_UpdatesDoneInDifferentTransactions()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
@@ -263,6 +272,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_BatchDeletesRowThatDoesNotExist_SilentlyFails()
       {
          _tableStorageProvider.Delete( _tableName, "not", "found" );
@@ -270,6 +280,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_DeletesPerformedIndividually()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
@@ -301,6 +312,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_SameRowAddedAndUpdated_OperationsDoneInDifferentTransactions()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );
@@ -317,7 +329,7 @@ namespace TechSmith.Hyde.IntegrationTest
          {
          }
 
-         Assert.IsNotNull(  _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ) );
+         Assert.IsNotNull( _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "abc" ) );
       }
    }
 }

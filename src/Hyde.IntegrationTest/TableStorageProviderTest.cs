@@ -1172,6 +1172,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory("Integration")]
       public void Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );

@@ -55,6 +55,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_TooManyOperationsForEGT_ThrowsInvalidOperationException()
       {
          string partitionKey = "123";
@@ -83,6 +84,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_OperationsInDifferentPartitions_ThrowsInvalidOperationException()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Ed" } );
@@ -99,6 +101,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_OperationsWithSamePartitionKeyInDifferentTables_ThrowsInvalidOperationException()
       {
          var newTableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
@@ -124,6 +127,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_MultipleOperationTypesOnSamePartitionAndNoConflicts_OperationsSucceed()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 34 } );
@@ -138,6 +142,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       [ExpectedException( typeof( InvalidOperationException ) )]
       public void Save_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
       {
@@ -149,6 +154,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory( "Integration" )]
       public void Inserts_TwoRowsInPartitionAndOneAlreadyExists_NeitherRowInserted()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake", Age = 34 } );
