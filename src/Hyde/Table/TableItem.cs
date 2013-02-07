@@ -42,24 +42,26 @@ namespace TechSmith.Hyde.Table
          }
       }
 
+      public static TableItem Create( object entity, bool throwOnReservedPropertyName )
+      {
+         var item = CreateFromType( entity, throwOnReservedPropertyName );
+
+         if ( item.PartitionKey == null )
+         {
+            throw new ArgumentException( "Missing PartitionKey property" );
+         }
+
+         if ( item.RowKey == null )
+         {
+            throw new ArgumentException( "Missing RowKey property" );
+         }
+
+         return item;
+      }
+
       public static TableItem Create( object entity, string partitionKey, string rowKey, bool throwOnReservedPropertyName )
       {
-         var properties = new Dictionary<string, Tuple<object, Type>>();
-         foreach ( var property in entity.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
-         {
-            properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
-         }
-         var item = new TableItem( properties, throwOnReservedPropertyName );
-
-         if ( entity.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
-         {
-            item.PartitionKey = entity.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         }
-
-         if ( entity.HasPropertyDecoratedWith<RowKeyAttribute>() )
-         {
-            item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-         }
+         var item = CreateFromType( entity, throwOnReservedPropertyName );
 
          if ( item.PartitionKey != null && item.PartitionKey != partitionKey )
          {
@@ -73,6 +75,28 @@ namespace TechSmith.Hyde.Table
          }
          item.RowKey = rowKey;
 
+         return item;
+      }
+
+      private static TableItem CreateFromType( object entity, bool throwOnReservedPropertyName )
+      {
+         var properties = new Dictionary<string, Tuple<object, Type>>();
+         foreach ( var property in entity.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         {
+            properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
+         }
+
+         var item = new TableItem( properties, throwOnReservedPropertyName );
+
+         if ( entity.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
+         {
+            item.PartitionKey = entity.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         }
+
+         if ( entity.HasPropertyDecoratedWith<RowKeyAttribute>() )
+         {
+            item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         }
          return item;
       }
    }

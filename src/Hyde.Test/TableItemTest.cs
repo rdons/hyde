@@ -68,6 +68,29 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
       }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void Create_KeysNotProvidedAndEntityHasNoPartitionKey_ThrowsArgumentException()
+      {
+         TableItem.Create( new ClassWithoutDecoratedPartitionKey { Name = "Joe" }, true );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void Create_KeysNotProvidedAndEntityHasNoRowKey_ThrowsArgumentException()
+      {
+         TableItem.Create( new ClassWithoutDecoratedRowKey { Name = "Joe" }, true );
+      }
+
+      [TestMethod]
+      public void Create_KeysNotProvidedAndEntityHasDecoratedKeyProperties_ItemCreatedWithKeys()
+      {
+         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 }, true );
+
+         Assert.AreEqual( "pk", item.PartitionKey );
+         Assert.AreEqual( "rk", item.RowKey );
+      }
    }
 
    class ClassWithTimestamp
@@ -82,5 +105,17 @@ namespace TechSmith.Hyde.Test
       public string Name { get; set; }
 
       public string PartitionKey { get; set; }
+   }
+
+   class ClassWithoutDecoratedRowKey
+   {
+      [PartitionKey]
+      public string Name { get; set; }
+   }
+
+   class ClassWithoutDecoratedPartitionKey
+   {
+      [RowKey]
+      public string Name { get; set; }
    }
 }
