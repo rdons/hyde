@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
@@ -42,9 +43,11 @@ namespace TechSmith.Hyde.Table
          }
       }
 
-      public static TableItem Create( object entity, bool throwOnReservedPropertyName )
+      public static TableItem Create( dynamic entity, bool throwOnReservedPropertyName )
       {
-         var item = CreateFromType( entity, throwOnReservedPropertyName );
+         TableItem item =  entity is IDynamicMetaObjectProvider ?
+            CreateFromDynamicMetaObject( entity, throwOnReservedPropertyName ) :
+            CreateFromType( entity, throwOnReservedPropertyName );
 
          if ( item.PartitionKey == null )
          {
@@ -59,9 +62,11 @@ namespace TechSmith.Hyde.Table
          return item;
       }
 
-      public static TableItem Create( object entity, string partitionKey, string rowKey, bool throwOnReservedPropertyName )
+      public static TableItem Create( dynamic entity, string partitionKey, string rowKey, bool throwOnReservedPropertyName )
       {
-         var item = CreateFromType( entity, throwOnReservedPropertyName );
+         TableItem item = entity is IDynamicMetaObjectProvider ?
+            CreateFromDynamicMetaObject( entity, throwOnReservedPropertyName ) :
+            CreateFromType( entity, throwOnReservedPropertyName );
 
          if ( item.PartitionKey != null && item.PartitionKey != partitionKey )
          {
@@ -75,6 +80,43 @@ namespace TechSmith.Hyde.Table
          }
          item.RowKey = rowKey;
 
+         return item;
+      }
+
+      private static TableItem CreateFromDynamicMetaObject( IDynamicMetaObjectProvider entity, bool throwOnReservedPropertyName )
+      {
+         var properties = new Dictionary<string, Tuple<object, Type>>();
+         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( entity );
+         foreach ( var memberName in memberNames )
+         {
+            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( entity, memberName );
+            properties[memberName] = new Tuple<object, Type>( (object) result, result.GetType() );
+         }
+
+         Tuple<object, Type> key;
+         string partitionKey = null, rowKey = null;
+
+         if ( !throwOnReservedPropertyName && properties.TryGetValue( "PartitionKey", out key ) )
+         {
+            properties.Remove( "PartitionKey" );
+            partitionKey = key.Item1 as string;
+         }
+
+         if ( !throwOnReservedPropertyName && properties.TryGetValue( "RowKey", out key ) )
+         {
+            properties.Remove( "RowKey" );
+            rowKey = key.Item1 as string;
+         }
+
+         var item = new TableItem( properties, throwOnReservedPropertyName );
+         if ( partitionKey != null )
+         {
+            item.PartitionKey = partitionKey;
+         }
+         if ( rowKey != null )
+         {
+            item.RowKey = rowKey;
+         }
          return item;
       }
 

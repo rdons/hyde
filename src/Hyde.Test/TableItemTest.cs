@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
@@ -90,6 +91,135 @@ namespace TechSmith.Hyde.Test
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
+      }
+
+      [TestMethod]
+      public void Create_DynamicEntityAndKeysProvided_ItemCreatedWithKeys()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk", true );
+
+         Assert.AreEqual( "pk", item.PartitionKey );
+         Assert.AreEqual( "rk", item.RowKey );
+      }
+
+      [TestMethod]
+      public void Create_DynamicEntityAndKeysProvided_ItemCreatedWithCorrectProperties()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk", true );
+
+         Assert.AreEqual( 1, item.Properties.Count );
+         Assert.AreEqual( "Joe", item.Properties["Name"].Item1 );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( InvalidEntityException ) )]
+      public void CreateAndThrowOnReservedProperties_DynamicEntityWithReservedPropertiesAndKeysProvided_ThrowsInvalidEntityException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "foo";
+
+         TableItem.Create( entity, "pk", "rk", true );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void CreateAndIgnoreReservedProperties_DynamicEntityWithKeysProvidedAndConflictingPartitionKeyProperty_ThrowsArgumentException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "foo";
+
+         TableItem.Create( entity, "pk", "rk", false );
+      }
+
+      [TestMethod]
+      public void CreateAndIgnoreReservedProperties_DyanmicEntityWithKeysProvidedAndMatchingPartitionKeyProperty_ReturnsItemWithPartitionKey()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "pk";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk", false );
+
+         Assert.AreEqual( "pk", item.PartitionKey );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void CreateAndIgnoreReservedProperties_DynamicEntityWithKeysProvidedAndConflictingRowKeyProperty_ThrowsArgumentException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.RowKey = "foo";
+
+         TableItem.Create( entity, "pk", "rk", false );
+      }
+
+      [TestMethod]
+      public void CreateAndIgnoreReservedProperties_DyanmicEntityWithKeysProvidedAndMatchingRowKeyProperty_ReturnsItemWithRowKey()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.RowKey = "rk";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk", false );
+
+         Assert.AreEqual( "rk", item.RowKey );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( InvalidEntityException ) )]
+      public void CreateAndThrowOnReservedProperties_DynamicEntityWithKeyProperties_ThrowsInvalidEntityException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "pk";
+         entity.RowKey = "rk";
+
+         TableItem.Create( entity, true );
+      }
+
+      [TestMethod]
+      public void CreateAndIgnoreReservedProperties_DynamicEntityWithKeyProperties_ReturnsItemWithCorrectKeys()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "pk";
+         entity.RowKey = "rk";
+
+         TableItem item = TableItem.Create( entity, false );
+
+         Assert.AreEqual( "pk", item.PartitionKey );
+         Assert.AreEqual( "rk", item.RowKey );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void CreateAndIgnoreReservedProperties_DynamicEntityWithoutRowKey_ThrowsArgumentException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.PartitionKey = "pk";
+
+         TableItem.Create( entity, false );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void CreateAndIgnoreReservedProperties_DynamicEntityWithoutPartitionKey_ThrowsArgumentException()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.RowKey = "rk";
+
+         TableItem.Create( entity, false );
       }
    }
 
