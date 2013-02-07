@@ -45,6 +45,29 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "Joe", item.Properties["Name"].Item1 );
          Assert.AreEqual( "pk", item.PartitionKey );
       }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void Create_KeysProvidedAndEntityHasDecoratedPartitionKeyPropertyWithDifferentValue_ThrowsArgumentException()
+      {
+         TableItem.Create( new DecoratedItem { Id = "pk1", Name = "rk", Age = 34 }, "pk2", "rk", true );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void Create_KeysProvidedAndEntityHasDecoratedRowKeyPropertyWithDifferentValue_ThrowsArgumentException()
+      {
+         TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk1", Age = 34 }, "pk", "rk2", true );
+      }
+
+      [TestMethod]
+      public void Create_KeysProvidedAndEntityHasDecoratedKeyPropertiesWithMatchingValues_ItemCreatedWithKeys()
+      {
+         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 }, "pk", "rk", true );
+
+         Assert.AreEqual( "pk", item.PartitionKey );
+         Assert.AreEqual( "rk", item.RowKey );
+      }
    }
 
    class ClassWithTimestamp
