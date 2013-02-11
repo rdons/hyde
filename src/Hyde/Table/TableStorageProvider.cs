@@ -35,12 +35,12 @@ namespace TechSmith.Hyde.Table
       /// Add entity to the given table
       /// </summary>
       /// <param name="tableName">Name of the table</param>
-      /// <param name="entity">Entity to store</param>
+      /// <param name="instance">the instance to store</param>
       /// <param name="partitionKey">The partition key to use when storing the entity</param>
       /// <param name="rowKey">The row key to use when storing the entity</param>
-      public void Add( string tableName, dynamic entity, string partitionKey, string rowKey )
+      public void Add( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.AddNewItem( tableName, TableItem.Create( entity, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         _context.AddNewItem( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       /// <summary>
@@ -162,14 +162,14 @@ namespace TechSmith.Hyde.Table
          _context.DeleteCollection( tableName, partitionKey );
       }
 
-      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
+      public void Update( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Update( tableName, TableItem.Create( item, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
-      public void Update( string tableName, dynamic item )
+      public void Update( string tableName, dynamic instance )
       {
-         _context.Update( tableName, TableItem.Create( item, _reservedPropertyBehavior ) );
+         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
    }
 }
