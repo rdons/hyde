@@ -12,7 +12,7 @@ namespace TechSmith.Hyde.Table
          _context = context;
       }
 
-      private bool _shouldThrowForReservedPropertyNames = true;
+      private TableItem.ReservedPropertyBehavior _reservedPropertyBehavior = TableItem.ReservedPropertyBehavior.Throw;
       /// <summary>
       /// Sets how reserved property names are handled.  The default is true.
       /// If true an InvalidEntityException will be thrown when reserved property names are encountered.
@@ -23,11 +23,11 @@ namespace TechSmith.Hyde.Table
       {
          get
          {
-            return _shouldThrowForReservedPropertyNames;
+            return _reservedPropertyBehavior == TableItem.ReservedPropertyBehavior.Throw ? true : false;
          }
          set
          {
-            _shouldThrowForReservedPropertyNames = value;
+            _reservedPropertyBehavior = value ? TableItem.ReservedPropertyBehavior.Throw : TableItem.ReservedPropertyBehavior.Ignore;
          }
       }
 
@@ -40,7 +40,7 @@ namespace TechSmith.Hyde.Table
       /// <param name="rowKey">The row key to use when storing the entity</param>
       public void Add( string tableName, dynamic entity, string partitionKey, string rowKey )
       {
-         _context.AddNewItem( tableName, TableItem.Create( entity, partitionKey, rowKey, ShouldThrowForReservedPropertyNames ) );
+         _context.AddNewItem( tableName, TableItem.Create( entity, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       /// <summary>
@@ -56,7 +56,7 @@ namespace TechSmith.Hyde.Table
       /// <exception cref="ArgumentException">if T does not have properties PartitionKey and or RowKey</exception>
       public void Add( string tableName, dynamic instance )
       {
-         _context.AddNewItem( tableName, TableItem.Create( instance, ShouldThrowForReservedPropertyNames ) );
+         _context.AddNewItem( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
       public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -138,17 +138,17 @@ namespace TechSmith.Hyde.Table
 
       public void Upsert( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Upsert( tableName, TableItem.Create( instance, partitionKey, rowKey, ShouldThrowForReservedPropertyNames ) );
+         _context.Upsert( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       public void Upsert( string tableName, dynamic instance )
       {
-         _context.Upsert( tableName, TableItem.Create( instance, ShouldThrowForReservedPropertyNames ) );
+         _context.Upsert( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
       public void Delete( string tableName, dynamic instance )
       {
-         TableItem tableItem = TableItem.Create( instance, ShouldThrowForReservedPropertyNames );
+         TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
          Delete( tableName, tableItem.PartitionKey, tableItem.RowKey );
       }
 
@@ -164,12 +164,12 @@ namespace TechSmith.Hyde.Table
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         _context.Update( tableName, TableItem.Create( item, partitionKey, rowKey, ShouldThrowForReservedPropertyNames ) );
+         _context.Update( tableName, TableItem.Create( item, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       public void Update( string tableName, dynamic item )
       {
-         _context.Update( tableName, TableItem.Create( item, ShouldThrowForReservedPropertyNames ) );
+         _context.Update( tableName, TableItem.Create( item, _reservedPropertyBehavior ) );
       }
    }
 }

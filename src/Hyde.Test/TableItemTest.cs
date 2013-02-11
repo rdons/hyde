@@ -13,7 +13,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Create_ValidEntity_PropertiesSetCorrectly()
       {
-         var item = TableItem.Create( new SimpleDataItem { FirstType = "Joe", SecondType = 34 }, "pk", "rk", true );
+         var item = TableItem.Create( new SimpleDataItem { FirstType = "Joe", SecondType = 34 }, "pk", "rk" );
 
          Assert.AreEqual( 3, item.Properties.Count );
          Assert.AreEqual( "Joe", item.Properties["FirstType"].Item1 );
@@ -24,7 +24,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void CreateAndThrowOnReservedProperty_KeysProvidedAndNoReservedProperties_KeysSetCorrectly()
       {
-         var item = TableItem.Create( new SimpleDataItem { FirstType = "Joe", SecondType = 34 }, "pk", "rk", true );
+         var item = TableItem.Create( new SimpleDataItem { FirstType = "Joe", SecondType = 34 }, "pk", "rk" );
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
@@ -34,13 +34,13 @@ namespace TechSmith.Hyde.Test
       [ExpectedException( typeof( InvalidEntityException ) )]
       public void CreateAndThrowOnReservedProperty_KeysProvidedAndHasReservedProperty_ThrowsInvalidEntityException()
       {
-         TableItem.Create( new ClassWithTimestamp { Name = "Joe", Timestamp = DateTime.Now }, "pk", "rk", true );
+         TableItem.Create( new ClassWithTimestamp { Name = "Joe", Timestamp = DateTime.Now }, "pk", "rk" );
       }
 
       [TestMethod]
       public void CreateAndIgnoreReservedProperty_KeysProvidedAndHasReservedProperty_IgnoresReservedProperty()
       {
-         var item = TableItem.Create( new ClassWithUndecoratedPartitionKey { Name = "Joe", PartitionKey = "should be ignored" }, "pk", "rk", false );
+         var item = TableItem.Create( new ClassWithUndecoratedPartitionKey { Name = "Joe", PartitionKey = "should be ignored" }, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
 
          Assert.AreEqual( 1, item.Properties.Count );
          Assert.AreEqual( "Joe", item.Properties["Name"].Item1 );
@@ -51,20 +51,20 @@ namespace TechSmith.Hyde.Test
       [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysProvidedAndEntityHasDecoratedPartitionKeyPropertyWithDifferentValue_ThrowsArgumentException()
       {
-         TableItem.Create( new DecoratedItem { Id = "pk1", Name = "rk", Age = 34 }, "pk2", "rk", true );
+         TableItem.Create( new DecoratedItem { Id = "pk1", Name = "rk", Age = 34 }, "pk2", "rk" );
       }
 
       [TestMethod]
       [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysProvidedAndEntityHasDecoratedRowKeyPropertyWithDifferentValue_ThrowsArgumentException()
       {
-         TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk1", Age = 34 }, "pk", "rk2", true );
+         TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk1", Age = 34 }, "pk", "rk2" );
       }
 
       [TestMethod]
       public void Create_KeysProvidedAndEntityHasDecoratedKeyPropertiesWithMatchingValues_ItemCreatedWithKeys()
       {
-         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 }, "pk", "rk", true );
+         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 }, "pk", "rk" );
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
@@ -74,20 +74,20 @@ namespace TechSmith.Hyde.Test
       [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysNotProvidedAndEntityHasNoPartitionKey_ThrowsArgumentException()
       {
-         TableItem.Create( new ClassWithoutDecoratedPartitionKey { Name = "Joe" }, true );
+         TableItem.Create( new ClassWithoutDecoratedPartitionKey { Name = "Joe" } );
       }
 
       [TestMethod]
       [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysNotProvidedAndEntityHasNoRowKey_ThrowsArgumentException()
       {
-         TableItem.Create( new ClassWithoutDecoratedRowKey { Name = "Joe" }, true );
+         TableItem.Create( new ClassWithoutDecoratedRowKey { Name = "Joe" } );
       }
 
       [TestMethod]
       public void Create_KeysNotProvidedAndEntityHasDecoratedKeyProperties_ItemCreatedWithKeys()
       {
-         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 }, true );
+         var item = TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk", Age = 34 } );
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
@@ -99,7 +99,7 @@ namespace TechSmith.Hyde.Test
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
 
-         TableItem item = TableItem.Create( entity, "pk", "rk", true );
+         TableItem item = TableItem.Create( entity, "pk", "rk" );
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
@@ -111,7 +111,7 @@ namespace TechSmith.Hyde.Test
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
 
-         TableItem item = TableItem.Create( entity, "pk", "rk", true );
+         TableItem item = TableItem.Create( entity, "pk", "rk" );
 
          Assert.AreEqual( 1, item.Properties.Count );
          Assert.AreEqual( "Joe", item.Properties["Name"].Item1 );
@@ -125,7 +125,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.PartitionKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk", true );
+         TableItem.Create( entity, "pk", "rk" );
       }
 
       [TestMethod]
@@ -136,7 +136,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.PartitionKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk", false );
+         TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
       }
 
       [TestMethod]
@@ -146,7 +146,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.PartitionKey = "pk";
 
-         TableItem item = TableItem.Create( entity, "pk", "rk", false );
+         TableItem item = TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
 
          Assert.AreEqual( "pk", item.PartitionKey );
       }
@@ -159,7 +159,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.RowKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk", false );
+         TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
       }
 
       [TestMethod]
@@ -169,7 +169,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.RowKey = "rk";
 
-         TableItem item = TableItem.Create( entity, "pk", "rk", false );
+         TableItem item = TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
 
          Assert.AreEqual( "rk", item.RowKey );
       }
@@ -183,7 +183,7 @@ namespace TechSmith.Hyde.Test
          entity.PartitionKey = "pk";
          entity.RowKey = "rk";
 
-         TableItem.Create( entity, true );
+         TableItem.Create( entity );
       }
 
       [TestMethod]
@@ -194,7 +194,7 @@ namespace TechSmith.Hyde.Test
          entity.PartitionKey = "pk";
          entity.RowKey = "rk";
 
-         TableItem item = TableItem.Create( entity, false );
+         TableItem item = TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore );
 
          Assert.AreEqual( "pk", item.PartitionKey );
          Assert.AreEqual( "rk", item.RowKey );
@@ -208,7 +208,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.PartitionKey = "pk";
 
-         TableItem.Create( entity, false );
+         TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore );
       }
 
       [TestMethod]
@@ -219,7 +219,7 @@ namespace TechSmith.Hyde.Test
          entity.Name = "Joe";
          entity.RowKey = "rk";
 
-         TableItem.Create( entity, false );
+         TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore );
       }
    }
 

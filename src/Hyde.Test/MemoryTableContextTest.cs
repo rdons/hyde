@@ -29,7 +29,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void GetItem_ItemAddedButSaveNotCalled_ThrowsEntityDoesNotExistException()
       {
-         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 50 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 50 } ) );
          try
          {
             _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -44,7 +44,7 @@ namespace TechSmith.Hyde.Test
       public void Save_ItemAdded_GetItemReturnsTheItem()
       {
          var item = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         var entity = TableItem.Create( item, true );
+         var entity = TableItem.Create( item );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
@@ -58,7 +58,7 @@ namespace TechSmith.Hyde.Test
       public void GetItem_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         var entity = TableItem.Create( addedItem, true );
+         var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
@@ -72,7 +72,7 @@ namespace TechSmith.Hyde.Test
       public void GetItem_ItemAddedToDifferentTable_ThrowsEntityDoesNotExistException()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         var entity = TableItem.Create( addedItem, true );
+         var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
@@ -89,19 +89,19 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsNotCalled_NoExceptionThrown()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" } ) );
       }
 
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsCalled_ThrowsEntityAlreadyExistsException()
       {
-         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" }, true ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" }, true ) );
+         _context.AddNewItem( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" } ) );
          try
          {
             _context.Save( Execute.Individually );
@@ -115,7 +115,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Update_EntityDoesNotExist_ThrowsExceptionOnSave()
       {
-         _context.Update( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 12 }, true ) );
+         _context.Update( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 12 } ) );
 
          try
          {
@@ -144,7 +144,7 @@ namespace TechSmith.Hyde.Test
                      };
          foreach ( var item in items )
          {
-            _context.AddNewItem( "table", TableItem.Create( item, true ) );
+            _context.AddNewItem( "table", TableItem.Create( item ) );
          }
          _context.Save( Execute.Individually );
 
@@ -157,7 +157,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
-         _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
+         _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -167,10 +167,10 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityExists_EntityUpdatedOnSave()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.Upsert( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, true ) );
+         _context.Upsert( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
          _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -180,7 +180,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Delete_EntityExists_EntityDeletedOnSave()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
          _context.DeleteItem( "table", "abc", "123" );
@@ -206,12 +206,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_ManyOperations_AllOperationsPersist()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, true ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, true ) ); 
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
+         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -231,13 +231,13 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_ManyOperationsAndOneFails_NoOperationsPersist()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, true ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, true ) ); 
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "not found", Age = 42 }, true ) ); // should fail
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
+         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
+         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "not found", Age = 42 } ) ); // should fail
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -258,8 +258,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_TwoOperationsOnSameEntity_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, true ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
          try
          {
             _context.Save( Execute.Atomically );
@@ -273,8 +273,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentPartitions_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" }, true ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "bcd", Name = "foo" }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" } ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "bcd", Name = "foo" } ) );
          try
          {
             _context.Save( Execute.Atomically );
@@ -290,7 +290,7 @@ namespace TechSmith.Hyde.Test
       {
          for ( int i=0 ; i < 101; ++i )
          {
-            _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" + i }, true ) );
+            _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" + i } ) );
          }
 
          try
@@ -306,8 +306,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentTables_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" }, true ) );
-         _context.AddNewItem( "table2", TableItem.Create(new DecoratedItem { Id = "abc", Name = "bar" }, true ) );
+         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" } ) );
+         _context.AddNewItem( "table2", TableItem.Create(new DecoratedItem { Id = "abc", Name = "bar" } ) );
 
          try
          {

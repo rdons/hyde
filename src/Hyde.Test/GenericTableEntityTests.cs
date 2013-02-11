@@ -19,7 +19,7 @@ namespace TechSmith.Hyde.Test
                              SecondType = 0
                           };
 
-         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk", true );
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
 
          var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 
@@ -45,7 +45,7 @@ namespace TechSmith.Hyde.Test
                              Name = "name",
                              Age = 42,
                           };
-         TableItem tableItem = TableItem.Create( itemToSave, true );
+         TableItem tableItem = TableItem.Create( itemToSave );
          var genericEntity = GenericTableEntity.HydrateFrom( tableItem );
 
          Assert.AreEqual( "id", genericEntity.PartitionKey, "incorrect partition key" );
@@ -78,7 +78,7 @@ namespace TechSmith.Hyde.Test
                              SerializedString = "foo",
                              NotSerializedString = "bar"
                           };
-         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk", true );
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
 
          var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 
@@ -109,7 +109,7 @@ namespace TechSmith.Hyde.Test
          itemToSave.FirstType = "foo";
          itemToSave.SecondType = "bar";
 
-         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk", true );
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
 
          var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 

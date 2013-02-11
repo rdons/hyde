@@ -9,6 +9,12 @@ namespace TechSmith.Hyde.Table
 {
    public class TableItem
    {
+      public enum ReservedPropertyBehavior
+      {
+         Throw,
+         Ignore,
+      }
+
       public string PartitionKey
       {
          get;
@@ -43,8 +49,9 @@ namespace TechSmith.Hyde.Table
          }
       }
 
-      public static TableItem Create( dynamic entity, bool throwOnReservedPropertyName )
+      public static TableItem Create( dynamic entity, ReservedPropertyBehavior reservedPropertyBehavior = ReservedPropertyBehavior.Throw )
       {
+         bool throwOnReservedPropertyName = reservedPropertyBehavior == ReservedPropertyBehavior.Throw;
          TableItem item =  entity is IDynamicMetaObjectProvider ?
             CreateFromDynamicMetaObject( entity, throwOnReservedPropertyName ) :
             CreateFromType( entity, throwOnReservedPropertyName );
@@ -62,8 +69,9 @@ namespace TechSmith.Hyde.Table
          return item;
       }
 
-      public static TableItem Create( dynamic entity, string partitionKey, string rowKey, bool throwOnReservedPropertyName )
+      public static TableItem Create( dynamic entity, string partitionKey, string rowKey, ReservedPropertyBehavior reservedPropertyBehavior = ReservedPropertyBehavior.Throw )
       {
+         bool throwOnReservedPropertyName = reservedPropertyBehavior == ReservedPropertyBehavior.Throw;
          TableItem item = entity is IDynamicMetaObjectProvider ?
             CreateFromDynamicMetaObject( entity, throwOnReservedPropertyName ) :
             CreateFromType( entity, throwOnReservedPropertyName );
