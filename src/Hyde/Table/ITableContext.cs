@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table
 {
@@ -7,10 +8,10 @@ namespace TechSmith.Hyde.Table
    {
       // Implementation using generics and reflection.
       T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new();
-      IEnumerable<T> GetCollection<T>( string tableName ) where T : new();
-      IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new();
-      IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();
-      IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new();
+      IQuery<T> GetCollection<T>( string tableName ) where T : new();
+      IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new();
+      IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();
+      IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new();
 
       // Implemntation using dynamics.
       dynamic GetItem( string tableName, string partitionKey, string rowKey );

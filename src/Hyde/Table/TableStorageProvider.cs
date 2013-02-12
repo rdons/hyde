@@ -69,7 +69,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetItem( tableName, partitionKey, rowKey );
       }
 
-      public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return _context.GetCollection<T>( tableName, partitionKey );
       }
@@ -85,7 +85,7 @@ namespace TechSmith.Hyde.Table
       /// <typeparam name="T">type of the instances to return</typeparam>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
-      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
       {
          return _context.GetCollection<T>( tableName );
       }
@@ -106,7 +106,7 @@ namespace TechSmith.Hyde.Table
          return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return _context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
@@ -116,7 +116,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetRangeByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          return _context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }

@@ -28,29 +28,29 @@ namespace TechSmith.Hyde.Table.Azure
          return Get( tableName, partitionKey, rowKey ).ConvertTo<T>();
       }
 
-      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
       {
          string allPartitionAndRowsFilter = string.Empty;
-         return ExecuteFilterOnTable<T>( tableName, allPartitionAndRowsFilter );
+         return new AzureQuery<T>( Table( tableName ), allPartitionAndRowsFilter );
       }
 
-      public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
-         return ExecuteFilterOnTable<T>( tableName, allRowsInPartitonFilter );
+         return new AzureQuery<T>( Table( tableName ), allRowsInPartitonFilter );
       }
 
-      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          var lowerRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.GreaterThanOrEqual, partitionKeyLow );
          var higherRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.LessThanOrEqual, partitionKeyHigh );
 
          var rangePartitionFilter = TableQuery.CombineFilters( lowerRangePartitionFilter, TableOperators.And, higherRangePartitionFilter );
 
-         return ExecuteFilterOnTable<T>( tableName, rangePartitionFilter );
+         return new AzureQuery<T>( Table( tableName ), rangePartitionFilter );
       }
 
-      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          var partitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
          var lowerRangeRowFilter = TableQuery.GenerateFilterCondition( "RowKey", QueryComparisons.GreaterThanOrEqual, rowKeyLow );
@@ -60,7 +60,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          var fullRangeFilter = TableQuery.CombineFilters( partitionFilter, TableOperators.And, rangeRowFilter );
 
-         return ExecuteFilterOnTable<T>( tableName, fullRangeFilter );
+         return new AzureQuery<T>( Table( tableName ), fullRangeFilter );
       }
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
@@ -331,12 +331,6 @@ namespace TechSmith.Hyde.Table.Azure
          }
 
          return (GenericTableEntity)result.Result;
-      }
-
-      private IEnumerable<T> ExecuteFilterOnTable<T>( string tableName, string filter ) where T : new()
-      {
-         var query = new TableQuery<GenericTableEntity>().Where( filter );
-         return Table( tableName ).ExecuteQuery( query ).Select( e => e.ConvertTo<T>() );
       }
 
       private IEnumerable<dynamic> ExecuteFilterOnTable( string tableName, string filter )

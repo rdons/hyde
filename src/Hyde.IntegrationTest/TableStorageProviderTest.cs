@@ -1201,6 +1201,19 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsFalse( results.Any( i => i.Name == "three" ) );
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void GetCollection_ManyItemsInStore_TakeMethodReturnsProperAmount()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "a" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "b" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "c" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Take( 2 );
+         Assert.AreEqual( 2, result.Count() );
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty
