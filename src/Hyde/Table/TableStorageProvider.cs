@@ -95,7 +95,7 @@ namespace TechSmith.Hyde.Table
       /// </summary>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
-      public IEnumerable<dynamic> GetCollection( string tableName )
+      public IQuery<dynamic> GetCollection( string tableName )
       {
          return _context.GetCollection( tableName );
       }
@@ -111,7 +111,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
          return _context.GetRangeByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh );
       }
@@ -121,7 +121,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }
 
-      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
          return _context.GetRangeByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }

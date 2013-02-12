@@ -258,24 +258,24 @@ namespace TechSmith.Hyde.Table.Memory
          return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertToDynamic();
       }
 
-      public IEnumerable<dynamic> GetCollection( string tableName )
+      public IQuery<dynamic> GetCollection( string tableName )
       {
-         return GetEntities( tableName ).Select( e => e.ConvertToDynamic() );
+         return new MemoryQuery<dynamic>( GetEntities( tableName ).Select( e => e.ConvertToDynamic() ) );
       }
 
-      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return GetEntities( tableName, partitionKey ).Select( e => e.ConvertToDynamic() );
+         return new MemoryQuery<dynamic>( GetEntities( tableName, partitionKey ).Select( e => e.ConvertToDynamic() ) );
       }
 
-      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertToDynamic() );
+         return new MemoryQuery<dynamic>( GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertToDynamic() ) );
       }
 
-      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() );
+         return new MemoryQuery<dynamic>( GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )

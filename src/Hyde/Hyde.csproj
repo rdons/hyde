@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Table\Azure\AzureDynamicQuery.cs" />
     <Compile Include="Table\Azure\AzureQuery.cs" />
     <Compile Include="Table\Azure\AzureKeyValidator.cs" />
     <Compile Include="Table\AzureTableStorageProvider.cs" />

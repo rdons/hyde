@@ -15,10 +15,10 @@ namespace TechSmith.Hyde.Table
 
       // Implemntation using dynamics.
       dynamic GetItem( string tableName, string partitionKey, string rowKey );
-      IEnumerable<dynamic> GetCollection( string tableName );
-      IEnumerable<dynamic> GetCollection( string tableName, string partitionKey );
-      IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh );
-      IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh );
+      IQuery<dynamic> GetCollection( string tableName );
+      IQuery<dynamic> GetCollection( string tableName, string partitionKey );
+      IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh );
+      IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh );
       void AddNewItem( string tableName, TableItem tableItem );
       void Upsert( string tableName, TableItem tableItem );
       void Update( string tableName, TableItem tableItem );
