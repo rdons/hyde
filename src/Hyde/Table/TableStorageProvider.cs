@@ -5,11 +5,26 @@ namespace TechSmith.Hyde.Table
 {
    public abstract class TableStorageProvider
    {
+      // The maximum key value for a partition or row key is the largest unicode-16 character (\uFFFF) repeated 1024 times.
+      public readonly string MaximumKeyValue;
+      public const char HighestTableStorageUnicodeCharacter = '\uFFFF';
+
+      // The minimum key value for a partition or row key is a single space character ' '
+      public readonly string MinimumKeyValue = new string( new[] { LowestTableStorageUnicodeCharacter } );
+      public const char LowestTableStorageUnicodeCharacter = '\u0020';
+
       private readonly ITableContext _context;
 
       protected TableStorageProvider( ITableContext context )
       {
          _context = context;
+
+         var charArray = new char[1024];
+         for ( int i = 0; i < charArray.Length; i++ )
+         {
+            charArray[ i ] = HighestTableStorageUnicodeCharacter;
+         }
+         MaximumKeyValue = new string( charArray );
       }
 
       private TableItem.ReservedPropertyBehavior _reservedPropertyBehavior = TableItem.ReservedPropertyBehavior.Throw;

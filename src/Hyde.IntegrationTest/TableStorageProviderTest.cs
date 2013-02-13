@@ -1214,6 +1214,36 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 2, result.Count() );
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void GetCollection_ManyItemsInStore_MaxKeyValueAllowsUnboundedRangeQuery()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\uFFFF\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\uFFFF\uFFFF\uFFFF" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "\uFFFF\uFFFF", _tableStorageProvider.MaximumKeyValue );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      // This test fails on a local emulator but passes against an actual azure storage account.  The correct query is sent by the client, 
+      // but incorrect results are received from the emulator.
+      public void GetCollection_ManyItemsInStore_MinKeyValueAllowsUnboundedRangeQuery()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\u0020\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\u0020\u0020\u0020" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, _tableStorageProvider.MinimumKeyValue, "\u0020\u0020" );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty
