@@ -215,7 +215,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IQuery<T> GetCollection<T>( string tableName ) where T : new()
       {
-         return new MemoryQuery<T>( GetEntities( tableName ).Select( e => e.ConvertTo<T>() ) );
+         return new Query<T>( GetEntities( tableName ).Select( e => e.ConvertTo<T>() ) );
       }
 
       private IEnumerable<GenericTableEntity> GetEntities( string tableName, string partitionKey)
@@ -226,7 +226,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         return new MemoryQuery<T>( GetEntities( tableName, partitionKey)  .Select( e => e.ConvertTo<T>() ) );
+         return new Query<T>( GetEntities( tableName, partitionKey)  .Select( e => e.ConvertTo<T>() ) );
       }
 
       private IEnumerable<GenericTableEntity> GetEntitiesByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
@@ -238,7 +238,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         return new MemoryQuery<T>( GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertTo<T>() ) );
+         return new Query<T>( GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertTo<T>() ) );
       }
 
       private IEnumerable<GenericTableEntity> GetEntitiesByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
@@ -250,7 +250,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
-         return new MemoryQuery<T>( GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertTo<T>() ) );
+         return new Query<T>( GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertTo<T>() ) );
       }
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
@@ -260,22 +260,22 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IQuery<dynamic> GetCollection( string tableName )
       {
-         return new MemoryQuery<dynamic>( GetEntities( tableName ).Select( e => e.ConvertToDynamic() ) );
+         return new Query<dynamic>( GetEntities( tableName ).Select( e => e.ConvertToDynamic() ) );
       }
 
       public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return new MemoryQuery<dynamic>( GetEntities( tableName, partitionKey ).Select( e => e.ConvertToDynamic() ) );
+         return new Query<dynamic>( GetEntities( tableName, partitionKey ).Select( e => e.ConvertToDynamic() ) );
       }
 
       public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return new MemoryQuery<dynamic>( GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertToDynamic() ) );
+         return new Query<dynamic>( GetEntitiesByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh ).Select( e => e.ConvertToDynamic() ) );
       }
 
       public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return new MemoryQuery<dynamic>( GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() ) );
+         return new Query<dynamic>( GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )

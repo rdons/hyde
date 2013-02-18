@@ -1210,7 +1210,7 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "c" );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Take( 2 );
+         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Top( 2 );
          Assert.AreEqual( 2, result.Count() );
       }
 
@@ -1260,7 +1260,5 @@ namespace TechSmith.Hyde.IntegrationTest
          return dt1.Year == dt2.Year && dt1.Month == dt2.Month && dt1.Day == dt2.Day && dt1.Hour == dt2.Hour && dt1.Minute == dt2.Minute
                 && dt1.Second == dt2.Second && dt1.Kind == dt2.Kind;
       }
-
-      // TODO: Create a test that leverages filters (such as timestamp > or a Take(10)).
    }
 }

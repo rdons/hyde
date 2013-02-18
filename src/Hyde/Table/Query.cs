@@ -2,20 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TechSmith.Hyde.Table.Memory
+namespace TechSmith.Hyde.Table
 {
-   internal class MemoryQuery<T> : IQuery<T> where T : new()
+   public class Query<T> : IQuery<T> where T : new()
    {
       private IEnumerable<T> _results;
 
-      public MemoryQuery( IEnumerable<T> results )
+      public Query( IEnumerable<T> results )
       {
          _results = results;
       }
 
-      public IQuery<T> Take( int count )
+      public IQuery<T> Top( int count )
       {
-         return new MemoryQuery<T>( _results.Take( count ) );
+         return new Query<T>( _results.Take( count ) );
       }
 
       public IEnumerator<T> GetEnumerator()

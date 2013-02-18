@@ -5,12 +5,12 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Azure
 {
-   public class AzureQuery<T> : IQuery<T> where T : new()
+   internal class AzureQuery<T> : IQuery<T> where T : new()
    {
       private readonly CloudTable _table;
       private TableQuery<GenericTableEntity> _query;
 
-      public AzureQuery( CloudTable table, string filter )
+      internal AzureQuery( CloudTable table, string filter )
       {
          _table = table;
          _query = new TableQuery<GenericTableEntity>().Where( filter );
@@ -32,10 +32,11 @@ namespace TechSmith.Hyde.Table.Azure
          return GetEnumerator();
       }
 
-      public IQuery<T> Take( int count )
+      public IQuery<T> Top( int count )
       {
          return new AzureQuery<T>( _table, _query.Take( count ) );
       }
+
 
    }
 }

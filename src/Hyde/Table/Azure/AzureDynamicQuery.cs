@@ -16,7 +16,7 @@ namespace TechSmith.Hyde.Table.Azure
          _query = new TableQuery<GenericTableEntity>().Where( filter );
       }
 
-      public IQuery<object> Take( int count )
+      public IQuery<object> Top( int count )
       {
          _query = _query.Take( count );
          return this;

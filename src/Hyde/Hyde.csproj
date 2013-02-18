@@ -99,7 +99,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Common\PropertyInfoExtensions.cs" />
     <Compile Include="Common\DataAnnotations\RowKeyAttribute.cs" />
-    <Compile Include="Table\Memory\MemoryQuery.cs" />
+    <Compile Include="Table\DefaultQuery.cs" />
     <Compile Include="Table\Memory\MemoryTableContext.cs" />
     <Compile Include="Table\TableConstants.cs" />
     <Compile Include="Table\TableStorageProvider.cs" />
