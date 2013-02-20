@@ -11,7 +11,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      Fix AzureTableStorageProvider.SetConcurrentConnectionLimit, and allow manual configuration of connection limits
+      * Updating to Azure SDK 2.0.4
+      * Adding ability to retrieve just the Top n records from a query
+      * 'Range' queries now retrieve from entire the range of UTF-8 characters
+      * Handling dynamic objects with Partition/RowKey properties in a more friendly way
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
