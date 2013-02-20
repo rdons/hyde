@@ -759,13 +759,13 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void AddingAndRetreivingTypeWithSingleNullableBoolPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithNullableDateTimeTypeProperty
+         _tableStorageProvider.Add( _tableName, new TypeWithNullableBoolTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableDateTimeTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = _tableStorageProvider.Get<TypeWithNullableBoolTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
