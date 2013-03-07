@@ -11,10 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Updating to Azure SDK 2.0.4
-      * Adding ability to retrieve just the Top n records from a query
-      * 'Range' queries now retrieve from entire the range of UTF-8 characters
-      * Handling dynamic objects with Partition/RowKey properties in a more friendly way
+      * Added support for Merge. This works like an Update operation, but only changes the modified properties. It does not replace the entire record.
+      * Updated all GetCollection methods to support the Top operation.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
