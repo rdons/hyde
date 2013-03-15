@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Fixed a bug in MemoryTableContext related to not comparing strings ordinally.
+      * Previous bug fix in MemoryTableContext related to not comparing strings ordinally is now fixed for RowKeys *and* PartitionKeys.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
