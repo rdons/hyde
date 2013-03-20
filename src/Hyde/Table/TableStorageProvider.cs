@@ -115,6 +115,27 @@ namespace TechSmith.Hyde.Table
          return _context.GetCollection( tableName );
       }
 
+      /// <summary>
+      /// Create a query object that allows fluent filtering on partition and row keys.
+      /// </summary>
+      /// <typeparam name="T">type of the instances to return</typeparam>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>a fluent query object</returns>
+      public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
+      {
+         return _context.CreateQuery<T>( tableName );
+      }
+
+      /// <summary>
+      /// Create a query object that allows fluent filtering on partition and row keys.
+      /// </summary>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>a fluent query object</returns>
+      public IFilterable<dynamic> CreateQuery( string tableName )
+      {
+         return _context.CreateQuery( tableName );
+      }
+
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {

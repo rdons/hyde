@@ -52,6 +52,11 @@ namespace TechSmith.Hyde.Table.Azure
             .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
+      public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
+      {
+         return new AzureQuery<T>( Table( tableName ) );
+      }
+
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
       {
          return Get( tableName, partitionKey, rowKey ).ConvertToDynamic();
@@ -79,6 +84,11 @@ namespace TechSmith.Hyde.Table.Azure
          return new AzureDynamicQuery( Table( tableName ) )
             .PartitionKeyEquals( partitionKey )
             .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
+      }
+
+      public IFilterable<dynamic> CreateQuery( string tableName )
+      {
+         return new AzureDynamicQuery( Table( tableName ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )

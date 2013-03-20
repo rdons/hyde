@@ -254,6 +254,11 @@ namespace TechSmith.Hyde.Table.Memory
             .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
+      public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
+      {
+         return new MemoryQuery<T>( GetEntities( tableName ) );
+      }
+
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
       {
          return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertToDynamic();
@@ -281,6 +286,11 @@ namespace TechSmith.Hyde.Table.Memory
          return new DynamicMemoryQuery( GetEntities( tableName ) )
             .PartitionKeyEquals( partitionKey )
             .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
+      }
+
+      public IFilterable<dynamic> CreateQuery( string tableName )
+      {
+         return (IFilterable<dynamic>)new DynamicMemoryQuery( GetEntities( tableName ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )
