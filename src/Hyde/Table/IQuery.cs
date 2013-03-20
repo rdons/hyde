@@ -2,30 +2,24 @@
 
 namespace TechSmith.Hyde.Table
 {
-   public interface IFilterable<T> : IPkLowBoundedFilterable<T>
+   public interface IFilterable<T> : IPartitionKeyLowBoundedFilterable<T>
    {
-      IBoundChoice<IPkLowBoundedFilterable<T>> PartitionKeyFrom( string value );
-      IRkFilterable<T> PartitionKeyEquals( string value );
+      IBoundChoice<IPartitionKeyLowBoundedFilterable<T>> PartitionKeyFrom( string value );
+      IRowKeyFilterable<T> PartitionKeyEquals( string value );
    }
 
-   public interface IBoundChoice<T>
+   public interface IPartitionKeyLowBoundedFilterable<T> : IRowKeyFilterable<T>
    {
-      T Exclusive();
-      T Inclusive();
+      IBoundChoice<IRowKeyFilterable<T>> PartitionKeyTo( string value );
    }
 
-   public interface IPkLowBoundedFilterable<T> : IRkFilterable<T>
+   public interface IRowKeyFilterable<T> :IRowKeyLowBoundedFilterable<T>
    {
-      IBoundChoice<IRkFilterable<T>> PartitionKeyTo( string value );
-   }
-
-   public interface IRkFilterable<T> :IRkLowBoundedFilterable<T>
-   {
-      IBoundChoice<IRkLowBoundedFilterable<T>> RowKeyFrom( string value );
+      IBoundChoice<IRowKeyLowBoundedFilterable<T>> RowKeyFrom( string value );
       IQuery<T> RowKeyEquals( string value );
    }
 
-   public interface IRkLowBoundedFilterable<T> : IQuery<T>
+   public interface IRowKeyLowBoundedFilterable<T> : IQuery<T>
    {
       IBoundChoice<IQuery<T>> RowKeyTo( string value );
    }
@@ -33,5 +27,11 @@ namespace TechSmith.Hyde.Table
    public interface IQuery<T> : IEnumerable<T>
    {
       IEnumerable<T> Top( int count );
+   }
+
+   public interface IBoundChoice<T>
+   {
+      T Exclusive();
+      T Inclusive();
    }
 }

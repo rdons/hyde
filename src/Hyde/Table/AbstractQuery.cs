@@ -20,7 +20,7 @@ namespace TechSmith.Hyde.Table
          _query = previous._query;
       }
 
-      public IRkFilterable<T> PartitionKeyEquals( string value )
+      public IRowKeyFilterable<T> PartitionKeyEquals( string value )
       {
          var result = CreateCopy();
          result._query.PartitionKeyRange.Lower = new KeyBound { Value = value, IsInclusive = true };
@@ -28,10 +28,10 @@ namespace TechSmith.Hyde.Table
          return result;
       }
 
-      public IBoundChoice<IPkLowBoundedFilterable<T>> PartitionKeyFrom( string value )
+      public IBoundChoice<IPartitionKeyLowBoundedFilterable<T>> PartitionKeyFrom( string value )
       {
          var result = CreateCopy();
-         return new BoundChoice<IPkLowBoundedFilterable<T>>( isInclusive =>
+         return new BoundChoice<IPartitionKeyLowBoundedFilterable<T>>( isInclusive =>
          {
             result._query.PartitionKeyRange.Lower = new KeyBound { Value = value, IsInclusive = isInclusive };
             return result;
@@ -58,10 +58,10 @@ namespace TechSmith.Hyde.Table
          }
       }
 
-      public IBoundChoice<IRkFilterable<T>> PartitionKeyTo( string value )
+      public IBoundChoice<IRowKeyFilterable<T>> PartitionKeyTo( string value )
       {
          var result = CreateCopy();
-         return new BoundChoice<IRkFilterable<T>>( isInclusive =>
+         return new BoundChoice<IRowKeyFilterable<T>>( isInclusive =>
          {
             result._query.PartitionKeyRange.Upper = new KeyBound { Value = value, IsInclusive = isInclusive };
             return result;
@@ -76,10 +76,10 @@ namespace TechSmith.Hyde.Table
          return result;
       }
 
-      public IBoundChoice<IRkLowBoundedFilterable<T>> RowKeyFrom( string value )
+      public IBoundChoice<IRowKeyLowBoundedFilterable<T>> RowKeyFrom( string value )
       {
          var result = CreateCopy();
-         return new BoundChoice<IRkLowBoundedFilterable<T>>( isInclusive =>
+         return new BoundChoice<IRowKeyLowBoundedFilterable<T>>( isInclusive =>
          {
             result._query.RowKeyRange.Lower = new KeyBound { Value = value, IsInclusive = isInclusive };
             return result;

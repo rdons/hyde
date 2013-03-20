@@ -74,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Table\AbstractQuery.cs" />
+    <Compile Include="Table\Azure\AbstractAzureQuery.cs" />
     <Compile Include="Table\Azure\AzureDynamicQuery.cs" />
     <Compile Include="Table\Azure\AzureQuery.cs" />
     <Compile Include="Table\Azure\AzureKeyValidator.cs" />
