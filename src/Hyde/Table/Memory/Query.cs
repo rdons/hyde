@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TechSmith.Hyde.Table
+namespace TechSmith.Hyde.Table.Memory
 {
    public class Query<T> : IQuery<T> where T : new()
    {
