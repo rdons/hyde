@@ -12,18 +12,6 @@ namespace TechSmith.Hyde.Table.Memory
       {
          private readonly Dictionary<string, GenericTableEntity> _entities = new Dictionary<string, GenericTableEntity>();
 
-         public GenericTableEntity GetEntity( string rowKey )
-         {
-            lock ( _entities )
-            {
-               if ( ! _entities.ContainsKey( rowKey ) )
-               {
-                  throw new EntityDoesNotExistException();
-               }
-               return _entities[rowKey];
-            }
-         }
-
          public void Add( GenericTableEntity entity )
          {
             AzureKeyValidator.ValidatePartitionKey( entity.PartitionKey );
@@ -219,73 +207,15 @@ namespace TechSmith.Hyde.Table.Memory
          _tables = new StorageAccount();
       }
 
-      public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
-      {
-         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertTo<T>();
-      }
-
       private IEnumerable<GenericTableEntity> GetEntities( string tableName )
       {
          return _tables.GetTable( tableName ).GetAllPartitions().SelectMany( p => p.GetAll() )
                        .OrderBy( e => e.PartitionKey ).ThenBy( e => e.RowKey );
       }
 
-      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
-      {
-         return new MemoryQuery<T>( GetEntities( tableName ) );
-      }
-
-      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
-      {
-         return new MemoryQuery<T>( GetEntities( tableName ) ).PartitionKeyEquals( partitionKey );
-      }
-
-      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return new MemoryQuery<T>( GetEntities( tableName ) )
-            .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-            .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
-      {
-         return new MemoryQuery<T>( GetEntities( tableName ) )
-            .PartitionKeyEquals( partitionKey )
-            .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
-      }
-
       public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
       {
          return new MemoryQuery<T>( GetEntities( tableName ) );
-      }
-
-      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
-      {
-         return _tables.GetTable( tableName ).GetPartition( partitionKey ).GetEntity( rowKey ).ConvertToDynamic();
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName )
-      {
-         return (IQuery<dynamic>)new DynamicMemoryQuery( GetEntities( tableName ) );
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
-      {
-         return new DynamicMemoryQuery( GetEntities( tableName ) ).PartitionKeyEquals( partitionKey );
-      }
-
-      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
-      {
-         return new DynamicMemoryQuery( GetEntities( tableName ) )
-            .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-            .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
-      {
-         return new DynamicMemoryQuery( GetEntities( tableName ) )
-            .PartitionKeyEquals( partitionKey )
-            .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
       public IFilterable<dynamic> CreateQuery( string tableName )
@@ -393,11 +323,6 @@ namespace TechSmith.Hyde.Table.Memory
             }
             _tables = resultingTables;
          }
-      }
-
-      public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
    }
 }

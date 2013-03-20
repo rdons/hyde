@@ -23,67 +23,9 @@ namespace TechSmith.Hyde.Table.Azure
          _storageAccount = storageAccount;
       }
 
-      public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
-      {
-         return Get( tableName, partitionKey, rowKey ).ConvertTo<T>();
-      }
-
-      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
-      {
-         return new AzureQuery<T>( Table( tableName ) );
-      }
-
-      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
-      {
-         return new AzureQuery<T>( Table( tableName ) ).PartitionKeyEquals( partitionKey );
-      }
-
-      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return new AzureQuery<T>( Table( tableName ) )
-            .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-            .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
-      {
-         return new AzureQuery<T>( Table( tableName ) )
-            .PartitionKeyEquals( partitionKey )
-            .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
-      }
-
       public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
       {
          return new AzureQuery<T>( Table( tableName ) );
-      }
-
-      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
-      {
-         return Get( tableName, partitionKey, rowKey ).ConvertToDynamic();
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName )
-      {
-         return new AzureDynamicQuery( Table( tableName ) );
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
-      {
-         return new AzureDynamicQuery( Table( tableName ) ).PartitionKeyEquals( partitionKey );
-      }
-
-      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
-      {
-         return new AzureDynamicQuery( Table( tableName ) )
-            .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-            .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
-      {
-         return new AzureDynamicQuery( Table( tableName ) )
-            .PartitionKeyEquals( partitionKey )
-            .RowKeyFrom( rowKeyLow ).Inclusive().RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
       public IFilterable<dynamic> CreateQuery( string tableName )
@@ -308,26 +250,6 @@ namespace TechSmith.Hyde.Table.Azure
          {
             ExecuteBatchHandlingExceptions( tables[0], batchOp );
          }
-      }
-
-      [Obsolete( "Use GetRangeByPartitionKey instead." )]
-      public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
-      }
-
-      private GenericTableEntity Get( string tableName, string partitionKey, string rowKey )
-      {
-         var retrieveOperation = TableOperation.Retrieve<GenericTableEntity>( partitionKey, rowKey );
-
-         var result = Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
-
-         if ( result.Result == null )
-         {
-            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
-         }
-
-         return (GenericTableEntity)result.Result;
       }
 
       private CloudTable Table( string tableName )
