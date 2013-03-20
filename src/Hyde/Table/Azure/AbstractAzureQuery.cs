@@ -36,7 +36,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          var filterStr = BuildFilterExpr( "PartitionKey", _query.PartitionKeyRange );
          var rkFilterStr = BuildFilterExpr( "RowKey", _query.RowKeyRange );
-         if ( string.IsNullOrEmpty( rkFilterStr ) )
+         if ( !string.IsNullOrEmpty( rkFilterStr ) )
          {
             filterStr = string.IsNullOrEmpty( filterStr )
                            ? rkFilterStr
