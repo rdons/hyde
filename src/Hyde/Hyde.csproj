@@ -91,7 +91,9 @@
     <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
-    <Compile Include="Table\Memory\Query.cs" />
+    <Compile Include="Table\Memory\AbstractMemoryQuery.cs" />
+    <Compile Include="Table\Memory\DynamicMemoryQuery.cs" />
+    <Compile Include="Table\Memory\MemoryQuery.cs" />
     <Compile Include="Table\QueryDescriptor.cs" />
     <Compile Include="Table\TableItem.cs" />
     <Compile Include="Table\Execute.cs" />
