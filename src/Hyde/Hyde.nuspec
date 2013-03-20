@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Previous bug fix in MemoryTableContext related to not comparing strings ordinally is now fixed for RowKeys *and* PartitionKeys.
+      * Added fluent interface for querying. This replaces all old Get* methods which are now deprecated.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
