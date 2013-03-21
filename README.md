@@ -7,7 +7,8 @@ Object to Entity mapper for Windows Azure, it **hy**drates and **de**hydrates ob
  * Super simple access to Azure Table Storage. Use your existing POCO C# objects and map Table Storage entities to them.
  * Easily unit test your code that accesses Table Storage with an in-memory test double. No complicated mocks or stubs required!
  * Automatically batches large reads & writes to optimize common operations.
- * Handles quirks of your local Azure emulator for you. (Upserts work locally!)
+ * Easily compose complex queries using the fluent interface.
+ * Handles quirks of your local Azure emulator for you.
 
 ### Basic Example
 
@@ -27,7 +28,9 @@ public class Color
 var storageAccount = new ConnectionStringCloudStorageAccount( "YourConnectionStringHere" );
 var tableStorage = new AzureTableStorageProvider( storageAccount );
 
-var color = tableStorage.Get<Color>( "MyColorsTable", "Red", "Crimson" );
+var color = tableStorage.CreateQuery<Color>( "MyColorsTable" )
+                        .PartitionKeyEquals( "Red" )
+                        .RowKeyEquals( "Crimson" );
 
 ```
 
