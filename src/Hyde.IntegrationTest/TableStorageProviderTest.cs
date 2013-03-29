@@ -346,12 +346,12 @@ namespace TechSmith.Hyde.IntegrationTest
             };
 
             _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey + dataItem.FirstType );
-            _tableStorageProvider.Save();
          }
+         _tableStorageProvider.Save( Execute.InBatches );
 
 
          _tableStorageProvider.DeleteCollection( _tableName, _partitionKey );
-         _tableStorageProvider.Save();
+         _tableStorageProvider.Save( Execute.InBatches );
 
          var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
 
@@ -832,8 +832,8 @@ namespace TechSmith.Hyde.IntegrationTest
             {
                FirstType = i
             }, _partitionKey, i.ToString() );
-            _tableStorageProvider.Save();
          }
+         _tableStorageProvider.Save( Execute.InBatches );
 
          var result = _tableStorageProvider.GetCollection<TypeWithIntProperty>( _tableName, _partitionKey );
          Assert.AreEqual( 1100, result.Count() );
