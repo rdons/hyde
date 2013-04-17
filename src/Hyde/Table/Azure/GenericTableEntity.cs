@@ -130,13 +130,21 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( KeyValuePair<string, Tuple<object, Type>> property in properties )
          {
             Type propertyType = property.Value.Item2;
-            if ( !_typeToEntityPropertyFunctions.ContainsKey( propertyType ) )
+            if ( !_typeToEntityPropertyFunctions.ContainsKey( propertyType ) && !propertyType.IsEnum )
             {
                throw new NotSupportedException( "The type " + propertyType + " is not supported." );
             }
 
-            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[propertyType];
-            entityProperties[property.Key] = objectToEntityPropertyConverter( property.Value.Item1 );
+            if ( propertyType.IsEnum )
+            {
+               Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[typeof( int )];
+               entityProperties[property.Key] = objectToEntityPropertyConverter( (int) property.Value.Item1 );
+            }
+            else
+            {
+               Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[propertyType];
+               entityProperties[property.Key] = objectToEntityPropertyConverter( property.Value.Item1 );
+            }
          }
 
          return entityProperties;
@@ -191,10 +199,33 @@ namespace TechSmith.Hyde.Table.Azure
             return;
          }
 
-         Func<EntityProperty, object> funcToCall = _typeToValueFunctions[typeProperty.PropertyType];
-         object propertyValue = funcToCall( _properties[typeProperty.Name] );
+         if ( typeProperty.PropertyType.IsEnum )
+         {
+            Func<EntityProperty, object> funcToCall = _typeToValueFunctions[typeof( int )];
+            int enumValueAsInt = (int) funcToCall( _properties[typeProperty.Name] );
 
-         typeProperty.SetValue( newItem, propertyValue, null );
+            if ( Enum.IsDefined( typeProperty.PropertyType, enumValueAsInt ) )
+            {
+               typeProperty.SetValue( newItem, Enum.ToObject( typeProperty.PropertyType, enumValueAsInt ), null );
+            }
+            else
+            {
+               Array enumValues = Enum.GetValues( typeProperty.PropertyType );
+               if ( enumValues.Length > 0 )
+               {
+                  var value = enumValues.GetValue( 0 );
+                  typeProperty.SetValue( newItem, value, null );
+               }
+            }
+         }
+         else
+         {
+            Func<EntityProperty, object> funcToCall = _typeToValueFunctions[typeProperty.PropertyType];
+            object propertyValue = funcToCall( _properties[typeProperty.Name] );
+
+            typeProperty.SetValue( newItem, propertyValue, null );
+         }
+
       }
 
       private void SetRowKeyAndPartitionKeyOnObject<T>( T newItem ) where T : new()
