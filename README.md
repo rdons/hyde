@@ -39,6 +39,10 @@ More examples and getting started help can be found [on the wiki](https://github
 ###License
 BSD 3-Clause, see http://www.opensource.org/licenses/BSD-3-Clause
 
+### Getting started with development
+ 1. The first step is to get your developer machine setup. The easiest way to do so is to [run the machine setup script](tools/machinesetup.bat)
+ 1. Finally, farmiliarize yourself with the submission guidelines below.
+
 ### Submission guidelines
 Follow these guidelines, in no particular order, to improve your chances of having a pull request merged in.
 
