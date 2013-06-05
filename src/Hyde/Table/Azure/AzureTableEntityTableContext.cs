@@ -148,7 +148,7 @@ namespace TechSmith.Hyde.Table.Azure
                }
                case Execute.InBatches:
                {
-                  throw new NotImplementedException();
+                  return SaveBatchAsync( new List<ExecutableTableOperation>( _operations ) );
                }
                case Execute.Atomically:
                {
@@ -263,7 +263,8 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
+      private static List<List<ExecutableTableOperation>> ValidateAndSplitIntoBatches(
+         IEnumerable<ExecutableTableOperation> operations )
       {
          // For two operations to appear in the same batch...
          Func<ExecutableTableOperation, ExecutableTableOperation, bool> canBatch = ( op1, op2 ) =>
@@ -288,8 +289,12 @@ namespace TechSmith.Hyde.Table.Azure
             }
             batches.Last().Add( nextOp );
          }
+         return batches;
+      }
 
-         foreach ( var batch in batches )
+      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
+      {
+         foreach ( var batch in ValidateAndSplitIntoBatches( operations ) )
          {
             // No need to use an EGT for a single operation.
             if ( batch.Count == 1 )
@@ -308,6 +313,25 @@ namespace TechSmith.Hyde.Table.Azure
       {
          HandleTableStorageExceptions( false, () =>
             table.ExecuteBatch( batchOperation, _retriableTableRequest ) );
+      }
+
+      private Task SaveBatchAsync( IEnumerable<ExecutableTableOperation> operations )
+      {
+         var batches = ValidateAndSplitIntoBatches( operations );
+         Func<List<ExecutableTableOperation>, Func<Task>> toAsyncFunc = ops =>
+            () => SaveAtomicallyAsync(ops);
+         var asyncFuncs = batches.Select( toAsyncFunc ).ToList();
+
+         var task = asyncFuncs[0]();
+         for ( int i = 1; i < asyncFuncs.Count; ++i )
+         {
+            var funcNum = i;
+            task = task.ContinueWith( t => t.Status == TaskStatus.RanToCompletion
+                                           ? asyncFuncs[funcNum]()
+                                           : CreateCompletedTask() )
+                       .Unwrap();
+         }
+         return task;
       }
 
       private void SaveAtomically( IEnumerable<ExecutableTableOperation> ops )
