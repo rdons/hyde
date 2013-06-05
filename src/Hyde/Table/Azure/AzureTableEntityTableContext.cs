@@ -152,7 +152,7 @@ namespace TechSmith.Hyde.Table.Azure
                }
                case Execute.Atomically:
                {
-                  throw new NotImplementedException();
+                  return SaveAtomicallyAsync( new List<ExecutableTableOperation>( _operations ) );
                }
                default:
                {
@@ -298,23 +298,29 @@ namespace TechSmith.Hyde.Table.Azure
                continue;
             }
 
-            var batchOperation = new TableBatchOperation();
-            var table = batch.First().Table;
-            foreach ( var op in batch )
-            {
-               batchOperation.Add( op.Operation );
-            }
+            CloudTable table;
+            var batchOperation = ValidateAndCreateBatchOp( batch, out table );
             ExecuteBatchHandlingExceptions( table, batchOperation );
          }
       }
 
-      private void ExecuteBatchHandlingExceptions( string table, TableBatchOperation batchOperation )
+      private void ExecuteBatchHandlingExceptions( CloudTable table, TableBatchOperation batchOperation )
       {
          HandleTableStorageExceptions( false, () =>
-            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
+            table.ExecuteBatch( batchOperation, _retriableTableRequest ) );
       }
 
       private void SaveAtomically( IEnumerable<ExecutableTableOperation> ops )
+      {
+         CloudTable table;
+         var batchOp = ValidateAndCreateBatchOp( ops, out table );
+         if ( batchOp.Count > 0 )
+         {
+            ExecuteBatchHandlingExceptions( table, batchOp );
+         }
+      }
+
+      private TableBatchOperation ValidateAndCreateBatchOp( IEnumerable<ExecutableTableOperation> ops, out CloudTable table )
       {
          var operations = ops.ToList();
          var partitionKeys = operations.Select( op => op.PartitionKey ).Distinct();
@@ -334,10 +340,24 @@ namespace TechSmith.Hyde.Table.Azure
          {
             batchOp.Add( op.Operation );
          }
-         if ( batchOp.Count > 0 )
+         table = batchOp.Count == 0 ? null : Table( tables[0] );
+         return batchOp;
+      }
+
+      private Task SaveAtomicallyAsync( IEnumerable<ExecutableTableOperation> ops )
+      {
+         CloudTable table;
+         var batchOp = ValidateAndCreateBatchOp( ops, out table );
+         if ( batchOp.Count == 0 )
          {
-            ExecuteBatchHandlingExceptions( tables[0], batchOp );
+            return CreateCompletedTask();
          }
+
+         var asyncResult = table.BeginExecuteBatch( batchOp, null, null );
+
+         return Task.Factory.FromAsync( asyncResult,
+            result => HandleTableStorageExceptions( false, () =>
+               table.EndExecuteBatch( result ) ) );
       }
 
       private CloudTable Table( string tableName )
