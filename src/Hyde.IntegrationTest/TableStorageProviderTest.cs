@@ -606,7 +606,7 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsTrue( DateTimesPrettyMuchEqual( dateTime, result.FirstType ) );
       }
 
-      [TestMethod]
+      [TestCategory( "Integration" ), TestMethod]
       public void AddingAndRetreivingTypeWithSingleDateTimeProperty_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
       {
          var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
@@ -623,7 +623,7 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );  
       }
 
-      [TestMethod]
+      [TestCategory( "Integration" ), TestMethod]
       public void AddingAndRetreivingTypeWithSingleDateTimeOffsetProperty_EntityHasLocalDateTimeStoredInOffset_DateOffsetIsRetrieved()
       {
          var theDateTime = new DateTime( 635055151618936589, DateTimeKind.Local );
