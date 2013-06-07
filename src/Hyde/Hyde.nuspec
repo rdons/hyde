@@ -11,7 +11,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Added support for (de)serializing Enums.
+      * Added support for Asynchronous reads and writes
+      * Added support for (de)serializing DateTimeOffset.
+      * Fixed bug related to how DateTime values were being retrieved.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
