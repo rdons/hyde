@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -1432,6 +1433,25 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      [ExpectedException(typeof(InvalidOperationException))]
+      public void Add_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
+      {
+         if ( IsDevelopmentStorageAccount( _storageAccount ) )
+         {
+            Assert.Inconclusive( "This behavior does not occur on a development storage account." );
+         }
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Save();
+      }
+
+      private bool IsDevelopmentStorageAccount( ICloudStorageAccount storageAccount )
+      {
+         return storageAccount.Credentials.AccountName == CloudStorageAccount.DevelopmentStorageAccount.Credentials.AccountName;
       }
 
       private void EnsureOneItemInTableStorage()
