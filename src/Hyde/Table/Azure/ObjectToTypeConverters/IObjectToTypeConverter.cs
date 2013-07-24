@@ -130,6 +130,10 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
             DateTimeOffset? value = null;
             if ( date.HasValue )
             {
+               if ( date.Value < TableStorageProvider.MinimumSupportedDateTime )
+               {
+                  throw new InvalidOperationException( "Object contains a DateTime value that falls below the range supported by Table Storage." );
+               }
                value = new DateTimeOffset( date.Value );
             }
             return new EntityProperty( value );
@@ -141,7 +145,18 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    internal class DateTimeOffsetConverter : ValueTypeConverter<DateTimeOffset>
    {
       public DateTimeOffsetConverter()
-         : base( ep => ep.DateTimeOffsetValue, o => new EntityProperty( (DateTimeOffset?) o ) )
+         : base( ep => ep.DateTimeOffsetValue, o =>
+         {
+            var dateTimeOffset = (DateTimeOffset?) o;
+            if ( dateTimeOffset.HasValue )
+            {
+               if ( dateTimeOffset.Value < TableStorageProvider.MinimumSupportedDateTimeOffset )
+               {
+                  throw new InvalidOperationException( "Object contains a DateTimeOffset value that falls below the range supported by Table Storage." );
+               }
+            }
+            return new EntityProperty( dateTimeOffset );
+         } )
       {
       }
    }

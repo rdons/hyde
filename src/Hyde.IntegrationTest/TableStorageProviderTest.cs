@@ -1440,18 +1440,22 @@ namespace TechSmith.Hyde.IntegrationTest
       [ExpectedException(typeof(InvalidOperationException))]
       public void Add_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
       {
-         if ( IsDevelopmentStorageAccount( _storageAccount ) )
-         {
-            Assert.Inconclusive( "This behavior does not occur on a development storage account." );
-         }
-
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
-         _tableStorageProvider.Save();
       }
 
-      private bool IsDevelopmentStorageAccount( ICloudStorageAccount storageAccount )
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Add_CSharpDateTimeMinSupported_DoesNotThrow()
       {
-         return storageAccount.Credentials.AccountName == CloudStorageAccount.DevelopmentStorageAccount.Credentials.AccountName;
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Save_CSharpDateTimeMinSupported_DoesNotThrow()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+         _tableStorageProvider.Save();
       }
 
       private void EnsureOneItemInTableStorage()

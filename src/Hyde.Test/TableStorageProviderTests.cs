@@ -1100,6 +1100,29 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( expectedCount, items.Count() );
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      [ExpectedException(typeof(InvalidOperationException))]
+      public void Add_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Add_CSharpDateTimeMinSupported_DoesNotThrow()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Save_CSharpDateTimeMinSupported_DoesNotThrow()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+         _tableStorageProvider.Save();
+      }
+
       private void EnsureItemsInContext( TableStorageProvider tableStorageProvider, int count )
       {
          for ( int i = 0; i < count; i++ )
