@@ -132,7 +132,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
             {
                if ( date.Value < TableStorageProvider.MinimumSupportedDateTime )
                {
-                  throw new InvalidOperationException( "Object contains a DateTime value that falls below the range supported by Table Storage." );
+                  throw new ArgumentOutOfRangeException( "Object contains a DateTime value that falls below the range supported by Table Storage." );
                }
                value = new DateTimeOffset( date.Value );
             }
@@ -152,7 +152,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
             {
                if ( dateTimeOffset.Value < TableStorageProvider.MinimumSupportedDateTimeOffset )
                {
-                  throw new InvalidOperationException( "Object contains a DateTimeOffset value that falls below the range supported by Table Storage." );
+                  throw new ArgumentOutOfRangeException( "Object contains a DateTimeOffset value that falls below the range supported by Table Storage." );
                }
             }
             return new EntityProperty( dateTimeOffset );

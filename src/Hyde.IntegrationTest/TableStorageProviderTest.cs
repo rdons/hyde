@@ -1437,7 +1437,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      [ExpectedException(typeof(InvalidOperationException))]
+      [ExpectedException(typeof(ArgumentOutOfRangeException))]
       public void Add_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
