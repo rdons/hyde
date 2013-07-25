@@ -1459,6 +1459,17 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void WriteOperations_CSharpDateTimeMaxValue_DoesNotThrow()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Save();
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty
