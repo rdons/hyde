@@ -134,6 +134,11 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                {
                   throw new ArgumentOutOfRangeException( "Object contains a DateTime value that falls below the range supported by Table Storage." );
                }
+
+               if( date.Value.Kind == DateTimeKind.Unspecified )
+               {
+                  date = new DateTime( date.Value.Ticks, DateTimeKind.Utc );
+               }
                value = new DateTimeOffset( date.Value );
             }
             return new EntityProperty( value );
