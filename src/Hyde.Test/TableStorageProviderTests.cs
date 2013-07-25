@@ -1100,26 +1100,26 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( expectedCount, items.Count() );
       }
 
+
       [TestMethod]
-      [TestCategory( "Integration" )]
-      [ExpectedException(typeof(ArgumentOutOfRangeException))]
-      public void Add_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
+      public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         int exceptionCount = 0;
+         try { _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
+         try { _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
+         try { _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
+         try { _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
+
+         Assert.AreEqual( 4, exceptionCount  );
       }
 
       [TestMethod]
-      [TestCategory( "Integration" )]
-      public void Add_CSharpDateTimeMinSupported_DoesNotThrow()
+      public void WriteOperations_CSharpDateTimeMinSupported_DoesNotThrow()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
-      }
-
-      [TestMethod]
-      [TestCategory( "Integration" )]
-      public void Save_CSharpDateTimeMinSupported_DoesNotThrow()
-      {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = TableStorageProvider.MinimumSupportedDateTime } );
          _tableStorageProvider.Save();
       }
 
