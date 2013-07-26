@@ -181,14 +181,32 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       internal static readonly DateTimeOffset MinimumSupportedDateTimeOffset = new DateTimeOffset( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, offset: TimeSpan.FromTicks( 0 ) );
 
       public DateTimeOffsetConverter()
-         : base( ep => ep.DateTimeOffsetValue, o =>
+         : base( ep =>
+         {
+            try
+            {
+               if ( ep.DateTimeOffsetValue.HasValue )
+               {
+                  return ep.DateTimeOffsetValue.Value.UtcDateTime;
+               }
+            }
+            catch ( InvalidOperationException )
+            {
+               DateTimeOffset fromString;
+               DateTimeOffset.TryParse( ep.StringValue, out fromString );
+               return fromString;
+            }
+            return null;
+         }, o =>
          {
             var dateTimeOffset = (DateTimeOffset?) o;
             if ( dateTimeOffset.HasValue )
             {
+               // For dates that table storage cannot support with an Edm type, we store them as a string
                if ( dateTimeOffset.Value < MinimumSupportedDateTimeOffset )
                {
-                  throw new ArgumentOutOfRangeException( "Object contains a DateTimeOffset value that falls below the range supported by Table Storage." );
+                  var stringValue = dateTimeOffset.Value.ToString( CultureInfo.InvariantCulture );
+                  return new EntityProperty( stringValue );
                }
             }
             return new EntityProperty( dateTimeOffset );
