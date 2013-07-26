@@ -1100,17 +1100,17 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( expectedCount, items.Count() );
       }
 
-
       [TestMethod]
-      public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_ThrowsException()
+      public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
       {
-         int exceptionCount = 0;
-         try { _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
-         try { _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
-         try { _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
-         try { _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); } catch ( ArgumentOutOfRangeException ) { exceptionCount++; }
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) }); 
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Save();
 
-         Assert.AreEqual( 4, exceptionCount  );
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.IsTrue( retrievedItem.CreationDate.Year == ( DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year );
       }
 
       [TestMethod]

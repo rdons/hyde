@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -124,23 +125,44 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    internal class DateTimeConverter : ValueTypeConverter<DateTime>
    {
       public DateTimeConverter()
-         : base( ep => ep.DateTimeOffsetValue.HasValue ? ep.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null, o =>
+         : base( 
+         ep =>
+         {
+            try
+            {
+               if ( ep.DateTimeOffsetValue.HasValue )
+               {
+                  return ep.DateTimeOffsetValue.Value.UtcDateTime;
+               }
+            }
+            catch ( InvalidOperationException )
+            {
+               DateTimeOffset fromString;
+               DateTimeOffset.TryParse( ep.StringValue, out fromString );
+               return fromString.UtcDateTime;
+            }
+            return null;
+         }, 
+         o =>
          {
             var date = (DateTime?) o;
             DateTimeOffset? value = null;
             if ( date.HasValue )
             {
-               if ( date.Value < TableStorageProvider.MinimumSupportedDateTime )
-               {
-                  throw new ArgumentOutOfRangeException( "Object contains a DateTime value that falls below the range supported by Table Storage." );
-               }
-
                if( date.Value.Kind == DateTimeKind.Unspecified )
                {
                   date = new DateTime( date.Value.Ticks, DateTimeKind.Utc );
                }
+
                value = new DateTimeOffset( date.Value );
-            }
+               // For dates that table storage cannot support with an Edm type, we store them as a string
+               if ( date.Value < TableStorageProvider.MinimumSupportedDateTime )
+               {
+                  var stringValue = value.Value.ToString();
+                  return new EntityProperty( stringValue );
+               }
+           }
+
             return new EntityProperty( value );
          } )
       {
