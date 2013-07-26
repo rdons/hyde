@@ -123,7 +123,11 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    }
 
    internal class DateTimeConverter : ValueTypeConverter<DateTime>
-   {
+   {      
+      // The minimum datetime value allowable by Table Storage.
+      // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
+      // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
+      internal static readonly DateTime MinimumSupportedDateTime = new DateTime( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc );
       public DateTimeConverter()
          : base( 
          ep =>
@@ -156,7 +160,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
                value = new DateTimeOffset( date.Value );
                // For dates that table storage cannot support with an Edm type, we store them as a string
-               if ( date.Value < TableStorageProvider.MinimumSupportedDateTime )
+               if ( date.Value < MinimumSupportedDateTime )
                {
                   var stringValue = value.Value.ToString();
                   return new EntityProperty( stringValue );
@@ -171,13 +175,18 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
    internal class DateTimeOffsetConverter : ValueTypeConverter<DateTimeOffset>
    {
+      // The minimum datetime value allowable by Table Storage.
+      // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
+      // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
+      internal static readonly DateTimeOffset MinimumSupportedDateTimeOffset = new DateTimeOffset( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, offset: TimeSpan.FromTicks( 0 ) );
+
       public DateTimeOffsetConverter()
          : base( ep => ep.DateTimeOffsetValue, o =>
          {
             var dateTimeOffset = (DateTimeOffset?) o;
             if ( dateTimeOffset.HasValue )
             {
-               if ( dateTimeOffset.Value < TableStorageProvider.MinimumSupportedDateTimeOffset )
+               if ( dateTimeOffset.Value < MinimumSupportedDateTimeOffset )
                {
                   throw new ArgumentOutOfRangeException( "Object contains a DateTimeOffset value that falls below the range supported by Table Storage." );
                }

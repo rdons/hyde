@@ -16,13 +16,6 @@ namespace TechSmith.Hyde.Table
       public readonly string MinimumKeyValue = new string( new[] { LowestTableStorageUnicodeCharacter } );
       public const char LowestTableStorageUnicodeCharacter = '\u0020';
 
-      // The minimum datetime value allowable by Table Storage.
-      // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
-      // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
-      public static readonly DateTime MinimumSupportedDateTime = new DateTime( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc );
-
-      public static readonly DateTimeOffset MinimumSupportedDateTimeOffset = new DateTimeOffset( MinimumSupportedDateTime );
-
       private readonly ITableContext _context;
 
       protected TableStorageProvider( ITableContext context )
