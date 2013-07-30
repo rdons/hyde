@@ -165,7 +165,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                // For dates that table storage cannot support with an Edm type, we store them as a string
                if ( date.Value < MinimumSupportedDateTime )
                {
-                  var stringValue = value.Value.ToString();
+                  var stringValue = value.Value.ToString( "O" );
                   return new EntityProperty( stringValue );
                }
            }
@@ -211,7 +211,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                // For dates that table storage cannot support with an Edm type, we store them as a string
                if ( dateTimeOffset.Value < MinimumSupportedDateTimeOffset )
                {
-                  var stringValue = dateTimeOffset.Value.ToString( CultureInfo.InvariantCulture );
+                  var stringValue = dateTimeOffset.Value.ToString( "O" );
                   return new EntityProperty( stringValue );
                }
             }
