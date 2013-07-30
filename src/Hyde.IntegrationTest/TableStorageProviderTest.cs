@@ -1451,13 +1451,16 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void WriteOperations_CSharpDateTimeMaxValue_DoesNotThrow()
+      public void WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
          _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
          _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
          _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
          _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.AreEqual( DateTime.MaxValue, retrievedItem.CreationDate );
       }
 
       private void EnsureOneItemInTableStorage()
