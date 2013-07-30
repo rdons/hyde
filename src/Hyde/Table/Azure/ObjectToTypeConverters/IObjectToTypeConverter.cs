@@ -144,7 +144,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                DateTimeOffset fromString;
                if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
                {
-                  throw new InvalidOperationException( "Unable to parse table storage data as DateTime." );
+                  throw;
                }
                return fromString.UtcDateTime;
             }
@@ -198,7 +198,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                DateTimeOffset fromString;
                if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
                {
-                  throw new InvalidOperationException( "Unable to parse table storage data as DateTimeOffset." );
+                  throw;
                }
                return fromString;
             }
