@@ -1110,7 +1110,7 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Save();
 
          var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
-         Assert.IsTrue( retrievedItem.CreationDate.Year == ( DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year );
+         Assert.AreEqual( (DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year, retrievedItem.CreationDate.Year );
       }
 
       [TestMethod]
