@@ -132,22 +132,32 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
          : base( 
          ep =>
          {
-            try
+            switch ( ep.PropertyType )
             {
-               if ( ep.DateTimeOffsetValue.HasValue )
+               case EdmType.DateTime:
                {
-                  return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                  if ( ep.DateTimeOffsetValue.HasValue )
+                  {
+                     return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                  }
+                  break;
+               }
+               case EdmType.String:
+               {
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTime." );
+                  }
+                  return fromString.UtcDateTime;
+               }
+
+               default:
+               {
+                  throw new InvalidOperationException( "Cannot interpret entity property as a DateTime." );
                }
             }
-            catch ( InvalidOperationException )
-            {
-               DateTimeOffset fromString;
-               if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
-               {
-                  throw;
-               }
-               return fromString.UtcDateTime;
-            }
+
             return null;
          }, 
          o =>
@@ -186,22 +196,33 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       public DateTimeOffsetConverter()
          : base( ep =>
          {
-            try
+            switch ( ep.PropertyType )
             {
-               if ( ep.DateTimeOffsetValue.HasValue )
+               case EdmType.DateTime:
                {
-                  return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                  if ( ep.DateTimeOffsetValue.HasValue )
+                  {
+                     return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                  }
+                  break;
+               }
+
+               case EdmType.String:
+               {
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
+                  }
+                  return fromString;
+               }
+
+               default:
+               {
+                  throw new InvalidOperationException( "Cannot interpret entity property as a DateTime." );
                }
             }
-            catch ( InvalidOperationException )
-            {
-               DateTimeOffset fromString;
-               if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
-               {
-                  throw;
-               }
-               return fromString;
-            }
+
             return null;
          }, o =>
          {
