@@ -1450,6 +1450,20 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
+      [TestCategory("Integration")]
+      public void WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); 
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.AreEqual( DateTime.MinValue, retrievedItem.CreationDate );
+      }
+
+      [TestMethod]
       [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
       {
