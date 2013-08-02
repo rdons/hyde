@@ -11,9 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Added support for Asynchronous reads and writes
-      * Added support for (de)serializing DateTimeOffset.
-      * Fixed bug related to how DateTime values were being retrieved.
+      * Fixed bug in DateTime handling. Previously exceptions would be thrown when storing DateTime values outside of edm:Date bounds. This no longer occurs and all Dates allowed in a C# DateTime can be persisted to TableStorage.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
