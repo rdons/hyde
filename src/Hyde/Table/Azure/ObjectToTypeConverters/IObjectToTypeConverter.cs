@@ -136,9 +136,16 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
             {
                case EdmType.DateTime:
                {
-                  if ( ep.DateTimeOffsetValue.HasValue )
+                  try
                   {
-                     return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     if ( ep.DateTimeOffsetValue.HasValue )
+                     {
+                        return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     }
+                  }
+                  catch ( ArgumentOutOfRangeException exception )
+                  {
+                     throw new InvalidOperationException( "Table storage returned a datetime that is not able to be stored in a C# DateTime. If you are using the storage emulator, this is most likely the cause of this exception.", exception );
                   }
                   break;
                }
@@ -200,9 +207,16 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
             {
                case EdmType.DateTime:
                {
-                  if ( ep.DateTimeOffsetValue.HasValue )
+                  try
                   {
-                     return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     if ( ep.DateTimeOffsetValue.HasValue )
+                     {
+                        return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     }
+                  }
+                  catch ( ArgumentOutOfRangeException exception )
+                  {
+                     throw new InvalidOperationException( "Table storage returned a datetime that is not able to be stored in a C# DateTime. If you are using the storage emulator, this is most likely the cause of this exception.", exception );
                   }
                   break;
                }
