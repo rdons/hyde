@@ -228,7 +228,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                   {
                      throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
                   }
-                  return fromString;
+                  return fromString.UtcDateTime;
                }
 
                default:
