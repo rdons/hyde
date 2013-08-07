@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Fixed bug in DateTime handling. Previously exceptions would be thrown when storing DateTime values outside of edm:Date bounds. This no longer occurs and all Dates allowed in a C# DateTime can be persisted to TableStorage.
+      * Fixed bug in dynamic DateTime handling. If the DateTime was outside the range of valid edm dates that can be stored in table storage we were converting it to a string. Then when it was read back out it would return a string instead of converting the property back to a datetime object.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
