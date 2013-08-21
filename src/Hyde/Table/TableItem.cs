@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 
@@ -131,7 +133,7 @@ namespace TechSmith.Hyde.Table
       private static TableItem CreateFromType( object entity, bool throwOnReservedPropertyName )
       {
          var properties = new Dictionary<string, Tuple<object, Type>>();
-         foreach ( var property in entity.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         foreach ( var property in GetProperties( entity ) )
          {
             properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
          }
@@ -148,6 +150,28 @@ namespace TechSmith.Hyde.Table
             item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          }
          return item;
+      }
+
+      private static IEnumerable<PropertyInfo> GetProperties( object entity )
+      {
+         if( IsAnonymousType( entity ) )
+         {
+            // For Anonymous types we want all properties, ignoring if they are settable
+            return entity.GetType().GetProperties( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance );
+         }
+         else
+         {
+            return entity.GetType().GetProperties().Where( p => p.ShouldSerialize() );
+         }
+      }
+
+      private static bool IsAnonymousType( object entity )
+      {
+          Type type = entity.GetType();
+          return Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
+                  && type.Name.Contains("AnonymousType")
+                  && (type.Name.StartsWith("<>") || type.Name.StartsWith("VB$"))
+                  && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
       }
    }
 }

@@ -149,6 +149,22 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void AddAndGet_AnonymousType_SerializesAndDeserializesProperly()
+      {
+         var dataItem = new { FirstType = "a", SecondType = 1 };
+
+         _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+
+         dynamic result = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+
+
+         Assert.AreEqual( dataItem.FirstType, result.FirstType );
+         Assert.AreEqual( dataItem.SecondType, result.SecondType );
+      }
+
+      [TestMethod]
       public void Add_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
       {
          var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
