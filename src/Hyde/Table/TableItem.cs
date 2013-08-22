@@ -48,6 +48,24 @@ namespace TechSmith.Hyde.Table
             {
                throw new InvalidEntityException( string.Format( "Reserved property name {0}", propertyName ) );
             }
+            else if( propertyName == TableConstants.PartitionKey )
+            {
+               var partitionKeyProperty = properties[propertyName];
+               if( partitionKeyProperty.Item2 != typeof( string ) )
+               {
+                  throw new InvalidEntityException( string.Format( "PartitionKey property must be a string but was a {0}", partitionKeyProperty.Item2 ) );
+               }
+               PartitionKey = (string) partitionKeyProperty.Item1;
+            }
+            else if( propertyName == TableConstants.RowKey )
+            {
+               var rowKeyProperty = properties[propertyName];
+               if ( rowKeyProperty.Item2 != typeof( string ) )
+               {
+                  throw new InvalidEntityException( string.Format( "RowKey property must be a string but was a {0}", rowKeyProperty.Item2 ) );
+               }
+               RowKey = (string) rowKeyProperty.Item1;
+            }
          }
       }
 
@@ -103,37 +121,38 @@ namespace TechSmith.Hyde.Table
             properties[memberName] = new Tuple<object, Type>( (object) result, result.GetType() );
          }
 
-         Tuple<object, Type> key;
-         string partitionKey = null, rowKey = null;
-
-         if ( !throwOnReservedPropertyName && properties.TryGetValue( "PartitionKey", out key ) )
-         {
-            properties.Remove( "PartitionKey" );
-            partitionKey = key.Item1 as string;
-         }
-
-         if ( !throwOnReservedPropertyName && properties.TryGetValue( "RowKey", out key ) )
-         {
-            properties.Remove( "RowKey" );
-            rowKey = key.Item1 as string;
-         }
-
-         var item = new TableItem( properties, throwOnReservedPropertyName );
-         if ( partitionKey != null )
-         {
-            item.PartitionKey = partitionKey;
-         }
-         if ( rowKey != null )
-         {
-            item.RowKey = rowKey;
-         }
-         return item;
+         return new TableItem( properties, throwOnReservedPropertyName );
       }
 
       private static TableItem CreateFromType( object entity, bool throwOnReservedPropertyName )
       {
+         if ( IsAnonymousType( entity ) )
+         {
+            return CreateFromAnonymousType( entity, throwOnReservedPropertyName );
+         }
+         else
+         {
+            return CreateFromStaticType( entity, throwOnReservedPropertyName );
+         }
+      }
+
+      private static TableItem CreateFromAnonymousType( object entity, bool throwOnReservedPropertyName )
+      {
          var properties = new Dictionary<string, Tuple<object, Type>>();
-         foreach ( var property in GetProperties( entity ) )
+
+         var allInstancePropertiesFlag = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+         foreach ( var property in entity.GetType().GetProperties( allInstancePropertiesFlag ) )
+         {
+            properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
+         }
+
+         return new TableItem( properties, throwOnReservedPropertyName );
+      }
+
+      private static TableItem CreateFromStaticType( object entity, bool throwOnReservedPropertyName )
+      {
+         var properties = new Dictionary<string, Tuple<object, Type>>();
+         foreach ( var property in entity.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
             properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
          }
@@ -150,19 +169,6 @@ namespace TechSmith.Hyde.Table
             item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          }
          return item;
-      }
-
-      private static IEnumerable<PropertyInfo> GetProperties( object entity )
-      {
-         if( IsAnonymousType( entity ) )
-         {
-            // For Anonymous types we want all properties, ignoring if they are settable
-            return entity.GetType().GetProperties( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance );
-         }
-         else
-         {
-            return entity.GetType().GetProperties().Where( p => p.ShouldSerialize() );
-         }
       }
 
       private static bool IsAnonymousType( object entity )

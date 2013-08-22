@@ -165,6 +165,22 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void AddAndGet_AnonymousTypeWithPartionAndRowKeyProperties_ShouldBeInsertedWithThoseKeys()
+      {
+         var dataItem = new { PartitionKey = "test", RowKey = "key", NonKey = "foo" };
+
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+         _tableStorageProvider.Add( _tableName, dataItem );
+         _tableStorageProvider.Save();
+
+
+         dynamic result = _tableStorageProvider.Get( _tableName, dataItem.PartitionKey, dataItem.RowKey );
+
+
+         Assert.AreEqual( dataItem.NonKey, result.NonKey );
+      }
+
+      [TestMethod]
       public void Add_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
       {
          var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
