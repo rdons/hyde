@@ -11,7 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Fixed bug in dynamic DateTime handling. If the DateTime was outside the range of valid edm dates that can be stored in table storage we were converting it to a string. Then when it was read back out it would return a string instead of converting the property back to a datetime object.
+      * Added support for serializing anonymous types
+         - This introduces a breaking change in how reserved properties are handled for strongly typed entities. Previously they would be ignored if you set `ShouldThrowOnReservedProperties` to false. Now we will read and use PartitionKey or RowKey properties even if they don't have the `PartitionKey` or `RowKey` attribute.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
