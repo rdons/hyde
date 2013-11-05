@@ -11,8 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Added support for serializing anonymous types
-         - This introduces a breaking change in how reserved properties are handled for strongly typed entities. Previously they would be ignored if you set `ShouldThrowOnReservedProperties` to false. Now we will read and use PartitionKey or RowKey properties even if they don't have the `PartitionKey` or `RowKey` attribute.
+      * Updating to Azure 2.2 SDK
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
