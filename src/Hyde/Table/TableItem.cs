@@ -72,6 +72,15 @@ namespace TechSmith.Hyde.Table
                }
                RowKey = (string) rowKeyProperty.Item1;
             }
+            else if ( propertyName == TableConstants.ETag )
+            {
+               var eTagProperty = properties[propertyName];
+               if ( eTagProperty.Item2 != typeof( string ) )
+               {
+                  throw new InvalidEntityException( string.Format( "ETag property must be a string but was a {0}", eTagProperty.Item2 ) );
+               }
+               ETag = (string) eTagProperty.Item1;
+            }
          }
       }
 
