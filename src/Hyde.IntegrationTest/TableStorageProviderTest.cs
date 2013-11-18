@@ -4,7 +4,6 @@ using System.Configuration;
 using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -339,6 +338,23 @@ namespace TechSmith.Hyde.IntegrationTest
          var result = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( dataItem.FirstType, result.FirstType );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Get_DecoratedItemWithETag_RetreivedItemHasValidETag()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 34
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         Assert.IsNotNull( retrievedItem.ETag );
       }
 
       [TestCategory( "Integration" ), TestMethod]

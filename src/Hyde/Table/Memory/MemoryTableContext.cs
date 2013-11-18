@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
@@ -23,6 +24,7 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityAlreadyExistsException();
                }
+               entity.ETag = DateTime.UtcNow.ToString( CultureInfo.InvariantCulture );
                _entities[entity.RowKey] = entity;
             }
          }

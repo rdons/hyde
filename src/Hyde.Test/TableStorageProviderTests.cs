@@ -742,7 +742,41 @@ namespace TechSmith.Hyde.Test
 
          Assert.AreEqual( null, gotItem.NotSerializedString );
          Assert.AreEqual( dataItem.SerializedString, gotItem.SerializedString );
+      }
 
+      [TestMethod]
+      public void Get_ItemWithETagPropertyInStore_ItemReturnedWithETag()
+      {
+         var decoratedETagItem = new DecoratedItemWithETag
+         {
+            Id = "someId",
+            Name = "someName",
+            Age = 12,
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedETagItem );
+         _tableStorageProvider.Save();
+
+         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "someId", "someName" );
+         Assert.IsNotNull( actualItem.ETag );
+      }
+
+      [TestMethod]
+      public void Get_RetreiveAsDynamic_DynamicItemHasETagProperty()
+      {
+         var decoratedItem = new DecoratedItem
+         {
+            Id = "id",
+            Name = "name",
+            Age = 33
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedItem );
+         _tableStorageProvider.Save();
+
+         var actualItem = _tableStorageProvider.Get( _tableName, "id", "name" );
+         var itemAsDict = actualItem as IDictionary<string, object>;
+         Assert.IsTrue( itemAsDict.ContainsKey( "ETag" ) );
       }
 
       [TestMethod]
