@@ -56,6 +56,21 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Hydrate_ItemDecoratedWithETagAttribute_ReturnedGenericTableEntityHasETag()
+      {
+         var itemToSave = new DecoratedItemWithETag
+         {
+            Id = "id",
+            Name = "name",
+            ETag = "etag"
+         };
+         TableItem tableItem = TableItem.Create( itemToSave );
+         var genericEntity = GenericTableEntity.HydrateFrom( tableItem );
+
+         Assert.AreEqual( "etag", genericEntity.ETag );
+      }
+
+      [TestMethod]
       public void CreateInstanceFromProperties_TargetTypeDecoratedWithRowAndPartitionKeyAttributes_RowAndPartitionKeySetCorrectly()
       {
          var genericEntity = new GenericTableEntity
@@ -69,6 +84,21 @@ namespace TechSmith.Hyde.Test
          var item = genericEntity.ConvertTo<DecoratedItem>();
          Assert.AreEqual( "foo", item.Id, "Incorrect partition key" );
          Assert.AreEqual( "bar", item.Name, "Incorrect row key" );
+      }
+
+      [TestMethod]
+      public void CreateInstanceFromProperties_TargetTypeDecoratedWithETagAttribute_ETagSetCorrectly()
+      {
+         var genericEntity = new GenericTableEntity
+         {
+            ETag = "tag"
+         };
+         var entityProperties = new Dictionary<string, EntityProperty>();
+         entityProperties["Age"] = new EntityProperty( 42 );
+         genericEntity.ReadEntity( entityProperties, null );
+
+         var item = genericEntity.ConvertTo<DecoratedItemWithETag>();
+         Assert.AreEqual( "tag", item.ETag, "Incorrect ETag" );
       }
 
       [TestMethod]
