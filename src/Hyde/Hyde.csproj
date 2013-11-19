@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\DataAnnotations\ETagAttribute.cs" />
+    <Compile Include="Common\EntityHasBeenChangedException.cs" />
     <Compile Include="Table\AbstractQuery.cs" />
     <Compile Include="Table\Azure\AbstractAzureQuery.cs" />
     <Compile Include="Table\Azure\AzureDynamicQuery.cs" />

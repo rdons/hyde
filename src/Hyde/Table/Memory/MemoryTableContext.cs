@@ -24,7 +24,7 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityAlreadyExistsException();
                }
-               entity.ETag = DateTime.UtcNow.ToString( CultureInfo.InvariantCulture );
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
@@ -37,11 +37,33 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityDoesNotExistException();
                }
+               if ( EntityHasBeenChanged( entity ) )
+               {
+                  throw new EntityHasBeenChangedException();
+               }
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
 
-         public void Upsert( GenericTableEntity entity ) {
+         private static string GetNewETag()
+         {
+            return DateTime.UtcNow.Ticks.ToString( CultureInfo.InvariantCulture );
+         }
+
+         private bool EntityHasBeenChanged( GenericTableEntity entity )
+         {
+            var hasETagProperty = !string.IsNullOrEmpty( entity.ETag );
+            var entityHasChanged = false;
+            if ( hasETagProperty )
+            {
+               entityHasChanged = !entity.ETag.Equals( _entities[entity.RowKey].ETag );
+            }
+            return entityHasChanged;
+         }
+
+         public void Upsert( GenericTableEntity entity )
+         {
             lock ( _entities )
             {
                _entities[entity.RowKey] = entity;
@@ -223,7 +245,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IFilterable<dynamic> CreateQuery( string tableName )
       {
-         return (IFilterable<dynamic>)new DynamicMemoryQuery( GetEntities( tableName ) );
+         return (IFilterable<dynamic>) new DynamicMemoryQuery( GetEntities( tableName ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )

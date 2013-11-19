@@ -1120,6 +1120,58 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.Fail( "Should have thrown EntityDoesNotExistException" );
       }
 
+      [TestMethod, TestCategory( "Integration" )]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Update_ClassWithETagAttributeHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var updatedItem2 = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         updatedItem2.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem2 );
+         _tableStorageProvider.Save();
+
+         updatedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Update_DynamicHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var updatedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+         var updatedItem2 = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+
+         updatedItem2.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem2 );
+         _tableStorageProvider.Save();
+
+         updatedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+      }
+
       [TestCategory( "Integration" ), TestMethod]
       [ExpectedException( typeof( EntityDoesNotExistException ) )]
       public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()

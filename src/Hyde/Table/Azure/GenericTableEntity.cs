@@ -150,6 +150,7 @@ namespace TechSmith.Hyde.Table.Azure
          ( (IDictionary<string, object>) newItem ).Add( "PartitionKey", PartitionKey );
          ( (IDictionary<string, object>) newItem ).Add( "RowKey", RowKey );
          ( (IDictionary<string, object>) newItem ).Add( "ETag", ETag );
+         // todo does it matter if this is always here?
 
          return newItem;
       }

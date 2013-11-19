@@ -52,7 +52,10 @@ namespace TechSmith.Hyde.Table.Azure
       public void Update( string tableName, TableItem tableItem )
       {
          GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         genericTableEntity.ETag = "*";
+         if ( string.IsNullOrEmpty( genericTableEntity.ETag ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
 
          var operation = TableOperation.Replace( genericTableEntity );
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, tableItem.PartitionKey, tableItem.RowKey ) );
@@ -253,10 +256,14 @@ namespace TechSmith.Hyde.Table.Azure
             {
                throw new EntityDoesNotExistException( "Entity does not exist", ex );
             }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.PreconditionFailed )
+            {
+               throw new EntityHasBeenChangedException( "Entity has been changed", ex );
+            }
             if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
             {
                throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
-            }
+            }            
 
             throw;
          }

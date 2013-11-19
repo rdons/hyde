@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
@@ -107,6 +106,55 @@ namespace TechSmith.Hyde.Test
          catch ( EntityDoesNotExistException )
          {
          }
+      }
+
+      [TestMethod]
+      public void Update_EntityExists_EntityUpdatedOnSave()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 36
+         } ) );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+         Assert.AreEqual( 36, item.Age );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Update_EntityHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Age = 42,
+            Id = "id",
+            Name = "name"
+         };
+         _context.AddNewItem( "table", TableItem.Create( decoratedItemWithETag ) );
+         _context.Save( Execute.Individually );
+
+         var entity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+
+         entity.Age = 19;
+         _context.Update( "table", TableItem.Create( entity ) );
+         _context.Save( Execute.Individually );
+
+         entity.Age = 21;
+         _context.Update( "table", TableItem.Create( entity ) );
+         _context.Save( Execute.Individually );
+
+         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
       }
 
       [TestMethod]
