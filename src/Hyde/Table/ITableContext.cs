@@ -8,7 +8,7 @@ namespace TechSmith.Hyde.Table
       IFilterable<T> CreateQuery<T>( string tableName ) where T : new();
 
       // Implemntation using dynamics.
-      IFilterable<dynamic> CreateQuery( string tableName );
+      IFilterable<dynamic> CreateQuery( string tableName, bool includeETagForDynamic );
 
       void AddNewItem( string tableName, TableItem tableItem );
       void Upsert( string tableName, TableItem tableItem );

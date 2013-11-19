@@ -50,6 +50,15 @@ namespace TechSmith.Hyde.Table
       }
 
       /// <summary>
+      /// Sets whether or not the ETag property should be included when reading a dynamic object from table storage
+      /// </summary>
+      public bool ShouldIncludeETagWithDynamics
+      {
+         get;
+         set;
+      }
+
+      /// <summary>
       /// Add entity to the given table
       /// </summary>
       /// <param name="tableName">Name of the table</param>
@@ -98,7 +107,7 @@ namespace TechSmith.Hyde.Table
 
       public Task<dynamic> GetAsync( string tableName, string partitionKey, string rowKey )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
                         .Async()
@@ -118,7 +127,7 @@ namespace TechSmith.Hyde.Table
 
       public dynamic Get( string tableName, string partitionKey, string rowKey )
       {
-         var result = _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
+         var result = _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
          if ( result.Length == 0 )
          {
             throw new EntityDoesNotExistException( partitionKey, rowKey, null );
@@ -135,7 +144,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey );
       }
 
       /// <summary>
@@ -158,7 +167,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName )
       {
-         return _context.CreateQuery( tableName );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
       /// <summary>
@@ -179,7 +188,7 @@ namespace TechSmith.Hyde.Table
       /// <returns>a fluent query object</returns>
       public IFilterable<dynamic> CreateQuery( string tableName )
       {
-         return _context.CreateQuery( tableName );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
       [Obsolete( "Use CreateQuery<T>" )]
@@ -199,7 +208,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyFrom( partitionKeyLow ).Inclusive()
                         .PartitionKeyTo( partitionKeyHigh ).Inclusive();
       }
@@ -216,7 +225,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyFrom( rowKeyLow ).Inclusive()
                         .RowKeyTo( rowKeyHigh ).Inclusive();

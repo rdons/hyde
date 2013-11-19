@@ -1147,7 +1147,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod, TestCategory( "Integration" )]
       [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Update_DynamicHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      public void Update_ShouldIncludeETagWithDynamicsIsTrueAndDynamicHasAnETagMismatch_ThrowsEntityHasBeenChangedException()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1158,18 +1158,50 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Add( _tableName, item );
          _tableStorageProvider.Save();
 
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
 
          var updatedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
-         var updatedItem2 = _tableStorageProvider.Get( _tableName, "foo", "bar" );
 
-         updatedItem2.Age = 22;
-         _tableStorageProvider.Update( _tableName, updatedItem2 );
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Update_ShouldIncludeETagWithDynamicsIsFalseAndDynamicHasAnETagMismatch_SuccessfullyExecutesBothUpdates()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = false;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var updatedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 22, storedItem.Age );
+
+         updatedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+
+         storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 33, storedItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]

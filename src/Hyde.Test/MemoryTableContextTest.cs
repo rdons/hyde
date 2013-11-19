@@ -164,13 +164,33 @@ namespace TechSmith.Hyde.Test
          _context.AddNewItem( "table", TableItem.Create( item ) );
          _context.Save( Execute.Individually );
 
-         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
+         var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
          var asDict = (IDictionary<string, object>) result.First();
 
          Assert.AreEqual( 2, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
+         Assert.IsFalse( asDict.ContainsKey( "ETag" ) );
+      }
+      
+      [TestMethod]
+      public void QueryForDynamic_ShouldIncludeETag_ResultingDynamicHasETag()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar"
+         };
+         _context.AddNewItem( "table", TableItem.Create( item ) );
+         _context.Save(Execute.Individually);
+
+         var result = _context.CreateQuery( "table", true ).PartitionKeyEquals( "foo" ).RowKeyEquals( "bar" );
+         var asDict = (IDictionary<string, object>) result.First();
+
+         Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "ETag" ) );
       }
 
       [TestMethod]
@@ -216,7 +236,7 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" )
+         var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" )
                               .RowKeyFrom( tsp.MinimumKeyValue ).Inclusive()
                               .RowKeyTo( tsp.MaximumKeyValue ).Inclusive();
 
@@ -239,7 +259,7 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.CreateQuery( "table" )
+         var result = _context.CreateQuery( "table", false )
                               .PartitionKeyFrom( tsp.MinimumKeyValue ).Inclusive()
                               .PartitionKeyTo( "bcc").Inclusive();
 

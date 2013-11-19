@@ -243,9 +243,9 @@ namespace TechSmith.Hyde.Table.Memory
          return new MemoryQuery<T>( GetEntities( tableName ) );
       }
 
-      public IFilterable<dynamic> CreateQuery( string tableName )
+      public IFilterable<dynamic> CreateQuery( string tableName, bool shouldIncludeETagForDynamic )
       {
-         return (IFilterable<dynamic>) new DynamicMemoryQuery( GetEntities( tableName ) );
+         return (IFilterable<dynamic>) new DynamicMemoryQuery( GetEntities( tableName ), shouldIncludeETagForDynamic );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )

@@ -132,7 +132,7 @@ namespace TechSmith.Hyde.Table.Azure
          return entityProperties;
       }
 
-      public dynamic ConvertToDynamic()
+      public dynamic ConvertToDynamic(bool includeETag)
       {
          dynamic newItem = new ExpandoObject();
 
@@ -149,8 +149,10 @@ namespace TechSmith.Hyde.Table.Azure
 
          ( (IDictionary<string, object>) newItem ).Add( "PartitionKey", PartitionKey );
          ( (IDictionary<string, object>) newItem ).Add( "RowKey", RowKey );
-         ( (IDictionary<string, object>) newItem ).Add( "ETag", ETag );
-         // todo does it matter if this is always here?
+         if ( includeETag )
+         {
+            ( (IDictionary<string, object>) newItem ).Add( "ETag", ETag );
+         }
 
          return newItem;
       }

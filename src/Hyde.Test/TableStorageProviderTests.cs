@@ -690,7 +690,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void Update_ItemExistsAndUpdatedPropertyIsValid_ShouldItemTheItem()
+      public void Update_ItemExistsAndUpdatedPropertyIsValid_ShouldUpdateTheItem()
       {
          EnsureOneItemInContext( _tableStorageProvider );
 
@@ -704,6 +704,33 @@ namespace TechSmith.Hyde.Test
          var resultingItem = _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( updatedFirstType, resultingItem.FirstType );
+      }
+
+      // This test ensures retreiving and updating dynamic entities is 
+      // backwards compatible with the optimistic concurrency update
+      [TestMethod]
+      public void Update_MultipleUpdatesFromSingleDynamicEntity_SucceedsRegardlessIfEntityHasBeenChanged()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 33
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var storedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+
+         storedItem.Age = 44;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         storedItem.Age = 39;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
       }
 
       [TestMethod]
@@ -773,6 +800,8 @@ namespace TechSmith.Hyde.Test
 
          _tableStorageProvider.Add( _tableName, decoratedItem );
          _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
 
          var actualItem = _tableStorageProvider.Get( _tableName, "id", "name" );
          var itemAsDict = actualItem as IDictionary<string, object>;

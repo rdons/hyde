@@ -9,7 +9,7 @@ namespace TechSmith.Hyde.Table.Memory
 {
    internal abstract class AbstractMemoryQuery<T> : AbstractQuery<T>
    {
-      private readonly IEnumerable<GenericTableEntity> _entities;
+      private readonly IEnumerable<GenericTableEntity> _entities;      
 
       internal AbstractMemoryQuery( IEnumerable<GenericTableEntity> entities )
       {

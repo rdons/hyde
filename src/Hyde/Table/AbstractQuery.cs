@@ -8,6 +8,7 @@ namespace TechSmith.Hyde.Table
    public abstract class AbstractQuery<T> : IFilterable<T>
    {
       protected QueryDescriptor _query;
+      protected bool IncludeETagForDynamic;
 
       protected AbstractQuery()
       {

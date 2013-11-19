@@ -29,9 +29,9 @@ namespace TechSmith.Hyde.Table.Azure
          return new AzureQuery<T>( Table( tableName ) );
       }
 
-      public IFilterable<dynamic> CreateQuery( string tableName )
+      public IFilterable<dynamic> CreateQuery( string tableName, bool includeETagForDynamic )
       {
-         return new AzureDynamicQuery( Table( tableName ) );
+         return new AzureDynamicQuery( Table( tableName ), includeETagForDynamic );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )
