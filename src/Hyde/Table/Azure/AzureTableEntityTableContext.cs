@@ -64,7 +64,10 @@ namespace TechSmith.Hyde.Table.Azure
       public void Merge( string tableName, TableItem tableItem )
       {
          GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         genericTableEntity.ETag = "*";
+         if ( string.IsNullOrEmpty( genericTableEntity.ETag ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
 
          var operation = TableOperation.Merge( genericTableEntity );
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Merge, tableItem.PartitionKey, tableItem.RowKey ) );

@@ -78,12 +78,17 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityDoesNotExistException();
                }
+               if ( EntityHasBeenChanged( entity ) )
+               {
+                  throw new EntityHasBeenChangedException();
+               }
 
                var currentEntity = _entities[entity.RowKey];
                foreach ( var property in entity.WriteEntity( null ) )
                {
                   currentEntity.SetProperty( property.Key, property.Value );
                }
+               currentEntity.ETag = GetNewETag();
             }
          }
 

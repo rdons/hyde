@@ -1091,6 +1091,36 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Merge_DynamicItemHasOutdatedETag_ThrowsEntityHasBeenChangedException()
+      {
+         dynamic item = new ExpandoObject();
+         item.Height = 50;
+         item.Name = "Bill";
+
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var retreivedItem = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         retreivedItem.Height = 66;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var tmp = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         Assert.AreEqual( 66, tmp.Height );
+         Assert.AreNotEqual( retreivedItem.ETag, tmp.ETag );
+
+         retreivedItem.Height = 70;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestMethod]
       public void GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
       {
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );

@@ -1234,6 +1234,33 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Merge_ClassHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      {
+         var decoratedItem = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 24
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedItem );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 44;
+         _tableStorageProvider.Merge( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         storedItem.Age = 59;
+         _tableStorageProvider.Merge( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemWithNotSerializedProperty_DoesntSerializeThatProperty()
       {
          var newItem = new SimpleItemWithDontSerializeAttribute
