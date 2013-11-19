@@ -19,7 +19,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [ETag]
-      public string ETag
+      public object ETag
       {
          get;
          set;

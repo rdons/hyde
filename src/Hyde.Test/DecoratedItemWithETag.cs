@@ -22,7 +22,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [ETag]
-      public string ETag
+      public object ETag
       {
          get;
          set;

@@ -264,7 +264,7 @@ namespace TechSmith.Hyde.Table
       public void Delete( string tableName, dynamic instance )
       {
          TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
-         if ( string.IsNullOrEmpty( tableItem.ETag ) )
+         if ( tableItem.ETag == null )
          {
             Delete( tableName, tableItem.PartitionKey, tableItem.RowKey );            
          }

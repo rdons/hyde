@@ -29,7 +29,7 @@ namespace TechSmith.Hyde.Table
          private set;
       }
 
-      public string ETag
+      public object ETag
       {
          get;
          private set;
@@ -186,7 +186,7 @@ namespace TechSmith.Hyde.Table
 
          if ( entity.HasPropertyDecoratedWith<ETagAttribute>() )
          {
-            item.ETag = entity.ReadPropertyDecoratedWith<ETagAttribute, string>();
+            item.ETag = entity.ReadPropertyDecoratedWith<ETagAttribute, object>();
          }
          return item;
       }
