@@ -1061,6 +1061,35 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "first", result.FirstType );
       }
 
+      [TestCategory( "Integration" ), TestMethod]
+      public void Upsert_ItemUpsertedTwiceAndNotAffectedByETag_ETagPropertyGetsUpdatedEachUpsert()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var retreivedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+
+         retreivedItem.Age = 39;
+         _tableStorageProvider.Upsert( _tableName, retreivedItem );
+         _tableStorageProvider.Save();
+
+         var upsertedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         Assert.AreNotEqual( retreivedItem.ETag, upsertedItem.ETag );
+
+         retreivedItem.Age = 41;
+         _tableStorageProvider.Upsert( _tableName, retreivedItem );
+         _tableStorageProvider.Save();
+
+         var upsertedItem2 = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         Assert.AreNotEqual( upsertedItem.ETag, upsertedItem2.ETag );
+      }
+
       [TestMethod]
       [ExpectedException( typeof( EntityDoesNotExistException ) )]
       public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()

@@ -66,6 +66,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             lock ( _entities )
             {
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
