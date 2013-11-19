@@ -17,6 +17,7 @@ namespace TechSmith.Hyde.Table
 
       // Shared implementation between generics and dynamics.
       void DeleteItem( string tableName, string partitionKey, string rowKey );
+      void DeleteItem( string tableName, TableItem tableItem );
       void DeleteCollection( string tableName, string partitionKey );
       void Save( Execute executeMethod );
       Task SaveAsync( Execute executeMethod );

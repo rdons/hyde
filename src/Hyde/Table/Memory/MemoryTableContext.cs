@@ -48,7 +48,7 @@ namespace TechSmith.Hyde.Table.Memory
 
          private static string GetNewETag()
          {
-            return DateTime.UtcNow.Ticks.ToString( CultureInfo.InvariantCulture );
+            return Guid.NewGuid().ToString();
          }
 
          private bool EntityHasBeenChanged( GenericTableEntity entity )
@@ -100,6 +100,21 @@ namespace TechSmith.Hyde.Table.Memory
                if ( _entities.ContainsKey( rowKey ) )
                {
                   _entities.Remove( rowKey );
+               }               
+            }
+         }
+
+         public void Delete( GenericTableEntity entity )
+         {
+            lock ( _entities )
+            {
+               if ( _entities.ContainsKey( entity.RowKey ) )
+               {
+                  if ( EntityHasBeenChanged( entity ) )
+                  {
+                     throw new EntityHasBeenChangedException();
+                  }
+                  _entities.Remove( entity.RowKey );
                }
             }
          }
@@ -286,6 +301,13 @@ namespace TechSmith.Hyde.Table.Memory
       {
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey );
          _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
+      }
+
+      public void DeleteItem( string tableName, TableItem tableItem )
+      {
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Delete( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )

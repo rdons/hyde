@@ -382,7 +382,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
          catch ( AggregateException e )
          {
-            Assert.IsTrue( e.InnerException.GetType() ==  typeof( EntityDoesNotExistException ) );
+            Assert.IsTrue( e.InnerException.GetType() == typeof( EntityDoesNotExistException ) );
          }
       }
 
@@ -398,6 +398,57 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
 
          _tableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+
+         Assert.IsFalse( items.Any() );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Delete_ItemWithETagHasBeenChanged_ThrowsEntityHasBeenChangedException()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 12
+         };
+
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, storedItem );
+         _tableStorageProvider.Save();
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Delete_ItemWithoutETagHasBeenChanged_RespectsTheDelete()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 12
+         };
+
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, storedItem );
          _tableStorageProvider.Save();
 
          var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
@@ -637,7 +688,7 @@ namespace TechSmith.Hyde.IntegrationTest
          var actual = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( DateTimeKind.Utc, actual.FirstType.Kind );
-         Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );  
+         Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
@@ -905,7 +956,10 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void AddingAndRetreivingTypeWithEnumProperty_ItemProperlyAddedAndRetreived()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithEnumProperty { EnumValue = TypeWithEnumProperty.TheEnum.SecondValue }, _partitionKey, _rowKey );
+         _tableStorageProvider.Add( _tableName, new TypeWithEnumProperty
+         {
+            EnumValue = TypeWithEnumProperty.TheEnum.SecondValue
+         }, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
@@ -1237,7 +1291,10 @@ namespace TechSmith.Hyde.IntegrationTest
       [ExpectedException( typeof( EntityDoesNotExistException ) )]
       public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
       {
-         _tableStorageProvider.Merge( _tableName, new TypeWithBooleanProperty { FirstType = true }, "not", "found" );
+         _tableStorageProvider.Merge( _tableName, new TypeWithBooleanProperty
+         {
+            FirstType = true
+         }, "not", "found" );
          _tableStorageProvider.Save();
       }
 
@@ -1458,19 +1515,44 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      [TestCategory("Integration")]
+      [TestCategory( "Integration" )]
       public void Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "one"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "two"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "three"
+         } );
          _tableStorageProvider.Save();
 
          // We can tell the last operation was executed last by
          // setting it up to fail and then verifying that the other two completed.
-         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
-         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "one",
+            Age = 42
+         } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "three"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "two"
+         } );
 
          try
          {
@@ -1491,9 +1573,21 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void SaveAsync_MultipleOperationsIndividually_AllOperationsExecuted()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "one"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "two"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "three"
+         } );
          var task = _tableStorageProvider.SaveAsync();
 
          task.Wait();
@@ -1506,16 +1600,41 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void SaveAsync_MultipleOperationsIndividuallyAndSecondFails_FollwingOperationsNotExecuted()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "one"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "two"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "three"
+         } );
          _tableStorageProvider.Save();
 
          // We can tell the last operation was executed last by
          // setting it up to fail and then verifying that the other two completed.
-         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
-         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "one",
+            Age = 42
+         } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "three"
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "123",
+            Name = "two"
+         } );
 
          var task = _tableStorageProvider.SaveAsync();
          try
@@ -1537,9 +1656,18 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void GetCollection_ManyItemsInStore_TakeMethodReturnsProperAmount()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "a" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "b" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "c" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "a"
+         }, _partitionKey, "a" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "b"
+         }, _partitionKey, "b" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "c"
+         }, _partitionKey, "c" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Top( 2 );
@@ -1550,9 +1678,18 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void GetCollection_ManyItemsInStore_MaxKeyValueAllowsUnboundedRangeQuery()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\uFFFF" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\uFFFF\uFFFF" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\uFFFF\uFFFF\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "a"
+         }, _partitionKey, "\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "b"
+         }, _partitionKey, "\uFFFF\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "c"
+         }, _partitionKey, "\uFFFF\uFFFF\uFFFF" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "\uFFFF\uFFFF", _tableStorageProvider.MaximumKeyValue );
@@ -1566,9 +1703,18 @@ namespace TechSmith.Hyde.IntegrationTest
       // but incorrect results are received from the emulator.
       public void GetCollection_ManyItemsInStore_MinKeyValueAllowsUnboundedRangeQuery()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\u0020" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\u0020\u0020" );
-         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\u0020\u0020\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "a"
+         }, _partitionKey, "\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "b"
+         }, _partitionKey, "\u0020\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "c"
+         }, _partitionKey, "\u0020\u0020\u0020" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, _tableStorageProvider.MinimumKeyValue, "\u0020\u0020" );
@@ -1580,7 +1726,11 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void Get_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithNullableProperty { Id = "0", Name = "1" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithNullableProperty
+         {
+            Id = "0",
+            Name = "1"
+         } );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get( _tableName, "0", "1" );
@@ -1592,13 +1742,33 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      [TestCategory("Integration")]
+      [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
-         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) }); 
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
-         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 )
+         } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 )
+         } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 )
+         } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 )
+         } );
          _tableStorageProvider.Save();
 
          var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
@@ -1606,13 +1776,33 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod]
-      [TestCategory("Integration")]
+      [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
-         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); 
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
-         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue
+         } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue
+         } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue
+         } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MinValue
+         } );
          _tableStorageProvider.Save();
 
          var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
@@ -1623,10 +1813,30 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
-         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
-         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MaxValue
+         } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MaxValue
+         } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MaxValue
+         } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime()
+         {
+            Id = "blah",
+            Name = "another blah",
+            CreationDate = DateTime.MaxValue
+         } );
          _tableStorageProvider.Save();
 
          var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );

@@ -376,6 +376,29 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Delete_ItemWithETagHasBeenUpdated_ThrowsEntityHasBeenChangedException()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 23
+         };
+         _tableStorageProvider.Add( _tableName, decoratedItemWithETag );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 25;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, storedItem );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod]
       public void Get_OneItemInStore_HydratedItemIsReturned()
       {
          var dataItem = new SimpleDataItem

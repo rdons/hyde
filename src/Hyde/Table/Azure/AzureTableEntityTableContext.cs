@@ -84,6 +84,13 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, rowKey ) );
       }
 
+      public void DeleteItem( string tableName, TableItem tableItem )
+      {
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         var operation = TableOperation.Delete( genericTableEntity );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, tableItem.PartitionKey, tableItem.RowKey ) );
+      }
+
       public void DeleteCollection( string tableName, string partitionKey )
       {
          var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
