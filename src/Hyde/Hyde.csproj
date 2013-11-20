@@ -97,6 +97,7 @@
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
     <Compile Include="Table\Azure\ObjectToTypeConverters\ObjectConverterFactory.cs" />
     <Compile Include="Table\Azure\ObjectToTypeConverters\IObjectToTypeConverter.cs" />
+    <Compile Include="Table\ConflictHandling.cs" />
     <Compile Include="Table\Memory\AbstractMemoryQuery.cs" />
     <Compile Include="Table\Memory\DynamicMemoryQuery.cs" />
     <Compile Include="Table\Memory\MemoryQuery.cs" />

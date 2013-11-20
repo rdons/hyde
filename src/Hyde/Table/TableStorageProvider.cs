@@ -261,7 +261,7 @@ namespace TechSmith.Hyde.Table
          _context.Upsert( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
-      public void Delete( string tableName, dynamic instance )
+      public void Delete( string tableName, dynamic instance, ConflictHandling conflictHandling = ConflictHandling.Throw )
       {
          TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
          if ( tableItem.ETag == null )
@@ -270,7 +270,7 @@ namespace TechSmith.Hyde.Table
          }
          else
          {
-            _context.DeleteItem( tableName, tableItem );
+            _context.DeleteItem( tableName, tableItem, conflictHandling );
          }
       }
       
@@ -284,24 +284,24 @@ namespace TechSmith.Hyde.Table
          _context.DeleteCollection( tableName, partitionKey );
       }
 
-      public void Update( string tableName, dynamic instance, string partitionKey, string rowKey )
+      public void Update( string tableName, dynamic instance, string partitionKey, string rowKey, ConflictHandling conflictHandling = ConflictHandling.Throw )
       {
-         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ), conflictHandling );
       }
 
-      public void Update( string tableName, dynamic instance )
+      public void Update( string tableName, dynamic instance, ConflictHandling conflictHandling = ConflictHandling.Throw )
       {
-         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
+         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ), conflictHandling );
       }
 
-      public void Merge( string tableName, dynamic instance, string partitionKey, string rowKey )
+      public void Merge( string tableName, dynamic instance, string partitionKey, string rowKey, ConflictHandling conflictHandling = ConflictHandling.Throw )
       {
-         _context.Merge( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         _context.Merge( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ), conflictHandling );
       }
 
-      public void Merge( string tableName, dynamic instance )
+      public void Merge( string tableName, dynamic instance, ConflictHandling conflictHandling = ConflictHandling.Throw )
       {
-         _context.Merge( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
+         _context.Merge( tableName, TableItem.Create( instance, _reservedPropertyBehavior ), conflictHandling );
       }
    }
 }

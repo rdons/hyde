@@ -49,10 +49,10 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
-      public void Update( string tableName, TableItem tableItem )
+      public void Update( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         if ( string.IsNullOrEmpty( genericTableEntity.ETag ) )
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
          {
             genericTableEntity.ETag = "*";
          }
@@ -61,10 +61,15 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
-      public void Merge( string tableName, TableItem tableItem )
+      private static bool ShouldForceOverwrite( ConflictHandling conflictHandling, GenericTableEntity genericTableEntity )
+      {
+         return string.IsNullOrEmpty( genericTableEntity.ETag ) || conflictHandling.Equals( ConflictHandling.Overwrite );
+      }
+
+      public void Merge( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         if ( string.IsNullOrEmpty( genericTableEntity.ETag ) )
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
          {
             genericTableEntity.ETag = "*";
          }
@@ -84,9 +89,13 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, rowKey ) );
       }
 
-      public void DeleteItem( string tableName, TableItem tableItem )
+      public void DeleteItem( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          var operation = TableOperation.Delete( genericTableEntity );
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, tableItem.PartitionKey, tableItem.RowKey ) );
       }
@@ -197,7 +206,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          // For each operation, construct a function that returns a task representing an async execution
          // of that operation. Note that the operation isn't executed until the function is called!.
-         var taskFuncs = operations.Select<ExecutableTableOperation,Func<Task>>( op => () => ToTask( op ) ).ToArray();
+         var taskFuncs = operations.Select<ExecutableTableOperation, Func<Task>>( op => () => ToTask( op ) ).ToArray();
 
          // Start asynchronously executing the first operation.
          var priorTask = taskFuncs[0]();
@@ -273,7 +282,7 @@ namespace TechSmith.Hyde.Table.Azure
             if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
             {
                throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
-            }            
+            }
 
             throw;
          }
@@ -315,7 +324,7 @@ namespace TechSmith.Hyde.Table.Azure
             // No need to use an EGT for a single operation.
             if ( batch.Count == 1 )
             {
-               SaveIndividual( new [] { batch[0] } );
+               SaveIndividual( new[] { batch[0] } );
                continue;
             }
 
@@ -334,7 +343,7 @@ namespace TechSmith.Hyde.Table.Azure
       private Task SaveBatchAsync( IEnumerable<ExecutableTableOperation> operations )
       {
          var batches = ValidateAndSplitIntoBatches( operations );
-         Func<List<ExecutableTableOperation>, Func<Task>> toAsyncFunc = ops => () => SaveAtomicallyAsync(ops);
+         Func<List<ExecutableTableOperation>, Func<Task>> toAsyncFunc = ops => () => SaveAtomicallyAsync( ops );
          var asyncFuncs = batches.Select( toAsyncFunc ).ToList();
 
          var task = asyncFuncs[0]();

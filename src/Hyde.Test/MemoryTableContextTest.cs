@@ -137,7 +137,7 @@ namespace TechSmith.Hyde.Test
             Id = "abc",
             Name = "123",
             Age = 12
-         } ) );
+         } ), ConflictHandling.Throw );
 
          try
          {
@@ -165,7 +165,7 @@ namespace TechSmith.Hyde.Test
             Id = "abc",
             Name = "123",
             Age = 36
-         } ) );
+         } ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
@@ -188,14 +188,40 @@ namespace TechSmith.Hyde.Test
          var entity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
 
          entity.Age = 19;
-         _context.Update( "table", TableItem.Create( entity ) );
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
          entity.Age = 21;
-         _context.Update( "table", TableItem.Create( entity ) );
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
          Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestMethod]
+      public void Update_EntityHasAnOldETagConflictHandlingOverwrite_EntityUpdatedOnSave()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Age = 42,
+            Id = "id",
+            Name = "name"
+         };
+         _context.AddNewItem( "table", TableItem.Create( decoratedItemWithETag ) );
+         _context.Save( Execute.Individually );
+
+         var entity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+
+         entity.Age = 19;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         entity.Age = 21;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         var retrievedEntity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+         Assert.AreEqual( 21, retrievedEntity.Age );
       }
 
       [TestMethod]
@@ -387,7 +413,7 @@ namespace TechSmith.Hyde.Test
 
          var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
 
-         _context.DeleteItem( "table", TableItem.Create( storedItem ) );
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
@@ -407,7 +433,7 @@ namespace TechSmith.Hyde.Test
 
          var storedItem = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
 
-         _context.DeleteItem( "table", TableItem.Create( storedItem ) );
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
@@ -416,7 +442,7 @@ namespace TechSmith.Hyde.Test
 
       [TestMethod]
       [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Delete_TableItemWithETagHasChanged_ThrowsEntityHasBeenUpdatedException()
+      public void Delete_TableItemWithETagHasChanged_ThrowsEntityHasBeenDeletedException()
       {
          _context.AddNewItem( "table", TableItem.Create( new DecoratedItemWithETag
          {
@@ -428,10 +454,33 @@ namespace TechSmith.Hyde.Test
 
          var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
 
-         _context.Update( "table", TableItem.Create( storedItem ) );
+         _context.Update( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
          _context.Save( Execute.Individually );
 
-         _context.DeleteItem( "table", TableItem.Create( storedItem ) );
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
+      }
+
+      [TestMethod]
+      public void Delete_TableItemWithETagHasChangedConflictHandlingOverwrite_DeletesEntity()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItemWithETag
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+
+         _context.Update( "table", TableItem.Create( storedItem ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Overwrite );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
@@ -466,7 +515,7 @@ namespace TechSmith.Hyde.Test
             Id = "abc",
             Name = "123",
             Age = 34
-         } ) );
+         } ), ConflictHandling.Throw );
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -511,13 +560,13 @@ namespace TechSmith.Hyde.Test
             Id = "abc",
             Name = "123",
             Age = 34
-         } ) );
+         } ), ConflictHandling.Throw );
          _context.Update( "table", TableItem.Create( new DecoratedItem
          {
             Id = "abc",
             Name = "not found",
             Age = 42
-         } ) ); // should fail
+         } ), ConflictHandling.Throw ); // should fail
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -549,7 +598,7 @@ namespace TechSmith.Hyde.Test
             Id = "abc",
             Name = "123",
             Age = 36
-         } ) );
+         } ), ConflictHandling.Throw );
          try
          {
             _context.Save( Execute.Atomically );

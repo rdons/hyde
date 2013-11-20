@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
@@ -54,6 +53,10 @@ namespace TechSmith.Hyde.Table.Memory
          private bool EntityHasBeenChanged( GenericTableEntity entity )
          {
             var hasETagProperty = !string.IsNullOrEmpty( entity.ETag );
+            if ( hasETagProperty && entity.ETag.Equals( "*" ) )
+            {
+               return false;
+            }
             var entityHasChanged = false;
             if ( hasETagProperty )
             {
@@ -283,16 +286,29 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Update( string tableName, TableItem tableItem )
+      public void Update( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Merge( string tableName, TableItem tableItem )
+      private static bool ShouldForceOverwrite( ConflictHandling conflictHandling, GenericTableEntity genericTableEntity )
+      {
+         return string.IsNullOrEmpty( genericTableEntity.ETag ) || conflictHandling.Equals( ConflictHandling.Overwrite );
+      }
+
+      public void Merge( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Merge( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
@@ -303,9 +319,13 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
-      public void DeleteItem( string tableName, TableItem tableItem )
+      public void DeleteItem( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Delete( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }

@@ -430,6 +430,34 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void Delete_ItemWithETagHasBeenChangedConflictHandlingOverwrite_DeletesItem()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 12
+         };
+
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, storedItem, ConflictHandling.Overwrite );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         Assert.Fail( "Should have thrown an EntityDoesNotExistException" );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       public void Delete_ItemWithoutETagHasBeenChanged_RespectsTheDelete()
       {
          var item = new DecoratedItem
@@ -1217,15 +1245,40 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
 
          var updatedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
-         var updatedItem2 = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
-         updatedItem2.Age = 22;
-         _tableStorageProvider.Update( _tableName, updatedItem2 );
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Update_ClassWithETagAttributeHasAnOldETagConflictHandlingOverwrite_UpdatesItem()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+
+         updatedItem.Age = 33;
+         _tableStorageProvider.Update( _tableName, updatedItem, ConflictHandling.Overwrite );
+         _tableStorageProvider.Save();
+
+         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 33, actualItem.Age );
       }
 
       [TestMethod, TestCategory( "Integration" )]
@@ -1344,6 +1397,33 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
 
          Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Merge_ClassHasAnOldETagConflictHandlingOverwrite_MergesItem()
+      {
+         var decoratedItem = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 24
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedItem );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 44;
+         _tableStorageProvider.Merge( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         storedItem.Age = 59;
+         _tableStorageProvider.Merge( _tableName, storedItem, ConflictHandling.Overwrite );
+         _tableStorageProvider.Save();
+
+         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 59, actualItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
