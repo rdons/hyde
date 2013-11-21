@@ -376,6 +376,29 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Delete_ItemWithETagHasBeenUpdated_ThrowsEntityHasBeenChangedException()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 23
+         };
+         _tableStorageProvider.Add( _tableName, decoratedItemWithETag );
+         _tableStorageProvider.Save();
+
+         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+
+         storedItem.Age = 25;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Delete( _tableName, storedItem );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod]
       public void Get_OneItemInStore_HydratedItemIsReturned()
       {
          var dataItem = new SimpleDataItem
@@ -690,7 +713,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void Update_ItemExistsAndUpdatedPropertyIsValid_ShouldItemTheItem()
+      public void Update_ItemExistsAndUpdatedPropertyIsValid_ShouldUpdateTheItem()
       {
          EnsureOneItemInContext( _tableStorageProvider );
 
@@ -704,6 +727,33 @@ namespace TechSmith.Hyde.Test
          var resultingItem = _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( updatedFirstType, resultingItem.FirstType );
+      }
+
+      // This test ensures retreiving and updating dynamic entities is 
+      // backwards compatible with the optimistic concurrency update
+      [TestMethod]
+      public void Update_MultipleUpdatesFromSingleDynamicEntity_SucceedsRegardlessIfEntityHasBeenChanged()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 33
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var storedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+
+         storedItem.Age = 44;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
+
+         storedItem.Age = 39;
+         _tableStorageProvider.Update( _tableName, storedItem );
+         _tableStorageProvider.Save();
       }
 
       [TestMethod]
@@ -742,7 +792,43 @@ namespace TechSmith.Hyde.Test
 
          Assert.AreEqual( null, gotItem.NotSerializedString );
          Assert.AreEqual( dataItem.SerializedString, gotItem.SerializedString );
+      }
 
+      [TestMethod]
+      public void Get_ItemWithETagPropertyInStore_ItemReturnedWithETag()
+      {
+         var decoratedETagItem = new DecoratedItemWithETag
+         {
+            Id = "someId",
+            Name = "someName",
+            Age = 12,
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedETagItem );
+         _tableStorageProvider.Save();
+
+         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "someId", "someName" );
+         Assert.IsNotNull( actualItem.ETag );
+      }
+
+      [TestMethod]
+      public void Get_RetreiveAsDynamic_DynamicItemHasETagProperty()
+      {
+         var decoratedItem = new DecoratedItem
+         {
+            Id = "id",
+            Name = "name",
+            Age = 33
+         };
+
+         _tableStorageProvider.Add( _tableName, decoratedItem );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+
+         var actualItem = _tableStorageProvider.Get( _tableName, "id", "name" );
+         var itemAsDict = actualItem as IDictionary<string, object>;
+         Assert.IsTrue( itemAsDict.ContainsKey( "ETag" ) );
       }
 
       [TestMethod]
@@ -998,6 +1084,35 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "first", result.FirstType );
       }
 
+      [TestCategory( "Integration" ), TestMethod]
+      public void Upsert_ItemUpsertedTwiceAndNotAffectedByETag_ETagPropertyGetsUpdatedEachUpsert()
+      {
+         var item = new DecoratedItemWithETag
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var retreivedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+
+         retreivedItem.Age = 39;
+         _tableStorageProvider.Upsert( _tableName, retreivedItem );
+         _tableStorageProvider.Save();
+
+         var upsertedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         Assert.AreNotEqual( retreivedItem.ETag, upsertedItem.ETag );
+
+         retreivedItem.Age = 41;
+         _tableStorageProvider.Upsert( _tableName, retreivedItem );
+         _tableStorageProvider.Save();
+
+         var upsertedItem2 = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         Assert.AreNotEqual( upsertedItem.ETag, upsertedItem2.ETag );
+      }
+
       [TestMethod]
       [ExpectedException( typeof( EntityDoesNotExistException ) )]
       public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
@@ -1025,6 +1140,66 @@ namespace TechSmith.Hyde.Test
 
          Assert.AreEqual( 60, updatedItem.Height );
          Assert.AreEqual( item.Name, updatedItem.Name );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Merge_DynamicItemHasOutdatedETag_ThrowsEntityHasBeenChangedException()
+      {
+         dynamic item = new ExpandoObject();
+         item.Height = 50;
+         item.Name = "Bill";
+
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var retreivedItem = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         retreivedItem.Height = 66;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var tmp = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         Assert.AreEqual( 66, tmp.Height );
+         Assert.AreNotEqual( retreivedItem.ETag, tmp.ETag );
+
+         retreivedItem.Height = 70;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestMethod]
+      public void Merge_DynamicItemHasOutdatedETagConflictHandlingOverwrite_MergesItem()
+      {
+         dynamic item = new ExpandoObject();
+         item.Height = 50;
+         item.Name = "Bill";
+
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+
+         var retreivedItem = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         retreivedItem.Height = 66;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var tmp = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         Assert.AreEqual( 66, tmp.Height );
+         Assert.AreNotEqual( retreivedItem.ETag, tmp.ETag );
+
+         retreivedItem.Height = 70;
+         _tableStorageProvider.Merge( _tableName, retreivedItem, _partitionKey, _rowKey, ConflictHandling.Overwrite );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         Assert.AreEqual( 70, actual.Height );
       }
 
       [TestMethod]

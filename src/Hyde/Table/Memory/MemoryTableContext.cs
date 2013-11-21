@@ -23,6 +23,7 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityAlreadyExistsException();
                }
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
@@ -35,13 +36,40 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityDoesNotExistException();
                }
+               if ( EntityHasBeenChanged( entity ) )
+               {
+                  throw new EntityHasBeenChangedException();
+               }
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
 
-         public void Upsert( GenericTableEntity entity ) {
+         private static string GetNewETag()
+         {
+            return Guid.NewGuid().ToString();
+         }
+
+         private bool EntityHasBeenChanged( GenericTableEntity entity )
+         {
+            var hasETagProperty = !string.IsNullOrEmpty( entity.ETag );
+            if ( hasETagProperty && entity.ETag.Equals( "*" ) )
+            {
+               return false;
+            }
+            var entityHasChanged = false;
+            if ( hasETagProperty )
+            {
+               entityHasChanged = !entity.ETag.Equals( _entities[entity.RowKey].ETag );
+            }
+            return entityHasChanged;
+         }
+
+         public void Upsert( GenericTableEntity entity )
+         {
             lock ( _entities )
             {
+               entity.ETag = GetNewETag();
                _entities[entity.RowKey] = entity;
             }
          }
@@ -54,12 +82,17 @@ namespace TechSmith.Hyde.Table.Memory
                {
                   throw new EntityDoesNotExistException();
                }
+               if ( EntityHasBeenChanged( entity ) )
+               {
+                  throw new EntityHasBeenChangedException();
+               }
 
                var currentEntity = _entities[entity.RowKey];
                foreach ( var property in entity.WriteEntity( null ) )
                {
                   currentEntity.SetProperty( property.Key, property.Value );
                }
+               currentEntity.ETag = GetNewETag();
             }
          }
 
@@ -70,6 +103,21 @@ namespace TechSmith.Hyde.Table.Memory
                if ( _entities.ContainsKey( rowKey ) )
                {
                   _entities.Remove( rowKey );
+               }               
+            }
+         }
+
+         public void Delete( GenericTableEntity entity )
+         {
+            lock ( _entities )
+            {
+               if ( _entities.ContainsKey( entity.RowKey ) )
+               {
+                  if ( EntityHasBeenChanged( entity ) )
+                  {
+                     throw new EntityHasBeenChangedException();
+                  }
+                  _entities.Remove( entity.RowKey );
                }
             }
          }
@@ -219,9 +267,9 @@ namespace TechSmith.Hyde.Table.Memory
          return new MemoryQuery<T>( GetEntities( tableName ) );
       }
 
-      public IFilterable<dynamic> CreateQuery( string tableName )
+      public IFilterable<dynamic> CreateQuery( string tableName, bool shouldIncludeETagForDynamic )
       {
-         return (IFilterable<dynamic>)new DynamicMemoryQuery( GetEntities( tableName ) );
+         return (IFilterable<dynamic>) new DynamicMemoryQuery( GetEntities( tableName ), shouldIncludeETagForDynamic );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )
@@ -238,16 +286,29 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Update( string tableName, TableItem tableItem )
+      public void Update( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Merge( string tableName, TableItem tableItem )
+      private static bool ShouldForceOverwrite( ConflictHandling conflictHandling, GenericTableEntity genericTableEntity )
+      {
+         return string.IsNullOrEmpty( genericTableEntity.ETag ) || conflictHandling.Equals( ConflictHandling.Overwrite );
+      }
+
+      public void Merge( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Merge( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
@@ -256,6 +317,17 @@ namespace TechSmith.Hyde.Table.Memory
       {
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey );
          _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
+      }
+
+      public void DeleteItem( string tableName, TableItem tableItem, ConflictHandling conflictHandling )
+      {
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         if ( ShouldForceOverwrite( conflictHandling, genericTableEntity ) )
+         {
+            genericTableEntity.ETag = "*";
+         }
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Delete( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )

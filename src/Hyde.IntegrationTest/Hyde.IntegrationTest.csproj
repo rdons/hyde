@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="DecoratedItem.cs" />
     <Compile Include="DecoratedItemWithDateTime.cs" />
+    <Compile Include="DecoratedItemWithETag.cs" />
     <Compile Include="DecoratedItemWithNullableProperty.cs" />
     <Compile Include="DynamicPropertyBag.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

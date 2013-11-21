@@ -22,6 +22,60 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Create_ETagDecoratedItem_ETagIncludedWithTableItem()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42,
+            ETag = "etag"
+         };
+
+         var item = TableItem.Create( decoratedItemWithETag );
+
+         Assert.IsNotNull( item.ETag );
+      }
+
+      [TestMethod]
+      public void Create_DecoratedItemWithoutETag_TableItemDoesNotIncludeETag()
+      {
+         var decoratedItem = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+
+         var item = TableItem.Create( decoratedItem );
+
+         Assert.IsNull( item.ETag );
+      }
+
+      [TestMethod]
+      public void Create_DynamicEntityWithETag_ItemCreatedWithETag()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+         entity.ETag = "etag";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
+
+         Assert.IsNotNull( item.ETag );
+      }
+
+      [TestMethod]
+      public void Create_DynamicWithoutETag_ItemCreatedWithNullETag()
+      {
+         dynamic entity = new ExpandoObject();
+         entity.Name = "Joe";
+
+         TableItem item = TableItem.Create( entity, "pk", "rk" );
+
+         Assert.IsNull( item.ETag );
+      }
+
+      [TestMethod]
       public void CreateAndThrowOnReservedProperty_KeysProvidedAndNoReservedProperties_KeysSetCorrectly()
       {
          var item = TableItem.Create( new SimpleDataItem { FirstType = "Joe", SecondType = 34 }, "pk", "rk" );

@@ -29,6 +29,12 @@ namespace TechSmith.Hyde.Table
          private set;
       }
 
+      public object ETag
+      {
+         get;
+         private set;
+      }
+
       public Dictionary<string, Tuple<object, Type>> Properties
       {
          get;
@@ -48,16 +54,16 @@ namespace TechSmith.Hyde.Table
             {
                throw new InvalidEntityException( string.Format( "Reserved property name {0}", propertyName ) );
             }
-            else if( propertyName == TableConstants.PartitionKey )
+            else if ( propertyName == TableConstants.PartitionKey )
             {
                var partitionKeyProperty = properties[propertyName];
-               if( partitionKeyProperty.Item2 != typeof( string ) )
+               if ( partitionKeyProperty.Item2 != typeof( string ) )
                {
                   throw new InvalidEntityException( string.Format( "PartitionKey property must be a string but was a {0}", partitionKeyProperty.Item2 ) );
                }
                PartitionKey = (string) partitionKeyProperty.Item1;
             }
-            else if( propertyName == TableConstants.RowKey )
+            else if ( propertyName == TableConstants.RowKey )
             {
                var rowKeyProperty = properties[propertyName];
                if ( rowKeyProperty.Item2 != typeof( string ) )
@@ -66,13 +72,18 @@ namespace TechSmith.Hyde.Table
                }
                RowKey = (string) rowKeyProperty.Item1;
             }
+            else if ( propertyName == TableConstants.ETag )
+            {
+               var eTagProperty = properties[propertyName];
+               ETag = eTagProperty.Item1;
+            }
          }
       }
 
       public static TableItem Create( dynamic entity, ReservedPropertyBehavior reservedPropertyBehavior = ReservedPropertyBehavior.Throw )
       {
          bool throwOnReservedPropertyName = reservedPropertyBehavior == ReservedPropertyBehavior.Throw;
-         TableItem item =  entity is IDynamicMetaObjectProvider ?
+         TableItem item = entity is IDynamicMetaObjectProvider ?
             CreateFromDynamicMetaObject( entity, throwOnReservedPropertyName ) :
             CreateFromType( entity, throwOnReservedPropertyName );
 
@@ -168,16 +179,21 @@ namespace TechSmith.Hyde.Table
          {
             item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          }
+
+         if ( entity.HasPropertyDecoratedWith<ETagAttribute>() )
+         {
+            item.ETag = entity.ReadPropertyDecoratedWith<ETagAttribute, object>();
+         }
          return item;
       }
 
       private static bool IsAnonymousType( object entity )
       {
-          Type type = entity.GetType();
-          return Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
-                  && type.Name.Contains("AnonymousType")
-                  && (type.Name.StartsWith("<>") || type.Name.StartsWith("VB$"))
-                  && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
+         Type type = entity.GetType();
+         return Attribute.IsDefined( type, typeof( CompilerGeneratedAttribute ), false )
+                 && type.Name.Contains( "AnonymousType" )
+                 && ( type.Name.StartsWith( "<>" ) || type.Name.StartsWith( "VB$" ) )
+                 && ( type.Attributes & TypeAttributes.NotPublic ) == TypeAttributes.NotPublic;
       }
    }
 }

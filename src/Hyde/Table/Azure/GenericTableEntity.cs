@@ -113,6 +113,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          genericEntity.PartitionKey = tableItem.PartitionKey;
          genericEntity.RowKey = tableItem.RowKey;
+         genericEntity.ETag = tableItem.ETag == null ? null : tableItem.ETag.ToString();
 
          return genericEntity;
       }
@@ -131,7 +132,7 @@ namespace TechSmith.Hyde.Table.Azure
          return entityProperties;
       }
 
-      public dynamic ConvertToDynamic()
+      public dynamic ConvertToDynamic(bool includeETag)
       {
          dynamic newItem = new ExpandoObject();
 
@@ -148,6 +149,10 @@ namespace TechSmith.Hyde.Table.Azure
 
          ( (IDictionary<string, object>) newItem ).Add( "PartitionKey", PartitionKey );
          ( (IDictionary<string, object>) newItem ).Add( "RowKey", RowKey );
+         if ( includeETag )
+         {
+            ( (IDictionary<string, object>) newItem ).Add( "ETag", ETag );
+         }
 
          return newItem;
       }
@@ -163,7 +168,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          var newItem = new T();
 
-         SetRowKeyAndPartitionKeyOnObject( newItem );
+         SetAzureTableConstantsOnObject( newItem );
 
          objectType.GetProperties().Where( p => p.ShouldSerialize() )
                                    .Where( p => _properties.ContainsKey( p.Name ) )
@@ -184,7 +189,7 @@ namespace TechSmith.Hyde.Table.Azure
          typeProperty.SetValue( newItem, objectConverter.ConvertToValue( _properties[typeProperty.Name], typeProperty ), null );
       }
 
-      private void SetRowKeyAndPartitionKeyOnObject<T>( T newItem ) where T : new()
+      private void SetAzureTableConstantsOnObject<T>( T newItem ) where T : new()
       {
          var partitionKeyProperty = newItem.FindPropertyDecoratedWith<PartitionKeyAttribute>();
          if ( partitionKeyProperty != null )
@@ -196,6 +201,12 @@ namespace TechSmith.Hyde.Table.Azure
          if ( rowKeyProperty != null )
          {
             rowKeyProperty.SetValue( newItem, RowKey, null );
+         }
+
+         var eTagProperty = newItem.FindPropertyDecoratedWith<ETagAttribute>();
+         if ( eTagProperty != null )
+         {
+            eTagProperty.SetValue( newItem, ETag, null );
          }
       }
    }

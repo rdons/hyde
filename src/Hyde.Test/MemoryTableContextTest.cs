@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
@@ -24,14 +23,24 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void CreateQuery_ItemAddedButSaveNotCalled_EntityNotReturnedByQuery()
       {
-         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 50 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 50
+         } ) );
          Assert.IsNull( _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault() );
       }
 
       [TestMethod]
       public void Save_ItemAdded_QueryReturnsTheItem()
       {
-         var item = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
+         var item = new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 50
+         };
          var entity = TableItem.Create( item );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
@@ -45,7 +54,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void CreateQuery_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
       {
-         var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
+         var addedItem = new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 50
+         };
          var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
@@ -59,7 +73,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void CreateQuery_ItemAddedToDifferentTable_QueryDoesNotReturnEntity()
       {
-         var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
+         var addedItem = new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 50
+         };
          var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
@@ -71,19 +90,35 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsNotCalled_NoExceptionThrown()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123"
+         } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123"
+         } ) );
       }
 
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsCalled_ThrowsEntityAlreadyExistsException()
       {
-         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123"
+         } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123"
+         } ) );
          try
          {
             _context.Save( Execute.Individually );
@@ -97,7 +132,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Update_EntityDoesNotExist_ThrowsExceptionOnSave()
       {
-         _context.Update( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 12 } ) );
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 12
+         } ), ConflictHandling.Throw );
 
          try
          {
@@ -110,25 +150,124 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Update_EntityExists_EntityUpdatedOnSave()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 36
+         } ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+         Assert.AreEqual( 36, item.Age );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Update_EntityHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Age = 42,
+            Id = "id",
+            Name = "name"
+         };
+         _context.AddNewItem( "table", TableItem.Create( decoratedItemWithETag ) );
+         _context.Save( Execute.Individually );
+
+         var entity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+
+         entity.Age = 19;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         entity.Age = 21;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+      }
+
+      [TestMethod]
+      public void Update_EntityHasAnOldETagConflictHandlingOverwrite_EntityUpdatedOnSave()
+      {
+         var decoratedItemWithETag = new DecoratedItemWithETag
+         {
+            Age = 42,
+            Id = "id",
+            Name = "name"
+         };
+         _context.AddNewItem( "table", TableItem.Create( decoratedItemWithETag ) );
+         _context.Save( Execute.Individually );
+
+         var entity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+
+         entity.Age = 19;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         entity.Age = 21;
+         _context.Update( "table", TableItem.Create( entity ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         var retrievedEntity = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "id" ).RowKeyEquals( "name" ).Single();
+         Assert.AreEqual( 21, retrievedEntity.Age );
+      }
+
+      [TestMethod]
       public void QueryForDynamic_RowContainsNullValues_ResultingDynamicHasNullPropertiesRemoved()
       {
-         var item = new DecoratedItemWithNullableProperty() { Id = "abc", Name = "Hello" };
+         var item = new DecoratedItemWithNullableProperty()
+         {
+            Id = "abc",
+            Name = "Hello"
+         };
          _context.AddNewItem( "table", TableItem.Create( item ) );
          _context.Save( Execute.Individually );
 
-         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
+         var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
          var asDict = (IDictionary<string, object>) result.First();
 
          Assert.AreEqual( 2, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
+         Assert.IsFalse( asDict.ContainsKey( "ETag" ) );
+      }
+
+      [TestMethod]
+      public void QueryForDynamic_ShouldIncludeETag_ResultingDynamicHasETag()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar"
+         };
+         _context.AddNewItem( "table", TableItem.Create( item ) );
+         _context.Save( Execute.Individually );
+
+         var result = _context.CreateQuery( "table", true ).PartitionKeyEquals( "foo" ).RowKeyEquals( "bar" );
+         var asDict = (IDictionary<string, object>) result.First();
+
+         Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "ETag" ) );
       }
 
       [TestMethod]
       public void QueryOnPartitionKey_NoItems_ReturnsEmptyEnumermation()
       {
-         Assert.AreEqual( 0, _context.CreateQuery<DecoratedItem>( "table").PartitionKeyEquals( "empty partition" ).Count() );
+         Assert.AreEqual( 0, _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "empty partition" ).Count() );
       }
 
       [TestMethod]
@@ -146,7 +285,7 @@ namespace TechSmith.Hyde.Test
          }
          _context.Save( Execute.Individually );
 
-         var result = _context.CreateQuery<DecoratedItem>( "table").PartitionKeyEquals( "abc" ).ToList();
+         var result = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).ToList();
          Assert.AreEqual( 2, result.Count );
          Assert.AreEqual( 1, result.Count( i => i.Name == items[0].Name && i.Id == items[0].Id && i.Age == items[0].Age ) );
          Assert.AreEqual( 1, result.Count( i => i.Name == items[1].Name && i.Id == items[1].Id && i.Age == items[1].Age ) );
@@ -168,7 +307,7 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" )
+         var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" )
                               .RowKeyFrom( tsp.MinimumKeyValue ).Inclusive()
                               .RowKeyTo( tsp.MaximumKeyValue ).Inclusive();
 
@@ -191,9 +330,9 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.CreateQuery( "table" )
+         var result = _context.CreateQuery( "table", false )
                               .PartitionKeyFrom( tsp.MinimumKeyValue ).Inclusive()
-                              .PartitionKeyTo( "bcc").Inclusive();
+                              .PartitionKeyTo( "bcc" ).Inclusive();
 
          Assert.AreEqual( 2, result.Count() );
       }
@@ -201,7 +340,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
-         _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.Upsert( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
@@ -211,10 +355,20 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityExists_EntityUpdatedOnSave()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
          _context.Save( Execute.Individually );
 
-         _context.Upsert( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
+         _context.Upsert( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 36
+         } ) );
          _context.Save( Execute.Individually );
 
          var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
@@ -224,7 +378,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Delete_EntityExists_EntityDeletedOnSave()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
          _context.Save( Execute.Individually );
 
          _context.DeleteItem( "table", "abc", "123" );
@@ -242,14 +401,121 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void SaveAtomically_ManyOperations_AllOperationsPersist()
+      public void Delete_TableItemWithETag_EntityDeletedOnSave()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItemWithETag
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
+         var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
+      }
+
+      [TestMethod]
+      public void Delete_TableItemWithoutETag_EntityDeletedOnSave()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         var storedItem = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Delete_TableItemWithETagHasChanged_ThrowsEntityHasBeenDeletedException()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItemWithETag
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+
+         _context.Update( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Throw );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
+      }
+
+      [TestMethod]
+      public void Delete_TableItemWithETagHasChangedConflictHandlingOverwrite_DeletesEntity()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItemWithETag
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         var storedItem = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+
+         _context.Update( "table", TableItem.Create( storedItem ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         _context.DeleteItem( "table", TableItem.Create( storedItem ), ConflictHandling.Overwrite );
+         _context.Save( Execute.Individually );
+
+         var item = _context.CreateQuery<DecoratedItemWithETag>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_ManyOperations_AllOperationsPersist()
+      {
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "789",
+            Age = 42
+         } ) );
+         _context.Save( Execute.Individually );
+
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "456",
+            Age = 42
+         } ) );
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 34
+         } ), ConflictHandling.Throw );
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -269,13 +535,38 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_ManyOperationsAndOneFails_NoOperationsPersist()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "789",
+            Age = 42
+         } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "not found", Age = 42 } ) ); // should fail
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "456",
+            Age = 42
+         } ) );
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 34
+         } ), ConflictHandling.Throw );
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "not found",
+            Age = 42
+         } ), ConflictHandling.Throw ); // should fail
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -296,8 +587,18 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_TwoOperationsOnSameEntity_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
-         _context.Update( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 42
+         } ) );
+         _context.Update( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 36
+         } ), ConflictHandling.Throw );
          try
          {
             _context.Save( Execute.Atomically );
@@ -311,8 +612,16 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentPartitions_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" } ) );
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "bcd", Name = "foo" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "foo"
+         } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "bcd",
+            Name = "foo"
+         } ) );
          try
          {
             _context.Save( Execute.Atomically );
@@ -326,9 +635,13 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnTooManyEntities_ThrowsInvalidOperationException()
       {
-         for ( int i=0 ; i < 101; ++i )
+         for ( int i = 0; i < 101; ++i )
          {
-            _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" + i } ) );
+            _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+            {
+               Id = "abc",
+               Name = "foo" + i
+            } ) );
          }
 
          try
@@ -344,8 +657,16 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentTables_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "foo" } ) );
-         _context.AddNewItem( "table2", TableItem.Create(new DecoratedItem { Id = "abc", Name = "bar" } ) );
+         _context.AddNewItem( "table", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "foo"
+         } ) );
+         _context.AddNewItem( "table2", TableItem.Create( new DecoratedItem
+         {
+            Id = "abc",
+            Name = "bar"
+         } ) );
 
          try
          {

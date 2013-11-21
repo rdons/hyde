@@ -50,6 +50,15 @@ namespace TechSmith.Hyde.Table
       }
 
       /// <summary>
+      /// Sets whether or not the ETag property should be included when reading a dynamic object from table storage
+      /// </summary>
+      public bool ShouldIncludeETagWithDynamics
+      {
+         get;
+         set;
+      }
+
+      /// <summary>
       /// Add entity to the given table
       /// </summary>
       /// <param name="tableName">Name of the table</param>
@@ -98,7 +107,7 @@ namespace TechSmith.Hyde.Table
 
       public Task<dynamic> GetAsync( string tableName, string partitionKey, string rowKey )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
                         .Async()
@@ -118,7 +127,7 @@ namespace TechSmith.Hyde.Table
 
       public dynamic Get( string tableName, string partitionKey, string rowKey )
       {
-         var result = _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
+         var result = _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
          if ( result.Length == 0 )
          {
             throw new EntityDoesNotExistException( partitionKey, rowKey, null );
@@ -135,7 +144,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey );
       }
 
       /// <summary>
@@ -158,7 +167,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName )
       {
-         return _context.CreateQuery( tableName );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
       /// <summary>
@@ -179,7 +188,7 @@ namespace TechSmith.Hyde.Table
       /// <returns>a fluent query object</returns>
       public IFilterable<dynamic> CreateQuery( string tableName )
       {
-         return _context.CreateQuery( tableName );
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
       [Obsolete( "Use CreateQuery<T>" )]
@@ -199,7 +208,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyFrom( partitionKeyLow ).Inclusive()
                         .PartitionKeyTo( partitionKeyHigh ).Inclusive();
       }
@@ -216,7 +225,7 @@ namespace TechSmith.Hyde.Table
       [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return _context.CreateQuery( tableName )
+         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyFrom( rowKeyLow ).Inclusive()
                         .RowKeyTo( rowKeyHigh ).Inclusive();
@@ -242,50 +251,168 @@ namespace TechSmith.Hyde.Table
          _context.Save( executeMethod );
       }
 
+      /// <summary>
+      /// Insert or replace the instance with specified partition key and row key
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to store</param>
+      /// <param name="partitionKey">The partition key to use when storing or replacing the entity</param>
+      /// <param name="rowKey">The row key to use when storing or replacing the entity</param>
       public void Upsert( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
          _context.Upsert( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
+      /// <summary>
+      /// Insert or replace the instance in table storage
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to insert or replace</param>
       public void Upsert( string tableName, dynamic instance )
       {
          _context.Upsert( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
+      /// <summary>
+      /// Remove the instance from table storage
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to delete</param>
       public void Delete( string tableName, dynamic instance )
       {
-         TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
-         Delete( tableName, tableItem.PartitionKey, tableItem.RowKey );
+         Delete( tableName, instance, ConflictHandling.Throw );
       }
 
+      /// <summary>
+      /// Remove the instance from table storage
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to delete</param>
+      /// <param name="conflictHandling">Method for handling ETag conflicts</param>
+      public void Delete( string tableName, dynamic instance, ConflictHandling conflictHandling )
+      {
+         TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
+         if ( tableItem.ETag == null )
+         {
+            Delete( tableName, tableItem.PartitionKey, tableItem.RowKey );            
+         }
+         else
+         {
+            _context.DeleteItem( tableName, tableItem, conflictHandling );
+         }
+      }
+      
+      /// <summary>
+      /// Remove the entity from table storage at the specified partition key and row key
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="partitionKey">The partition key to use when deleting the entity</param>
+      /// <param name="rowKey">The row key to use when deleting the entity</param>
       public void Delete( string tableName, string partitionKey, string rowKey )
       {
          _context.DeleteItem( tableName, partitionKey, rowKey );
       }
 
+      /// <summary>
+      /// Remove all entities with specified partition key
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="partitionKey">The partition key to use when deleting a collection of entities</param>
       public void DeleteCollection( string tableName, string partitionKey )
       {
          _context.DeleteCollection( tableName, partitionKey );
       }
 
+      /// <summary>
+      /// Update the entity with specified partition key and row key in table storage
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to update</param>
+      /// <param name="partitionKey">The partition key to use when storing the entity</param>
+      /// <param name="rowKey">The row key to use when storing the entity</param>
       public void Update( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         Update( tableName, instance, partitionKey, rowKey, ConflictHandling.Throw );
       }
 
+      /// <summary>
+      /// Update the entity with specified partition key and row key in table storage
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to update</param>
+      /// <param name="partitionKey">The partition key to use when storing the entity</param>
+      /// <param name="rowKey">The row key to use when storing the entity</param>
+      /// <param name="conflictHandling">Method for handling ETag conflicts</param>
+      public void Update( string tableName, dynamic instance, string partitionKey, string rowKey, ConflictHandling conflictHandling )
+      {
+         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ), conflictHandling );
+      }
+
+      /// <summary>
+      /// Update the entity
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to update</param>
       public void Update( string tableName, dynamic instance )
       {
-         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
+         Update( tableName, instance, ConflictHandling.Throw );
       }
 
+      /// <summary>
+      /// Update the entity
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to update</param>
+      /// <param name="conflictHandling">Method for handling ETag conflicts</param>
+      public void Update( string tableName, dynamic instance, ConflictHandling conflictHandling )
+      {
+         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ), conflictHandling );
+      }
+
+      /// <summary>
+      /// Merge the entity with specified partition key and row key
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to merge</param>
+      /// <param name="partitionKey">The partition key to use when merging the entity</param>
+      /// <param name="rowKey">The row key to use when merging the entity</param>
       public void Merge( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Merge( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
+         Merge( tableName, instance, partitionKey, rowKey, ConflictHandling.Throw );
       }
 
+      /// <summary>
+      /// Merge the entity with specified partition key and row key
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to merge</param>
+      /// <param name="partitionKey">The partition key to use when merging the entity</param>
+      /// <param name="rowKey">The row key to use when merging the entity</param>
+      /// <param name="conflictHandling">Method for handling ETag conflicts</param>
+      public void Merge( string tableName, dynamic instance, string partitionKey, string rowKey, ConflictHandling conflictHandling )
+      {
+         _context.Merge( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ), conflictHandling );
+      }
+
+      /// <summary>
+      /// Merge the entity
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to merge</param>
       public void Merge( string tableName, dynamic instance )
       {
-         _context.Merge( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
+         Merge( tableName, instance, ConflictHandling.Throw );
+      }
+
+      /// <summary>
+      /// Merge the entity
+      /// </summary>
+      /// <param name="tableName">Name of the table</param>
+      /// <param name="instance">the instance to merge</param>
+      /// <param name="conflictHandling">Method for handling ETag conflicts</param>
+      public void Merge( string tableName, dynamic instance, ConflictHandling conflictHandling )
+      {
+         _context.Merge( tableName, TableItem.Create( instance, _reservedPropertyBehavior ), conflictHandling );
       }
    }
 }
