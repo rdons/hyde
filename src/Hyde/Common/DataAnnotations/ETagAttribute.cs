@@ -3,7 +3,7 @@
 namespace TechSmith.Hyde.Common.DataAnnotations
 {
    /// <summary>
-   /// Marks a property as a table storage ETag. Property must have object type.
+   /// Marks a property as a table storage ETag.
    /// </summary>
    [AttributeUsage( AttributeTargets.Property, AllowMultiple = false, Inherited = true )]
    public class ETagAttribute : DontSerializeAttribute
