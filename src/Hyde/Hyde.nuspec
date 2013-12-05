@@ -11,8 +11,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Added support for Optimistic Concurrency via ETags.
-        Usage information can be found on the wiki: https://github.com/TechSmith/hyde/wiki
+      * Deprecated the DeleteCollection method. This method had problems with race conditions,
+        especially in the InMemory implementation. There is no good way to support it as it stands
+        so we are removing it. It will be fully removed in a later release.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
