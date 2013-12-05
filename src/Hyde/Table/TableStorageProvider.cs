@@ -318,6 +318,8 @@ namespace TechSmith.Hyde.Table
       /// </summary>
       /// <param name="tableName">Name of the table</param>
       /// <param name="partitionKey">The partition key to use when deleting a collection of entities</param>
+      [Obsolete("Using this method is discouraged and may not behave as expected, especially with an InMemoryTableStorageProvider. "
+              + "As an alternative, prefer to query the entities you wish to delete and execute delete operations manually.")]
       public void DeleteCollection( string tableName, string partitionKey )
       {
          _context.DeleteCollection( tableName, partitionKey );
