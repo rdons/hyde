@@ -11,11 +11,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * Deprecated the DeleteCollection method. This method had problems with race conditions,
-        especially in the InMemory implementation. There is no good way to support it as it stands
-        so we are removing it. It will be fully removed in a later release.
+      * Updated references to latest Azure SDKs
     </releaseNotes>
-    <copyright>Copyright TechSmith Corporation 2012</copyright>
+    <copyright>Copyright TechSmith Corporation 2014</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
   </metadata>
   <files>
