@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Dynamic;
 using System.Linq;
+using Microsoft.Data.OData;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
+using Newtonsoft.Json;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table;
@@ -517,7 +519,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Delete_TableDoesNotExist_NothingHappens()
       {
-         _tableStorageProvider.Delete( "table_that_does_not_exist", _partitionKey, _rowKey );
+         _tableStorageProvider.Delete( "tableThatDoesNotExist", _partitionKey, _rowKey );
          _tableStorageProvider.Save();
       }
 
