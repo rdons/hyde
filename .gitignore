@@ -12,3 +12,6 @@ TestResults
 *.vsmdi
 *.ncrunchproject
 testimpactdata.sdf
+
+#Ignore packages
+[Pp]ackages/
