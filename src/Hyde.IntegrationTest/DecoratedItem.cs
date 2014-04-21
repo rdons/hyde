@@ -1,4 +1,5 @@
-﻿using TechSmith.Hyde.Common.DataAnnotations;
+﻿using System.Data.Services.Common;
+using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.IntegrationTest
 {
@@ -28,6 +29,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
    }
 
+   [DataServiceKey( "PartitionKey", "RowKey")]
    class DecoratedItemEntity : Microsoft.WindowsAzure.Storage.Table.TableEntity
    {
       public string Id
