@@ -28,7 +28,7 @@ namespace TechSmith.Hyde.Table.Azure
          return _table.ExecuteQuery( query ).Select( ConvertResult ).GetEnumerator();
       }
 
-      public override Task<IPartialResult<T>> Async()
+      public override Task<IPartialResult<T>> PartialAsync()
       {
          return GetPartialResultAsync( CreateTableQuery(), new TableContinuationToken() );
       }

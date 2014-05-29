@@ -101,7 +101,7 @@ namespace TechSmith.Hyde.Table
          return _context.CreateQuery<T>( tableName )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
-                        .Async()
+                        .PartialAsync()
                         .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ) );
       }
 
@@ -110,7 +110,7 @@ namespace TechSmith.Hyde.Table
          return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
-                        .Async()
+                        .PartialAsync()
                         .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ),
                                        TaskContinuationOptions.OnlyOnRanToCompletion );
       }

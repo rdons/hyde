@@ -32,7 +32,18 @@ namespace TechSmith.Hyde.Table
 
    public interface IQueryAsync<T> : IEnumerable<T>
    {
-      Task<IPartialResult<T>> Async();
+      /// <summary>
+      /// Asynchrononusly returns an enumerable of all objects satisfying the query.
+      /// </summary>
+      /// <returns>An enumerable containing all of the objects satisfying the query.</returns>
+      Task<IEnumerable<T>> Async();
+
+      /// <summary>
+      /// Asynchronously returns a set of objects satisfying the query along with a handle
+      /// to retrieve more objects satisfying the query.
+      /// </summary>
+      /// <returns>A partial result containing a set of objects satisfying the query.</returns>
+      Task<IPartialResult<T>> PartialAsync();
    }
 
    public interface IPartialResult<T> : IEnumerable<T>

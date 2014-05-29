@@ -24,7 +24,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       internal abstract T Convert( GenericTableEntity e );
 
-      public override Task<IPartialResult<T>> Async()
+      public override Task<IPartialResult<T>> PartialAsync()
       {
          return Task.Factory.StartNew<IPartialResult<T>>( () => new PartialResult( this ) );
       }
