@@ -1925,6 +1925,40 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( DateTime.MaxValue, retrievedItem.CreationDate );
       }
 
+      [TestCategory( "Integration" ), TestMethod]
+      public void CreateQueryAsync_MultipleBatches_ContinuationsAreHidden()
+      {
+         for ( int i = 0; i < 1100; i++ )
+         {
+            _tableStorageProvider.Add( _tableName, new TypeWithIntProperty
+            {
+               FirstType = i
+            }, _partitionKey, i.ToString() );
+         }
+         _tableStorageProvider.Save( Execute.InBatches );
+
+         var result = _tableStorageProvider.CreateQuery<TypeWithIntProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async().Result;
+         Assert.AreEqual( 1100, result.Count() );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void CreateQueryPartialAsync_MultipleBatches_ContinuationsAreExposed()
+      {
+         for ( int i = 0; i < 1100; i++ )
+         {
+            _tableStorageProvider.Add( _tableName, new TypeWithIntProperty
+            {
+               FirstType = i
+            }, _partitionKey, i.ToString() );
+         }
+         _tableStorageProvider.Save( Execute.InBatches );
+
+         var result = _tableStorageProvider.CreateQuery<TypeWithIntProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).PartialAsync().Result;
+         Assert.AreEqual( 1000, result.Count() );
+         var continuation = result.GetNextAsync().Result;
+         Assert.AreEqual( 100, continuation.Count() );
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty

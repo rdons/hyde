@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table
 {
@@ -107,7 +108,11 @@ namespace TechSmith.Hyde.Table
 
       public abstract IEnumerator<T> GetEnumerator();
 
-      public abstract Task<IPartialResult<T>> Async();
+      public Task<IEnumerable<T>> Async()
+      {
+         return PartialAsync().FlattenAsync();
+      }
+      public abstract Task<IPartialResult<T>> PartialAsync();
 
       IEnumerator IEnumerable.GetEnumerator()
       {
