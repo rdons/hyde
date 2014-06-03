@@ -12,6 +12,7 @@
     <description>$description$</description>
     <releaseNotes>
       * Updated references to latest Azure SDKs
+      * Added Async method that flattens partial results to mimic normal IEnumerable result. This replaces the old Async() method behavior but results can still be processed in batches using the new PartialAsync method.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2014</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
