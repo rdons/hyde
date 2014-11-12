@@ -410,8 +410,6 @@ namespace TechSmith.Hyde.Table.Azure
       private CloudTable Table( string tableName )
       {
          var cloudTableClient = new CloudTableClient( new Uri( _storageAccount.TableEndpoint ), _storageAccount.Credentials );
-         // Default is JsonMinimalMetadata but we have to use AtomPub until this issue is fixed: https://odata.codeplex.com/workitem/15
-         cloudTableClient.PayloadFormat = TablePayloadFormat.AtomPub;
          return cloudTableClient.GetTableReference( tableName );
       }
    }
