@@ -9,212 +9,9 @@ namespace TechSmith.Hyde.Table.Memory
 {
    internal class MemoryTableContext : ITableContext
    {
-      private class Partition
-      {
-         private readonly Dictionary<string, GenericTableEntity> _entities = new Dictionary<string, GenericTableEntity>();
-
-         public void Add( GenericTableEntity entity )
-         {
-            AzureKeyValidator.ValidatePartitionKey( entity.PartitionKey );
-            AzureKeyValidator.ValidateRowKey( entity.RowKey );
-            lock ( _entities )
-            {
-               if ( _entities.ContainsKey( entity.RowKey ) )
-               {
-                  throw new EntityAlreadyExistsException();
-               }
-               entity.ETag = GetNewETag();
-               _entities[entity.RowKey] = entity;
-            }
-         }
-
-         public void Update( GenericTableEntity entity )
-         {
-            lock ( _entities )
-            {
-               if ( !_entities.ContainsKey( entity.RowKey ) )
-               {
-                  throw new EntityDoesNotExistException();
-               }
-               if ( EntityHasBeenChanged( entity ) )
-               {
-                  throw new EntityHasBeenChangedException();
-               }
-               entity.ETag = GetNewETag();
-               _entities[entity.RowKey] = entity;
-            }
-         }
-
-         private static string GetNewETag()
-         {
-            return Guid.NewGuid().ToString();
-         }
-
-         private bool EntityHasBeenChanged( GenericTableEntity entity )
-         {
-            var hasETagProperty = !string.IsNullOrEmpty( entity.ETag );
-            if ( hasETagProperty && entity.ETag.Equals( "*" ) )
-            {
-               return false;
-            }
-            var entityHasChanged = false;
-            if ( hasETagProperty )
-            {
-               entityHasChanged = !entity.ETag.Equals( _entities[entity.RowKey].ETag );
-            }
-            return entityHasChanged;
-         }
-
-         public void Upsert( GenericTableEntity entity )
-         {
-            lock ( _entities )
-            {
-               entity.ETag = GetNewETag();
-               _entities[entity.RowKey] = entity;
-            }
-         }
-
-         public void Merge( GenericTableEntity entity )
-         {
-            lock ( _entities )
-            {
-               if ( !_entities.ContainsKey( entity.RowKey ) )
-               {
-                  throw new EntityDoesNotExistException();
-               }
-               if ( EntityHasBeenChanged( entity ) )
-               {
-                  throw new EntityHasBeenChangedException();
-               }
-
-               var currentEntity = _entities[entity.RowKey];
-               foreach ( var property in entity.WriteEntity( null ) )
-               {
-                  currentEntity.SetProperty( property.Key, property.Value );
-               }
-               currentEntity.ETag = GetNewETag();
-            }
-         }
-
-         public void Delete( string rowKey )
-         {
-            lock ( _entities )
-            {
-               if ( _entities.ContainsKey( rowKey ) )
-               {
-                  _entities.Remove( rowKey );
-               }               
-            }
-         }
-
-         public void Delete( GenericTableEntity entity )
-         {
-            lock ( _entities )
-            {
-               if ( _entities.ContainsKey( entity.RowKey ) )
-               {
-                  if ( EntityHasBeenChanged( entity ) )
-                  {
-                     throw new EntityHasBeenChangedException();
-                  }
-                  _entities.Remove( entity.RowKey );
-               }
-            }
-         }
-
-         public IEnumerable<GenericTableEntity> GetAll()
-         {
-            lock ( _entities )
-            {
-               return new List<GenericTableEntity>( _entities.Values );
-            }
-         }
-
-         public Partition DeepCopy()
-         {
-            var result = new Partition();
-            lock ( _entities )
-            {
-               foreach ( var e in _entities )
-               {
-                  result._entities.Add( e.Key, e.Value );
-               }
-            }
-            return result;
-         }
-      }
-
-      private class Table
-      {
-         private readonly Dictionary<string, Partition> _partitions = new Dictionary<string, Partition>();
-
-         public Partition GetPartition( string partitionKey )
-         {
-            lock ( _partitions )
-            {
-               if ( !_partitions.ContainsKey( partitionKey ) )
-               {
-                  _partitions[partitionKey] = new Partition();
-               }
-               return _partitions[partitionKey];
-            }
-         }
-
-         public IEnumerable<Partition> GetAllPartitions()
-         {
-            lock ( _partitions )
-            {
-               return new List<Partition>( _partitions.Values );
-            }
-         }
-
-         public Table DeepCopy()
-         {
-            var result = new Table();
-            lock ( _partitions )
-            {
-               foreach ( var p in _partitions )
-               {
-                  result._partitions.Add( p.Key, p.Value.DeepCopy() );
-               }
-            }
-            return result;
-         }
-      }
-
-      private class StorageAccount
-      {
-         private readonly Dictionary<string, Table> _tables = new Dictionary<string, Table>();
-
-         public Table GetTable( string tableName )
-         {
-            lock ( _tables )
-            {
-               if ( !_tables.ContainsKey( tableName ) )
-               {
-                  _tables.Add( tableName, new Table() );
-               }
-               return _tables[tableName];
-            }
-         }
-
-         public StorageAccount DeepCopy()
-         {
-            var result = new StorageAccount();
-            lock ( _tables )
-            {
-               foreach ( var tableEntry in _tables )
-               {
-                  result._tables.Add( tableEntry.Key, tableEntry.Value.DeepCopy() );
-               }
-            }
-            return result;
-         }
-      }
-
       private class TableAction
       {
-         public Action<StorageAccount> Action
+         public Action<MemoryStorageAccount> Action
          {
             get;
             private set;
@@ -238,7 +35,7 @@ namespace TechSmith.Hyde.Table.Memory
             private set;
          }
 
-         public TableAction( Action<StorageAccount> action, string partitionKey, string rowKey, string tableName )
+         public TableAction(Action<MemoryStorageAccount> action, string partitionKey, string rowKey, string tableName)
          {
             Action = action;
             PartitionKey = partitionKey;
@@ -247,31 +44,31 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private static StorageAccount _sharedTables = new StorageAccount();
+      private static MemoryStorageAccount _sharedTables = new MemoryStorageAccount();
 
-      private StorageAccount _tables;
+      private MemoryStorageAccount _tables;
 
       private readonly Queue<TableAction> _pendingActions = new Queue<TableAction>();
 
-      public MemoryTableContext(bool useInstancePrivateAccount = false)
+      public MemoryTableContext(MemoryStorageAccount account = null)
       {
-         _tables = useInstancePrivateAccount ? new StorageAccount() : _sharedTables;
+         _tables = account ?? _sharedTables;
       }
 
       public static void ResetAllTables()
       {
-         _sharedTables = new StorageAccount();
+         _sharedTables = new MemoryStorageAccount();
       }
 
       public void ResetTables()
       {
          if (_tables == _sharedTables)
          {
-            _tables = _sharedTables = new StorageAccount();
+            _tables = _sharedTables = new MemoryStorageAccount();
          }
          else
          {
-            _tables = new StorageAccount();
+            // TODO: Call a method on MemoryStorageAccount to recreate tables?
          }
       }
 
@@ -294,14 +91,14 @@ namespace TechSmith.Hyde.Table.Memory
       public void AddNewItem( string tableName, TableItem tableItem )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Add( genericTableEntity );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Add(genericTableEntity);
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void Upsert( string tableName, TableItem tableItem )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Upsert( genericTableEntity );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Upsert(genericTableEntity);
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
@@ -312,7 +109,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Update(genericTableEntity);
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
@@ -328,13 +125,13 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Merge( genericTableEntity );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Merge(genericTableEntity);
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(partitionKey).Delete(rowKey);
          _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
@@ -345,7 +142,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Delete( genericTableEntity );
+         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Delete(genericTableEntity);
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 

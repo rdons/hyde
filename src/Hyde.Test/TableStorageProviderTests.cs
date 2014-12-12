@@ -501,8 +501,8 @@ namespace TechSmith.Hyde.Test
       public void AddItem_TwoMemoryContexts_TheSecondContextWillNotSeeAddedAndSavedItem_WithInstanceAccount()
       {
          InMemoryTableStorageProvider.ResetAllTables();
-         var firstTableStorageProvider = new InMemoryTableStorageProvider(true);
-         var secondTableStorageProvider = new InMemoryTableStorageProvider(true);
+         var firstTableStorageProvider = new InMemoryTableStorageProvider(new MemoryStorageAccount());
+         var secondTableStorageProvider = new InMemoryTableStorageProvider(new MemoryStorageAccount());
 
          var expectedItem = new SimpleDataItem
          {

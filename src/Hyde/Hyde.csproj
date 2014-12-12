@@ -109,6 +109,7 @@
     <Compile Include="Table\Memory\AbstractMemoryQuery.cs" />
     <Compile Include="Table\Memory\DynamicMemoryQuery.cs" />
     <Compile Include="Table\Memory\MemoryQuery.cs" />
+    <Compile Include="MemoryStorageAccount.cs" />
     <Compile Include="Table\QueryDescriptor.cs" />
     <Compile Include="Table\TableItem.cs" />
     <Compile Include="Table\Execute.cs" />

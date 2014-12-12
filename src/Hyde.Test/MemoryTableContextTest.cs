@@ -688,7 +688,7 @@ namespace TechSmith.Hyde.Test
       public void Initialize()
       {
          MemoryTableContext.ResetAllTables();
-         _context = new MemoryTableContext(true);
+         _context = new MemoryTableContext(new MemoryStorageAccount());
       }
 
       [TestMethod]
