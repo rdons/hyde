@@ -247,13 +247,32 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private static StorageAccount _tables = new StorageAccount();
+      private static StorageAccount _sharedTables = new StorageAccount();
+
+      private StorageAccount _tables;
 
       private readonly Queue<TableAction> _pendingActions = new Queue<TableAction>();
 
+      public MemoryTableContext(bool useInstancePrivateAccount = false)
+      {
+         _tables = useInstancePrivateAccount ? new StorageAccount() : _sharedTables;
+      }
+
       public static void ResetAllTables()
       {
-         _tables = new StorageAccount();
+         _sharedTables = new StorageAccount();
+      }
+
+      public void ResetTables()
+      {
+         if (_tables == _sharedTables)
+         {
+            _tables = _sharedTables = new StorageAccount();
+         }
+         else
+         {
+            _tables = new StorageAccount();
+         }
       }
 
       private IEnumerable<GenericTableEntity> GetEntities( string tableName )
@@ -357,7 +376,7 @@ namespace TechSmith.Hyde.Table.Memory
          return Task.Factory.StartNew( () => SaveInternal( executeMethod, actions ) );
       }
 
-      private static void SaveInternal( Execute executeMethod, Queue<TableAction> actions )
+      private void SaveInternal( Execute executeMethod, Queue<TableAction> actions )
       {
          if ( executeMethod == Execute.Atomically )
          {
@@ -374,7 +393,7 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private static void SaveAtomically( Queue<TableAction> actions )
+      private void SaveAtomically( Queue<TableAction> actions )
       {
          if ( actions.Count > 100 )
          {
