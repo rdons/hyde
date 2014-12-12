@@ -4,8 +4,8 @@ namespace TechSmith.Hyde.Table
 {
    public class InMemoryTableStorageProvider : TableStorageProvider
    {
-      public InMemoryTableStorageProvider()
-         : base( new MemoryTableContext() )
+      public InMemoryTableStorageProvider(bool useInstancePrivateAccount = false)
+         : base(new MemoryTableContext(useInstancePrivateAccount))
       {
       }
 

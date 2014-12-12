@@ -498,6 +498,35 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void AddItem_TwoMemoryContexts_TheSecondContextWillNotSeeAddedAndSavedItem_WithInstanceAccount()
+      {
+         InMemoryTableStorageProvider.ResetAllTables();
+         var firstTableStorageProvider = new InMemoryTableStorageProvider(true);
+         var secondTableStorageProvider = new InMemoryTableStorageProvider(true);
+
+         var expectedItem = new SimpleDataItem
+         {
+            FirstType = "a",
+            SecondType = 1
+         };
+
+         firstTableStorageProvider.Add(_tableName, expectedItem, _partitionKey, _rowKey);
+         firstTableStorageProvider.Save();
+
+         bool hasThrown = false;
+         try
+         {
+            secondTableStorageProvider.Get<SimpleDataItem>(_tableName, _partitionKey, _rowKey);
+         }
+         catch (EntityDoesNotExistException)
+         {
+            hasThrown = true;
+         }
+
+         Assert.IsTrue(hasThrown);
+      }
+
+      [TestMethod]
       public void AddItem_TwoMemoryContexts_ThePrimaryContextsUncommitedStoreShouldBeUnchangedWhenAnotherIsCreated()
       {
          InMemoryTableStorageProvider.ResetAllTables();
