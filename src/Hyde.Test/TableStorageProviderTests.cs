@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data.Services.Client;
 using System.Dynamic;
@@ -501,8 +500,8 @@ namespace TechSmith.Hyde.Test
       public void AddItem_TwoMemoryContexts_TheSecondContextWillNotSeeAddedAndSavedItem_WithInstanceAccount()
       {
          InMemoryTableStorageProvider.ResetAllTables();
-         var firstTableStorageProvider = new InMemoryTableStorageProvider(new MemoryStorageAccount());
-         var secondTableStorageProvider = new InMemoryTableStorageProvider(new MemoryStorageAccount());
+         var firstTableStorageProvider = new InMemoryTableStorageProvider( new MemoryStorageAccount() );
+         var secondTableStorageProvider = new InMemoryTableStorageProvider( new MemoryStorageAccount() );
 
          var expectedItem = new SimpleDataItem
          {
@@ -510,20 +509,20 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          };
 
-         firstTableStorageProvider.Add(_tableName, expectedItem, _partitionKey, _rowKey);
+         firstTableStorageProvider.Add( _tableName, expectedItem, _partitionKey, _rowKey );
          firstTableStorageProvider.Save();
 
          bool hasThrown = false;
          try
          {
-            secondTableStorageProvider.Get<SimpleDataItem>(_tableName, _partitionKey, _rowKey);
+            secondTableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
          }
-         catch (EntityDoesNotExistException)
+         catch ( EntityDoesNotExistException )
          {
             hasThrown = true;
          }
 
-         Assert.IsTrue(hasThrown);
+         Assert.IsTrue( hasThrown );
       }
 
       [TestMethod]
@@ -1346,11 +1345,11 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Save();
 
          var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
-         Assert.AreEqual( (DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year, retrievedItem.CreationDate.Year );
+         Assert.AreEqual( ( DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year, retrievedItem.CreationDate.Year );
       }
 
       [TestMethod]
-      [TestCategory("Integration")]
+      [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
@@ -1383,7 +1382,7 @@ namespace TechSmith.Hyde.Test
             var item = new SimpleDataItem
                        {
                           FirstType = i.ToString( CultureInfo.InvariantCulture ),
-                          SecondType = i 
+                          SecondType = i
                        };
             tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey + i );
          }

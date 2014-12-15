@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
@@ -35,7 +34,7 @@ namespace TechSmith.Hyde.Table.Memory
             private set;
          }
 
-         public TableAction(Action<MemoryStorageAccount> action, string partitionKey, string rowKey, string tableName)
+         public TableAction( Action<MemoryStorageAccount> action, string partitionKey, string rowKey, string tableName )
          {
             Action = action;
             PartitionKey = partitionKey;
@@ -50,7 +49,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       private readonly Queue<TableAction> _pendingActions = new Queue<TableAction>();
 
-      public MemoryTableContext(MemoryStorageAccount account = null)
+      public MemoryTableContext( MemoryStorageAccount account = null )
       {
          _tables = account ?? _sharedTables;
       }
@@ -62,7 +61,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void ResetTables()
       {
-         if (_tables == _sharedTables)
+         if ( _tables == _sharedTables )
          {
             _tables = _sharedTables = new MemoryStorageAccount();
          }
@@ -91,14 +90,14 @@ namespace TechSmith.Hyde.Table.Memory
       public void AddNewItem( string tableName, TableItem tableItem )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Add(genericTableEntity);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Add( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void Upsert( string tableName, TableItem tableItem )
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Upsert(genericTableEntity);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Upsert( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
@@ -109,7 +108,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Update(genericTableEntity);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
@@ -125,13 +124,13 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Merge(genericTableEntity);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Merge( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(partitionKey).Delete(rowKey);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey );
          _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
@@ -142,7 +141,7 @@ namespace TechSmith.Hyde.Table.Memory
          {
             genericTableEntity.ETag = "*";
          }
-         Action<MemoryStorageAccount> action = tables => tables.GetTable(tableName).GetPartition(tableItem.PartitionKey).Delete(genericTableEntity);
+         Action<MemoryStorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Delete( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
