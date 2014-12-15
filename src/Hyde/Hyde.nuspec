@@ -11,6 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
+      * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
       * Updated references to Azure Storage SDK 4.3
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2014</copyright>
