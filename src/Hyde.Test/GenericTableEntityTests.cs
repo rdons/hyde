@@ -102,6 +102,22 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void CreateInstanceFromProperties_TargetTypeDecoratedWithTimestampAttribute_TimestampSetCorrectly()
+      {
+         var dt = DateTime.Now;
+         var genericEntity = new GenericTableEntity
+         {
+            Timestamp = dt
+         };
+         var entityProperties = new Dictionary<string, EntityProperty>();
+         entityProperties["Age"] = new EntityProperty( 42 );
+         genericEntity.ReadEntity( entityProperties, null );
+
+         var item = genericEntity.ConvertTo<DecoratedItemWithTimestamp>();
+         Assert.AreEqual( dt, item.Timestamp, "Incorrect Timestamp" );
+      }
+
+      [TestMethod]
       public void SimpleItemWithDontSerializeAttributeConvertsToGenericTableEntityCorrectly()
       {
          var itemToSave = new SimpleItemWithDontSerializeAttribute

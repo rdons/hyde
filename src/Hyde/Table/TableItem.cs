@@ -29,6 +29,12 @@ namespace TechSmith.Hyde.Table
          private set;
       }
 
+      public DateTimeOffset Timestamp
+      {
+         get;
+         private set;
+      }
+
       public object ETag
       {
          get;
@@ -71,6 +77,14 @@ namespace TechSmith.Hyde.Table
                   throw new InvalidEntityException( string.Format( "RowKey property must be a string but was a {0}", rowKeyProperty.Item2 ) );
                }
                RowKey = (string) rowKeyProperty.Item1;
+            }
+            else if ( propertyName == TableConstants.Timestamp )
+            {
+               var timeStampProperty = properties[propertyName];
+               if ( timeStampProperty.Item2 != typeof( DateTimeOffset ) )
+               {
+                  Timestamp = (DateTimeOffset) timeStampProperty.Item1;
+               }
             }
             else if ( propertyName == TableConstants.ETag )
             {
@@ -178,6 +192,11 @@ namespace TechSmith.Hyde.Table
          if ( entity.HasPropertyDecoratedWith<RowKeyAttribute>() )
          {
             item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         }
+
+         if ( entity.HasPropertyDecoratedWith<TimestampAttribute>() )
+         {
+            item.Timestamp = entity.ReadPropertyDecoratedWith<TimestampAttribute, DateTimeOffset>();
          }
 
          if ( entity.HasPropertyDecoratedWith<ETagAttribute>() )
