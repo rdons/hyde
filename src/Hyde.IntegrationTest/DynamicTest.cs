@@ -179,5 +179,35 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( "this text is changed.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
       }
+
+      [TestMethod, TestCategory( "Integration" )]
+      [ExpectedException( typeof( InvalidEntityException ) )]
+      public void Add_ItemHasTimeStampPropertyAndThrowForReservedNamesIsOn_ExceptionIsThrown()
+      {
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = true;
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.Timestamp = new DateTimeOffset( DateTime.UtcNow );
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Add_ItemHasTimeStampPropertyAndThrowForReservedNamesIsOff_PropertyIsIgnored()
+      {
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         var manualTimestampValue = new DateTimeOffset( DateTime.UtcNow );
+         dyn.Timestamp = manualTimestampValue;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.IsTrue( result.Timestamp != manualTimestampValue, "Timestamp value should've been overwritten with accurate timestamp" );
+      }
    }
 }

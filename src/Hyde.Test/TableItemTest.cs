@@ -92,6 +92,15 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      [ExpectedException( typeof( InvalidEntityException ) )]
+      public void CreateAndIgnoreReservedProperty_HasTimestampProperty_IgnoresTimestampValue()
+      {
+         TableItem tableItem = TableItem.Create( new ClassWithTimestamp { Timestamp = DateTime.Now }, "pk", "rk" );
+
+         Assert.IsFalse( tableItem.Properties.ContainsKey( "Timestamp" ), "Serialized TableItem properties should not contain Timestamp" );
+      }
+
+      [TestMethod]
       [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperty_KeysProvidedAndHasADifferentParitionKeyProperty_ThrowsArgumentException()
       {

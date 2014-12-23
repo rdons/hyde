@@ -113,7 +113,6 @@ namespace TechSmith.Hyde.Table.Azure
 
          genericEntity.PartitionKey = tableItem.PartitionKey;
          genericEntity.RowKey = tableItem.RowKey;
-         genericEntity.Timestamp = tableItem.Timestamp;
          genericEntity.ETag = tableItem.ETag == null ? null : tableItem.ETag.ToString();
 
          return genericEntity;
