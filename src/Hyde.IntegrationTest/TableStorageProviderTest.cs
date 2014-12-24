@@ -1817,10 +1817,71 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var result = _tableStorageProvider.Get( _tableName, "0", "1" );
          var asDict = result as IDictionary<string, object>;
-         Assert.AreEqual( 2, asDict.Count() );
+         Assert.AreEqual( 3, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "Timestamp" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Get_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "0",
+            Name = "1"
+         } );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "0", "1" );
+         var asDict = result as IDictionary<string, object>;
+         Assert.AreEqual( 4, asDict.Count() );
+
+         var ts = (DateTimeOffset) asDict["Timestamp"];
+
+         Assert.IsNotNull( ts );
+         Assert.IsTrue( ts > DateTimeOffset.MinValue );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Get_EntityIsSerialized_ResponseContainsValidTimestampProperty()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "0",
+            Name = "1"
+         } );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get<DecoratedItemWithTimestamp>( _tableName, "0", "1" );
+         Assert.IsNotNull( result.Timestamp );
+         Assert.IsTrue( result.Timestamp > DateTimeOffset.MinValue );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Set_EntityHasETagAndTimestampAndEtagIsInvalid_Throws()
+      {
+         _tableStorageProvider.Add( _tableName, new { Id = "0", Name = "1" }, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+         var dataWithETagAndTimstamp = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.IsTrue( dataWithETagAndTimstamp.Timestamp > DateTimeOffset.MinValue, "The Timestamp should have been set on the object when it was retrieved" );
+
+
+         _tableStorageProvider.Update( _tableName, new { Id = "1", Name = "2" }, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+
+         dataWithETagAndTimstamp.Id = "newId";
+         _tableStorageProvider.Update( _tableName, dataWithETagAndTimstamp );
+         _tableStorageProvider.Save();
       }
 
       [TestMethod]
