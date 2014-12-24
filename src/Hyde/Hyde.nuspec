@@ -13,6 +13,7 @@
     <releaseNotes>
       * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
       * Updated references to Azure Storage SDK 4.3
+      * Added support for Timestamp attribute.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2014</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
