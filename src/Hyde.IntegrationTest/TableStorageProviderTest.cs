@@ -1863,6 +1863,29 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
+      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
+      public void Set_EntityHasETagAndTimestampAndEtagIsInvalid_Throws()
+      {
+         _tableStorageProvider.Add( _tableName, new { Id = "0", Name = "1" }, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
+         var dataWithETagAndTimstamp = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.IsTrue( dataWithETagAndTimstamp.Timestamp > DateTimeOffset.MinValue, "The Timestamp should have been set on the object when it was retrieved" );
+
+
+         _tableStorageProvider.Update( _tableName, new { Id = "1", Name = "2" }, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+
+         dataWithETagAndTimstamp.Id = "newId";
+         _tableStorageProvider.Update( _tableName, dataWithETagAndTimstamp );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
       public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
