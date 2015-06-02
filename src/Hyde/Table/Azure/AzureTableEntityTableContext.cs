@@ -409,7 +409,17 @@ namespace TechSmith.Hyde.Table.Azure
 
       private CloudTable Table( string tableName )
       {
-         var cloudTableClient = new CloudTableClient( new Uri( _storageAccount.TableEndpoint ), _storageAccount.Credentials );
+
+         bool hasSecondaryEndpoint = !string.IsNullOrWhiteSpace( _storageAccount.ReadonlyFallbackTableEndpoint );
+         Uri primaryEndpoint = new Uri( _storageAccount.TableEndpoint );
+         StorageUri storageUri = hasSecondaryEndpoint ? new StorageUri( primaryEndpoint, new Uri( _storageAccount.ReadonlyFallbackTableEndpoint ) ) : new StorageUri( primaryEndpoint );
+
+         var cloudTableClient = new CloudTableClient( storageUri, _storageAccount.Credentials );
+
+         if ( hasSecondaryEndpoint )
+         {
+            cloudTableClient.DefaultRequestOptions.LocationMode = LocationMode.PrimaryThenSecondary;
+         }
          return cloudTableClient.GetTableReference( tableName );
       }
    }
