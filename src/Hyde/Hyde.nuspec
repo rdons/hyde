@@ -14,8 +14,9 @@
       * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
       * Updated references to Azure Storage SDK 4.3
       * Added support for Timestamp attribute.
+      * Add support for using secondary, read only table storage endpoint if you have configured to be RA-GRS.
     </releaseNotes>
-    <copyright>Copyright TechSmith Corporation 2014</copyright>
+    <copyright>Copyright TechSmith Corporation 2015</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
   </metadata>
   <files>
