@@ -9,6 +9,11 @@ namespace TechSmith.Hyde
          get;
       }
 
+      string ReadonlyFallbackTableEndpoint
+      {
+         get;
+      }
+
       StorageCredentials Credentials
       {
          get;

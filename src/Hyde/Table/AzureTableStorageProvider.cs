@@ -67,13 +67,17 @@ namespace TechSmith.Hyde.Table
       {
          _cloudStorageAccount = cloudStorageAccount;
 
-         if ( !_setConcurrentConnectionLimit || _servicePointsUpdated.ContainsKey( _cloudStorageAccount.TableEndpoint ) )
+         if ( _setConcurrentConnectionLimit && !_servicePointsUpdated.ContainsKey( _cloudStorageAccount.TableEndpoint ) )
          {
-            return;
+            UpdateServicePointConnectionLimit( new Uri( _cloudStorageAccount.TableEndpoint ), _tableStorageConcurrentConnectionLimit );
+            _servicePointsUpdated.AddOrUpdate( _cloudStorageAccount.TableEndpoint, true, ( s, v ) => true );
          }
 
-         UpdateServicePointConnectionLimit( new Uri( _cloudStorageAccount.TableEndpoint ), _tableStorageConcurrentConnectionLimit );
-         _servicePointsUpdated.AddOrUpdate( _cloudStorageAccount.TableEndpoint, true, (s,v) => true );
+         if ( !string.IsNullOrWhiteSpace( _cloudStorageAccount.ReadonlyFallbackTableEndpoint ) && _setConcurrentConnectionLimit && !_servicePointsUpdated.ContainsKey( _cloudStorageAccount.ReadonlyFallbackTableEndpoint ) )
+         {
+            UpdateServicePointConnectionLimit( new Uri( _cloudStorageAccount.ReadonlyFallbackTableEndpoint ), _tableStorageConcurrentConnectionLimit );
+            _servicePointsUpdated.AddOrUpdate( _cloudStorageAccount.ReadonlyFallbackTableEndpoint, true, ( s, v ) => true );
+         }
       }
    }
 }

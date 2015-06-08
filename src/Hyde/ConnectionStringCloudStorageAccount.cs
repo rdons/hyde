@@ -16,7 +16,15 @@ namespace TechSmith.Hyde
       {
          get
          {
-            return _cloudStorageAccount.TableEndpoint.AbsoluteUri;
+            return _cloudStorageAccount.TableStorageUri.PrimaryUri.AbsoluteUri;
+         }
+      }
+
+      public string ReadonlyFallbackTableEndpoint
+      {
+         get
+         {
+            return _cloudStorageAccount.TableStorageUri.SecondaryUri == null ? null : _cloudStorageAccount.TableStorageUri.SecondaryUri.AbsoluteUri;
          }
       }
 
