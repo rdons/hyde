@@ -34,5 +34,6 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion( "8.3.0.0" )]
 [assembly: AssemblyFileVersion( "8.3.0.0" )]
+[assembly: AssemblyInformationalVersion( "8.3.1.0-pre001" )]
 
 [assembly: InternalsVisibleTo( "TechSmith.Hyde.Test" )]
