@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -47,7 +48,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       private MemoryStorageAccount _tables;
 
-      private readonly Queue<TableAction> _pendingActions = new Queue<TableAction>();
+      private ConcurrentQueue<TableAction> _pendingActions = new ConcurrentQueue<TableAction>();
 
       public MemoryTableContext( MemoryStorageAccount account = null )
       {
@@ -155,24 +156,21 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Save( Execute executeMethod )
       {
-         try
-         {
-            SaveInternal( executeMethod, _pendingActions );
-         }
-         finally
-         {
-            _pendingActions.Clear();
-         }
+         var pendingActions = _pendingActions.ToArray();
+         _pendingActions = new ConcurrentQueue<TableAction>();
+
+         SaveInternal( executeMethod, pendingActions );
       }
 
       public Task SaveAsync( Execute executeMethod )
       {
-         var actions = new Queue<TableAction>( _pendingActions );
-         _pendingActions.Clear();
-         return Task.Factory.StartNew( () => SaveInternal( executeMethod, actions ) );
+         var pendingActions = _pendingActions.ToArray();
+         _pendingActions = new ConcurrentQueue<TableAction>();
+
+         return Task.Factory.StartNew( () => SaveInternal( executeMethod, pendingActions ) );
       }
 
-      private void SaveInternal( Execute executeMethod, Queue<TableAction> actions )
+      private void SaveInternal( Execute executeMethod, TableAction[] actions )
       {
          if ( executeMethod == Execute.Atomically )
          {
@@ -189,9 +187,9 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private void SaveAtomically( Queue<TableAction> actions )
+      private void SaveAtomically( TableAction[] actions )
       {
-         if ( actions.Count > 100 )
+         if ( actions.Count() > 100 )
          {
             throw new InvalidOperationException( "Cannot atomically execute more than 100 operations" );
          }
