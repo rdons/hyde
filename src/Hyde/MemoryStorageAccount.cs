@@ -210,5 +210,13 @@ namespace TechSmith.Hyde
          }
          return result;
       }
+
+      internal void Clear()
+      {
+         lock ( _tables )
+         {
+            _tables.Clear();
+         }
+      }
    }
 }
