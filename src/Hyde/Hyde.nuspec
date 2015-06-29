@@ -15,6 +15,7 @@
       * Updated references to Azure Storage SDK 4.3
       * Added support for Timestamp attribute.
       * Add support for using secondary, read only table storage endpoint if you have configured to be RA-GRS.
+      * Bug fix - Address concurrency issues in MemoryTableStorageProvider during multiple Save calls across threads.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2015</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
