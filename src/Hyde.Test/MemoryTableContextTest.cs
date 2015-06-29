@@ -52,6 +52,30 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void ResetAllTables_ContextCreatedBeforeCallingReset_ExistingContextStillWorks()
+      {
+         var localContext = new MemoryTableContext();
+         MemoryTableContext.ResetAllTables();
+         _context = new MemoryTableContext();
+
+         var item = new DecoratedItem
+         {
+            Id = "abc",
+            Name = "123",
+            Age = 50
+         };
+         var entity = TableItem.Create( item );
+         _context.AddNewItem( "table", entity );
+         _context.Save( Execute.Individually );
+
+
+         var returnedItem = localContext.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
+         Assert.AreEqual( item.Id, returnedItem.Id );
+         Assert.AreEqual( item.Name, returnedItem.Name );
+         Assert.AreEqual( item.Age, returnedItem.Age );
+      }
+
+      [TestMethod]
       public void CreateQuery_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
       {
          var addedItem = new DecoratedItem

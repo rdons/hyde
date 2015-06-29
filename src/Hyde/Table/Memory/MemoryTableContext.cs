@@ -44,7 +44,7 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private static MemoryStorageAccount _sharedTables = new MemoryStorageAccount();
+      private static readonly MemoryStorageAccount _sharedTables = new MemoryStorageAccount();
 
       private MemoryStorageAccount _tables;
 
@@ -57,18 +57,18 @@ namespace TechSmith.Hyde.Table.Memory
 
       public static void ResetAllTables()
       {
-         _sharedTables = new MemoryStorageAccount();
+         _sharedTables.Clear();
       }
 
       public void ResetTables()
       {
          if ( _tables == _sharedTables )
          {
-            _tables = _sharedTables = new MemoryStorageAccount();
+            ResetAllTables();
          }
          else
          {
-            // TODO: Call a method on MemoryStorageAccount to recreate tables?
+            _tables.Clear();
          }
       }
 
