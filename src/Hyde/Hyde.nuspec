@@ -16,6 +16,7 @@
       * Added support for Timestamp attribute.
       * Add support for using secondary, read only table storage endpoint if you have configured to be RA-GRS.
       * Bug fix - Address concurrency issues in MemoryTableStorageProvider during multiple Save calls across threads.
+      * Bug fix - Fix bug in MemoryTableStorageProvider where ResetAllTables static call would break existing instances.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2015</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
