@@ -11,8 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
+      * Updated references to Azure Storage SDK 5.0.2
       * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
-      * Updated references to Azure Storage SDK 4.3
       * Added support for Timestamp attribute.
       * Add support for using secondary, read only table storage endpoint if you have configured to be RA-GRS.
       * Bug fix - Address concurrency issues in MemoryTableStorageProvider during multiple Save calls across threads.
