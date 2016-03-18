@@ -51,6 +51,7 @@ namespace TechSmith.Hyde.Table
       Task<IPartialResult<T>> GetNextAsync();
       IPartialResult<T> GetNext();
       bool HasMoreResults { get; }
+      QueryDescriptor Query { get; }
    }
 
    public interface IBoundChoice<T>
