@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
@@ -360,6 +361,59 @@ namespace TechSmith.Hyde.Test
                               .PartitionKeyTo( "bcc" ).Inclusive();
 
          Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      public void QueryByPartitionKeyRangeWithTop_ItemsInRange_ReturnsTopItem()
+      {
+         var items = new[]
+                     {
+                        new DecoratedItem { Id = "abc", Name = "123", Age = 42 },
+                        new DecoratedItem { Id = "abd", Name = "456", Age = 43 },
+                        new DecoratedItem { Id = "bcd", Name = "556", Age = 44 },
+                     };
+         foreach ( var item in items )
+         {
+            _context.AddNewItem( "table", TableItem.Create( item ) );
+         }
+         _context.Save( Execute.Individually );
+
+         var tsp = new InMemoryTableStorageProvider();
+         var result = _context.CreateQuery( "table", false )
+                              .PartitionKeyFrom( tsp.MinimumKeyValue ).Inclusive()
+                              .PartitionKeyTo( "bcc" ).Inclusive()
+                              .Top( 1 );
+
+         Assert.AreEqual( 1, result.Count() );
+         string actualName = result.Single().RowKey;
+         Assert.AreEqual( "123", actualName );
+      }
+
+      [TestMethod]
+      public void QueryAsyncByPartitionKeyRangeWithTop_ItemsInRange_ReturnsTopItem()
+      {
+         var items = new[]
+                     {
+                        new DecoratedItem { Id = "abc", Name = "123", Age = 42 },
+                        new DecoratedItem { Id = "abd", Name = "456", Age = 43 },
+                        new DecoratedItem { Id = "bcd", Name = "556", Age = 44 },
+                     };
+         foreach ( var item in items )
+         {
+            _context.AddNewItem( "table", TableItem.Create( item ) );
+         }
+         _context.Save( Execute.Individually );
+
+         var tsp = new InMemoryTableStorageProvider();
+         var result = _context.CreateQuery( "table", false )
+                              .PartitionKeyFrom( tsp.MinimumKeyValue ).Inclusive()
+                              .PartitionKeyTo( "bcc" ).Inclusive()
+                              .Top( 1 )
+                              .Async().Result;
+
+         Assert.AreEqual( 1, result.Count() );
+         string actualName = result.Single().RowKey;
+         Assert.AreEqual( "123", actualName );
       }
 
       [TestMethod]
