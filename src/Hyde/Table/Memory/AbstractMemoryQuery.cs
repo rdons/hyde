@@ -40,6 +40,8 @@ namespace TechSmith.Hyde.Table.Memory
 
          public bool HasMoreResults { get { return false; } }
 
+         public QueryDescriptor Query { get { return _parent._query; } }
+
          public IEnumerator<T> GetEnumerator()
          {
             return _parent.GetEnumerator();

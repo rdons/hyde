@@ -31,7 +31,7 @@ namespace TechSmith.Hyde.Common
             {
                aggregator = aggregator.Concat( antecedent.Result );
                var partialResult = antecedent.Result;
-               if ( partialResult.HasMoreResults )
+               if ( partialResult.HasMoreResults && !QueryHasBeenSatisfied( aggregator, partialResult.Query ) )
                {
                   MergeAndContinueIfNecessary<T>( antecedent.Result.GetNextAsync(), aggregator, overallCompletionSource );
                }
@@ -47,6 +47,11 @@ namespace TechSmith.Hyde.Common
             }
          }, TaskContinuationOptions.OnlyOnRanToCompletion );
          asyncResult.ContinueWith( ( Task faultedTask ) => faultedTask.Exception.Handle( overallCompletionSource.TrySetException ), TaskContinuationOptions.OnlyOnFaulted );
+      }
+
+      private static bool QueryHasBeenSatisfied<T>( IEnumerable<T> aggregator, QueryDescriptor query )
+      {
+         return query.TopCount.HasValue && aggregator.Count() >= query.TopCount.Value;
       }
    }
 }

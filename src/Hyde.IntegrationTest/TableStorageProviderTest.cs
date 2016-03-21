@@ -1736,7 +1736,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void GetCollection_ManyItemsInStore_TakeMethodReturnsProperAmount()
+      public void GetCollection_ManyItemsInStore_TopMethodReturnsProperAmount()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -1754,6 +1754,29 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Top( 2 );
          Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void CreateQueryWithTopAsync_ManyItemsInStore_TopMethodReturnsProperAmount()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "a"
+         }, _partitionKey, "a" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "b"
+         }, _partitionKey, "b" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
+         {
+            FirstType = "c"
+         }, _partitionKey, "c" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Top( 2 ).Async().Result;
+         Assert.AreEqual( 2, result.Count() );
+         Assert.AreEqual( "a", result.First().FirstType );
       }
 
       [TestMethod]

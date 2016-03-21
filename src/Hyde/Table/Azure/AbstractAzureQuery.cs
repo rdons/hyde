@@ -59,6 +59,8 @@ namespace TechSmith.Hyde.Table.Azure
             _segment = segment;
          }
 
+         public QueryDescriptor Query { get { return _parent._query; } }
+
          public bool HasMoreResults { get { return _segment.ContinuationToken != null; } }
 
          public Task<IPartialResult<T>> GetNextAsync()
