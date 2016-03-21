@@ -11,6 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
+      * (8.4.1) Fixed a bug where Top queries that retrieved data using Async could return more than the requested count.
       * Updated references to Azure Storage SDK 5.0.2
       * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
       * Added support for Timestamp attribute.
