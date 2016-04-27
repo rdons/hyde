@@ -11,13 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      * (8.4.1) Fixed a bug where Top queries that retrieved data using Async could return more than the requested count.
-      * Updated references to Azure Storage SDK 5.0.2
-      * Add overload to InMemoryTableStorageProvider that allows isolated storage via new MemoryStorageAccount class.
-      * Added support for Timestamp attribute.
-      * Add support for using secondary, read only table storage endpoint if you have configured to be RA-GRS.
-      * Bug fix - Address concurrency issues in MemoryTableStorageProvider during multiple Save calls across threads.
-      * Bug fix - Fix bug in MemoryTableStorageProvider where ResetAllTables static call would break existing instances.
+      * (8.4.2) Fixed a bug with the dynamic GetAsync where we could create tasks that never completed.
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2015</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
