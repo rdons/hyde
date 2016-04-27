@@ -111,8 +111,7 @@ namespace TechSmith.Hyde.Table
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
                         .PartialAsync()
-                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ),
-                                       TaskContinuationOptions.OnlyOnRanToCompletion );
+                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ) );
       }
 
       private static T EndGetAsync<T>( Task<IPartialResult<T>> task, string pk, string rk )
