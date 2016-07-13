@@ -180,7 +180,6 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( InvalidOperationException ) )]
       public void ConvertTo_ItemHasColumnWithNonBoolType_ResultingObjectHasFalsePropertyValue()
       {
          dynamic item = new ExpandoObject();
@@ -189,9 +188,7 @@ namespace TechSmith.Hyde.Test
          TableItem tableItem = TableItem.Create( item, "pk", "rk" );
          var tableEntity = GenericTableEntity.HydrateFrom( tableItem );
 
-         var entity = tableEntity.ConvertTo<TypeWithBoolProperty>();
-
-         Assert.IsFalse( entity.IsAwesome );
+         Assert.ThrowsException<InvalidOperationException>( () => tableEntity.ConvertTo<TypeWithBoolProperty>() );
       }
    }
 }

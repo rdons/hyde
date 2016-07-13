@@ -64,10 +64,9 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void FindProperty_MultiplePropertiesWithAttributeFound_ThrowsArgumentException()
       {
-         new TestClass().FindPropertyDecoratedWith<FooAttribute>();
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().FindPropertyDecoratedWith<FooAttribute>() );
       }
 
       [TestMethod]
@@ -95,10 +94,9 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void HasProperty_MultiplePropertiesWithAttributeFound_ThrowsArgumentException()
       {
-         new TestClass().FindPropertyDecoratedWith<FooAttribute>();
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().FindPropertyDecoratedWith<FooAttribute>() );
       }
 
       [TestMethod]
@@ -108,24 +106,21 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void ReadProperty_PropertyWithAttributeNotFound_ThrowsArgumentException()
       {
-         new TestClass().ReadPropertyDecoratedWith<FooAttribute,string>();
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().ReadPropertyDecoratedWith<FooAttribute, string>() );
       }
 
       [TestMethod]
-      [ExpectedException( typeof ( ArgumentException ) )]
       public void ReadProperty_PropertyHasUnexpectedType_ThrowsArgumentException()
       {
-         new TestClass().ReadPropertyDecoratedWith<BarAttribute, int>();
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().ReadPropertyDecoratedWith<BarAttribute, int>() );
       }
 
       [TestMethod]
-      [ExpectedException( typeof ( ArgumentException ) )]
       public void ReadProperty_MultiplePropertiesWithAttributeFound_ThrowsArgumentException()
       {
-         new TestClass().ReadPropertyDecoratedWith<FooAttribute, string>();
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().ReadPropertyDecoratedWith<FooAttribute, string>() );
       }
 
       [TestMethod]
@@ -135,17 +130,15 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof ( ArgumentException ) )]
       public void WriteProperty_PropertyWithAttributeNotFound_ThrowsArgumentException()
       {
-         new TestClass().WritePropertyDecoratedWith<NotUsedAttribute, string>( "s" );
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().WritePropertyDecoratedWith<NotUsedAttribute, string>( "s" ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof ( ArgumentException ) )]
       public void WriteProperty_MultiplePropertiesWithAttributeFound_ThrowsArgumentException()
       {
-         new TestClass().WritePropertyDecoratedWith<FooAttribute, string>( "s" );
+         Assert.ThrowsException<ArgumentException>( () => new TestClass().WritePropertyDecoratedWith<FooAttribute, string>( "s" ) );
       }
 
       [TestMethod]

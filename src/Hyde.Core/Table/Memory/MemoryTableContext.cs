@@ -155,20 +155,13 @@ namespace TechSmith.Hyde.Table.Memory
          return Task.FromResult( 0 );
       }
 
-      public void Save( Execute executeMethod )
-      {
-         var pendingActions = _pendingActions.ToArray();
-         _pendingActions = new ConcurrentQueue<TableAction>();
-
-         SaveInternal( executeMethod, pendingActions );
-      }
-
       public Task SaveAsync( Execute executeMethod )
       {
          var pendingActions = _pendingActions.ToArray();
          _pendingActions = new ConcurrentQueue<TableAction>();
 
-         return Task.Factory.StartNew( () => SaveInternal( executeMethod, pendingActions ) );
+         SaveInternal( executeMethod, pendingActions );
+         return Task.FromResult( 0 );
       }
 
       private void SaveInternal( Execute executeMethod, TableAction[] actions )
