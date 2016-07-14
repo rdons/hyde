@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Dynamic;
 using System.Linq;
-using Microsoft.Data.OData;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
-using Newtonsoft.Json;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table;
@@ -250,7 +248,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestInitialize]
       public void TestInitialize()
       {
-         _storageAccount = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
+         _storageAccount = Configuration.GetTestStorageAccount();
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
 
@@ -259,53 +257,58 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
 
          var table = _client.GetTableReference( _tableName );
-         table.Create();
+         table.CreateAsync().Wait();
       }
 
       [TestCleanup]
       public void TestCleanup()
       {
          var table = _client.GetTableReference( _tableName );
-         table.Delete();
+         table.DeleteAsync().Wait();
       }
 
       [ClassCleanup]
       public static void ClassCleanup()
       {
-         var storageAccountProvider = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
+         var storageAccountProvider = Configuration.GetTestStorageAccount();
 
          var client = new CloudTableClient( new Uri( storageAccountProvider.TableEndpoint ), storageAccountProvider.Credentials );
 
-         var orphanedTables = client.ListTables( _baseTableName );
-         foreach ( var orphanedTableName in orphanedTables )
+         TableContinuationToken token = new TableContinuationToken();
+         do
          {
-            var table = client.GetTableReference( orphanedTableName.Name );
-            table.DeleteIfExists();
+            var orphanedTables = client.ListTablesSegmentedAsync( _baseTableName, token ).Result;
+            token = orphanedTables.ContinuationToken;
+            foreach ( CloudTable orphanedTableName in orphanedTables.Results )
+            {
+               client.GetTableReference( orphanedTableName.Name ).DeleteIfExistsAsync().Wait();
+            }
          }
+         while ( token != null );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Constructor_TableDoesntExist_TableIsCreated()
+      public async Task Constructor_TableDoesntExist_TableIsCreated()
       {
-         Assert.IsTrue( _client.GetTableReference( _tableName ).Exists() );
+         Assert.IsTrue( await _client.GetTableReference( _tableName ).ExistsAsync() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddItem_TypeWithSingleStringProperty_ItemAddedToStore()
+      public async Task AddItem_TypeWithSingleStringProperty_ItemAddedToStore()
       {
          var dataItem = new TypeWithStringProperty
          {
             FirstType = "b"
          };
          _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( "b", result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddItem_TypeWithInheritance_ItemAddedToStore()
+      public async Task AddItem_TypeWithInheritance_ItemAddedToStore()
       {
          var dataItem = new TypeInherited
          {
@@ -314,36 +317,35 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, dataItem, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeInherited>( _tableName, "pk", "rk" );
+         var result = await _tableStorageProvider.GetAsync<TypeInherited>( _tableName, "pk", "rk" );
          Assert.AreEqual( "string2", result.SecondType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Get_NoItemsInStore_EntityDoesNotExistExceptionThrown()
+      public async Task Get_NoItemsInStore_EntityDoesNotExistExceptionThrown()
       {
-         _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Get_ItemInStore_ItemReturned()
+      public async Task Get_ItemInStore_ItemReturned()
       {
          var dataItem = new TypeWithStringProperty
          {
             FirstType = "a"
          };
          _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( dataItem.FirstType, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Get_DecoratedItemWithETag_RetreivedItemHasValidETag()
+      public async Task Get_DecoratedItemWithETag_RetreivedItemHasValidETag()
       {
          var item = new DecoratedItemWithETag
          {
@@ -352,22 +354,22 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 34
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          Assert.IsNotNull( retrievedItem.ETag );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetAsync_ItemInStore_ItemReturnedByTask()
+      public async Task GetAsync_ItemInStore_ItemReturnedByTask()
       {
          var dataItem = new TypeWithStringProperty
          {
             FirstType = "a"
          };
          _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          var result = _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
@@ -375,21 +377,21 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetAsync_ItemNotInStore_AccessingResultThrowsEntityDoesNotExistWrappedInAggregateException()
+      public async Task GetAsync_ItemNotInStore_AccessingResultThrowsEntityDoesNotExistWrappedInAggregateException()
       {
          try
          {
-            var result = _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey ).Result;
-            Assert.Fail( "Should have thrown exception" );
+            await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
          }
-         catch ( AggregateException e )
+         catch ( EntityDoesNotExistException )
          {
-            Assert.IsTrue( e.InnerException.GetType() == typeof( EntityDoesNotExistException ) );
+            return;
          }
+         Assert.Fail( "Should have thrown exception" );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Delete_ItemInStore_ItemDeleted()
+      public async Task Delete_ItemInStore_ItemDeleted()
       {
          var dataItem = new TypeWithStringProperty
          {
@@ -397,19 +399,18 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var items = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
 
          Assert.IsFalse( items.Any() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Delete_ItemWithETagHasBeenChanged_ThrowsEntityHasBeenChangedException()
+      public async Task Delete_ItemWithETagHasBeenChanged_ThrowsEntityHasBeenChangedException()
       {
          var item = new DecoratedItemWithETag
          {
@@ -419,21 +420,21 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          storedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Delete( _tableName, storedItem );
-         _tableStorageProvider.Save();
+
+         await AsyncAssert.ThrowsAsync<EntityHasBeenChangedException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Delete_ItemWithETagHasBeenChangedConflictHandlingOverwrite_DeletesItem()
+      public async Task Delete_ItemWithETagHasBeenChangedConflictHandlingOverwrite_DeletesItem()
       {
          var item = new DecoratedItemWithETag
          {
@@ -443,24 +444,22 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          storedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Delete( _tableName, storedItem, ConflictHandling.Overwrite );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
-
-         Assert.Fail( "Should have thrown an EntityDoesNotExistException" );
+         await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Delete_ItemWithoutETagHasBeenChanged_RespectsTheDelete()
+      public async Task Delete_ItemWithoutETagHasBeenChanged_RespectsTheDelete()
       {
          var item = new DecoratedItem
          {
@@ -470,24 +469,24 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "foo", "bar" );
 
          storedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Delete( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var items = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
 
          Assert.IsFalse( items.Any() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Delete_ManyItemsInStore_ItemsDeleted()
+      public async Task Delete_ManyItemsInStore_ItemsDeleted()
       {
          for ( var i = 0; i < 1001; i++ )
          {
@@ -498,53 +497,57 @@ namespace TechSmith.Hyde.IntegrationTest
 
             _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey + dataItem.FirstType );
          }
-         _tableStorageProvider.Save( Execute.InBatches );
+         await _tableStorageProvider.SaveAsync( Execute.InBatches );
 
 
-         _tableStorageProvider.DeleteCollection( _tableName, _partitionKey );
-         _tableStorageProvider.Save( Execute.InBatches );
+         var itemsToDelete = await _tableStorageProvider.CreateQuery( _tableName ).PartitionKeyEquals( _partitionKey ).Async();
+         foreach ( var item in itemsToDelete )
+         {
+            _tableStorageProvider.Delete( _tableName, item.PartitionKey, item.RowKey );
+         }
+         await _tableStorageProvider.SaveAsync( Execute.InBatches );
 
-         var items = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var items = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
 
          Assert.IsFalse( items.Any() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Delete_ItemIsNotInStore_NothingHappens()
+      public async Task Delete_ItemIsNotInStore_NothingHappens()
       {
          _tableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Delete_TableDoesNotExist_NothingHappens()
+      public async Task Delete_TableDoesNotExist_NothingHappens()
       {
          _tableStorageProvider.Delete( "tableThatDoesNotExist", _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetCollection_NothingInStore_EmptyIEnumerableReturned()
+      public async Task GetCollection_NothingInStore_EmptyIEnumerableReturned()
       {
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var result = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetCollection_OneItemInStore_EnumerableWithOneItemReturned()
+      public async Task GetCollection_OneItemInStore_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
             FirstType = "a"
          }, _partitionKey, "a" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var result = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetCollection_ManyItemsInStore_EnumerableWithManyItemsReturned()
+      public async Task GetCollection_ManyItemsInStore_EnumerableWithManyItemsReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -558,15 +561,15 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, _partitionKey, "c" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var result = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async() );
          Assert.AreEqual( 3, result.Count() );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void GetCollection_MultiplePartitions_ItemsFromAllPartitionsReturned()
+      public async Task GetCollection_MultiplePartitions_ItemsFromAllPartitionsReturned()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -586,34 +589,34 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "Jackie",
             Age = 12
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName );
+         var result = await _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).Async();
          Assert.AreEqual( 3, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRangeByPartitionKey_NothingInStore_EmptyIEnumerableReturned()
+      public async Task GetRangeByPartitionKey_NothingInStore_EmptyIEnumerableReturned()
       {
-         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyFrom( _partitionKey ).Inclusive().PartitionKeyTo( _partitionKeyForRange ).Inclusive().Async();
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRangeByPartitionKey_OneItemInStore_EnumerableWithOneItemReturned()
+      public async Task GetRangeByPartitionKey_OneItemInStore_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
             FirstType = "a"
          }, _partitionKey, "a" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyFrom(   _partitionKey ).Inclusive().PartitionKeyTo(   _partitionKeyForRange ).Inclusive().Async();
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRangeByPartitionKey_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
+      public async Task GetRangeByPartitionKey_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -627,49 +630,55 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, "0", "c" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKey );
+         var result =
+            await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName )
+               .PartitionKeyFrom( _partitionKey )
+               .Inclusive()
+               .PartitionKeyTo( _partitionKey )
+               .Inclusive()
+               .Async();
 
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleIntProperty_ItemProperlyAddedAndRetrieved()
+      public async Task AddingAndRetreivingTypeWithSingleIntProperty_ItemProperlyAddedAndRetrieved()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithIntProperty
          {
             FirstType = 1
          }, _partitionKey, 1.ToString() );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithIntProperty>( _tableName, _partitionKey, 1.ToString() );
+         var result = await _tableStorageProvider.GetAsync<TypeWithIntProperty>( _tableName, _partitionKey, 1.ToString() );
          Assert.AreEqual( 1, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleDoubleProperty_ItemProperlyAddedAndRetrieved()
+      public async Task AddingAndRetreivingTypeWithSingleDoubleProperty_ItemProperlyAddedAndRetrieved()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithDoubleProperty
          {
             FirstType = 0.1
          }, _partitionKey, 0.1.ToString() );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithDoubleProperty>( _tableName, _partitionKey, 0.1.ToString() );
+         var result = await _tableStorageProvider.GetAsync<TypeWithDoubleProperty>( _tableName, _partitionKey, 0.1.ToString() );
          Assert.AreEqual( 0.1, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleBinaryProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleBinaryProperty_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithBinaryProperty
          {
             FirstType = new byte[] { 1, 2, 3, 4 }
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithBinaryProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithBinaryProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( 1, result.FirstType[0] );
          Assert.AreEqual( 2, result.FirstType[1] );
          Assert.AreEqual( 3, result.FirstType[2] );
@@ -677,35 +686,35 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleGuidProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleGuidProperty_ItemProperlyAddedAndRetreived()
       {
          Guid guid = Guid.Empty;
          _tableStorageProvider.Add( _tableName, new TypeWithGuidProperty
          {
             FirstType = guid
          }, _partitionKey, guid.ToString() );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithGuidProperty>( _tableName, _partitionKey, guid.ToString() );
+         var result = await _tableStorageProvider.GetAsync<TypeWithGuidProperty>( _tableName, _partitionKey, guid.ToString() );
          Assert.AreEqual( guid, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleDateTimeProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleDateTimeProperty_ItemProperlyAddedAndRetreived()
       {
          var dateTime = new DateTime( 2011, 1, 1, 1, 1, 1, DateTimeKind.Utc );
          _tableStorageProvider.Add( _tableName, new TypeWithDatetimeProperty
          {
             FirstType = dateTime
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.IsTrue( DateTimesPrettyMuchEqual( dateTime, result.FirstType ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleDateTimeProperty_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
+      public async Task AddingAndRetreivingTypeWithSingleDateTimeProperty_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
       {
          var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
          var item = new TypeWithDatetimeProperty
@@ -713,16 +722,16 @@ namespace TechSmith.Hyde.IntegrationTest
             FirstType = theDate
          };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var actual = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
+         var actual = await _tableStorageProvider.GetAsync<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( DateTimeKind.Utc, actual.FirstType.Kind );
          Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleDateTimeOffsetProperty_EntityHasLocalDateTimeStoredInOffset_DateOffsetIsRetrieved()
+      public async Task AddingAndRetreivingTypeWithSingleDateTimeOffsetProperty_EntityHasLocalDateTimeStoredInOffset_DateOffsetIsRetrieved()
       {
          var theDateTime = new DateTime( 635055151618936589, DateTimeKind.Local );
          var theDateTimeOffset = new DateTimeOffset( theDateTime );
@@ -731,42 +740,42 @@ namespace TechSmith.Hyde.IntegrationTest
             FirstType = theDateTimeOffset
          };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var actual = _tableStorageProvider.Get<TypeWithDatetimeOffsetProperty>( _tableName, _partitionKey, _rowKey );
+         var actual = await _tableStorageProvider.GetAsync<TypeWithDatetimeOffsetProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( theDateTimeOffset, actual.FirstType );
          Assert.AreEqual( theDateTime, actual.FirstType.LocalDateTime );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleBooleanProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleBooleanProperty_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithBooleanProperty
          {
             FirstType = true
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithBooleanProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithBooleanProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( true, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleLongProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleLongProperty_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithLongProperty
          {
             FirstType = 1
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithLongProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithLongProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( 1, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleUriProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleUriProperty_ItemProperlyAddedAndRetreived()
       {
          var value = new Uri( @"http://google.com" );
 
@@ -774,14 +783,14 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = value
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithUriProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithUriProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( value, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullUriProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullUriProperty_ItemProperlyAddedAndRetreived()
       {
          Uri value = null;
 
@@ -789,66 +798,66 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = value
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithUriProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithUriProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( value, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullablePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullablePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableIntTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableIntPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableIntPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableIntTypeProperty
          {
             FirstType = 1
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( 1, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableLongThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableLongThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableLongTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableIntTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableLongThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableLongThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableLongTypeProperty
          {
             FirstType = -1
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableLongTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableLongTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( -1, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableDoublePropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableDoublePropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          const double doubleValue = 1.3;
 
@@ -856,27 +865,27 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = doubleValue
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableDoubleTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableDoubleTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( doubleValue, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableDoublePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableDoublePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableDoubleTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableDoubleTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableDoubleTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableGuidPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableGuidPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          var guid = Guid.NewGuid();
 
@@ -884,27 +893,27 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = guid
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableGuidTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableGuidTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( guid, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableGuidPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableGuidPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableGuidTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableGuidTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableGuidTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableDateTimePropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableDateTimePropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          var date = DateTime.UtcNow;
 
@@ -912,102 +921,98 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = date
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableDateTimeTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableDateTimeTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.IsTrue( date - result.FirstType.Value.ToUniversalTime() < TimeSpan.FromMilliseconds( 1 ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableDateTimePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableDateTimePropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableDateTimeTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableDateTimeTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableDateTimeTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableBoolPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableBoolPropertyThatIsNotSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableBoolTypeProperty
          {
             FirstType = true
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableBoolTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableBoolTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( true, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithSingleNullableBoolPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithSingleNullableBoolPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithNullableBoolTypeProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithNullableBoolTypeProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithNullableBoolTypeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithByteArrayPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithByteArrayPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithBinaryProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithBinaryProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithBinaryProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithStringPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithStringPropertyThatIsSetToNull_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
             FirstType = null
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddingAndRetreivingTypeWithEnumProperty_ItemProperlyAddedAndRetreived()
+      public async Task AddingAndRetreivingTypeWithEnumProperty_ItemProperlyAddedAndRetreived()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithEnumProperty
          {
             EnumValue = TypeWithEnumProperty.TheEnum.SecondValue
          }, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
+         var result = await _tableStorageProvider.GetAsync<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( TypeWithEnumProperty.TheEnum.SecondValue, result.EnumValue );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( NotSupportedException ) )]
       public void AddingTypeWithUnsupportedProperty_NotSupportedExceptionThrown()
       {
-         _tableStorageProvider.Add( _tableName, new TypeWithUnsupportedProperty(), _partitionKey, _rowKey );
-
-         _tableStorageProvider.Save();
+         Assert.ThrowsException<NotSupportedException>( () => _tableStorageProvider.Add( _tableName, new TypeWithUnsupportedProperty(), _partitionKey, _rowKey ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityAlreadyExistsException ) )]
-      public void AddingItemWithDuplicatePartitionAndRowKey_ExceptionThrown()
+      public async Task AddingItemWithDuplicatePartitionAndRowKey_ExceptionThrown()
       {
          var validType = new TypeWithStringProperty
          {
@@ -1015,15 +1020,15 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, validType, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Add( _tableName, validType, _partitionKey, _rowKey );
 
-         _tableStorageProvider.Save();
+         await AsyncAssert.ThrowsAsync<EntityAlreadyExistsException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddMoreThan1000ForContinuationTokens_ContinuationTokensAreHidden()
+      public async Task AddMoreThan1000ForContinuationTokens_ContinuationTokensAreHidden()
       {
          for ( int i = 0; i < 1100; i++ )
          {
@@ -1032,14 +1037,14 @@ namespace TechSmith.Hyde.IntegrationTest
                FirstType = i
             }, _partitionKey, i.ToString() );
          }
-         _tableStorageProvider.Save( Execute.InBatches );
+         await _tableStorageProvider.SaveAsync( Execute.InBatches );
 
-         var result = _tableStorageProvider.GetCollection<TypeWithIntProperty>( _tableName, _partitionKey );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithIntProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async();
          Assert.AreEqual( 1100, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
+      public async Task Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlSaved()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1047,16 +1052,16 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "bar",
             Age = 42
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var item = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         var item = await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "foo", "bar" );
 
          Assert.AreEqual( "foo", item.Id, "partition key not set" );
          Assert.AreEqual( "bar", item.Name, "row key not set" );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
+      public async Task Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1064,12 +1069,11 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "Kovacs",
             Age = 142,
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var tableServiceContext = _client.GetTableServiceContext();
-         var item = ( from e in tableServiceContext.CreateQuery<DecoratedItemEntity>( _tableName )
-                      where e.PartitionKey == "48823" && e.RowKey == "Kovacs"
-                      select e ).First();
+         var table = _client.GetTableReference( _tableName );
+         TableResult result = await table.ExecuteAsync( TableOperation.Retrieve<DecoratedItemEntity>( "48823", "Kovacs" ) );
+         var item = result.Result as DecoratedItemEntity;
 
          Assert.IsNull( item.Id );
          Assert.IsNull( item.Name );
@@ -1094,7 +1098,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
+      public async Task Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
       {
          var itemToUpsert = new TypeWithStringProperty
          {
@@ -1102,7 +1106,7 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Upsert( _tableName, itemToUpsert, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
          itemToUpsert = new TypeWithStringProperty
@@ -1111,15 +1115,15 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Upsert( _tableName, itemToUpsert, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var itemInTable = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var itemInTable = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( itemToUpsert.FirstType, itemInTable.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Upsert_ItemUpsertedTwiceAndNotAffectedByETag_ETagPropertyGetsUpdatedEachUpsert()
+      public async Task Upsert_ItemUpsertedTwiceAndNotAffectedByETag_ETagPropertyGetsUpdatedEachUpsert()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1128,27 +1132,27 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retreivedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         var retreivedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
 
          retreivedItem.Age = 39;
          _tableStorageProvider.Upsert( _tableName, retreivedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var upsertedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         var upsertedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
          Assert.AreNotEqual( retreivedItem.ETag, upsertedItem.ETag );
 
          retreivedItem.Age = 41;
          _tableStorageProvider.Upsert( _tableName, retreivedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var upsertedItem2 = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
+         var upsertedItem2 = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo2", "bar2" );
          Assert.AreNotEqual( upsertedItem.ETag, upsertedItem2.ETag );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
+      public async Task Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
       {
          var item = new DecoratedItem
          {
@@ -1157,7 +1161,7 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          var upsertedItem = new DecoratedItem
          {
@@ -1166,33 +1170,33 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 34
          };
          _tableStorageProvider.Upsert( _tableName, upsertedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         upsertedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo2", "bar2" );
+         upsertedItem = await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "foo2", "bar2" );
          Assert.AreEqual( 34, upsertedItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Update_ItemExistsAndUpdateIsValid_ShouldPerformTheUpdate()
+      public async Task Update_ItemExistsAndUpdateIsValid_ShouldPerformTheUpdate()
       {
-         EnsureOneItemInTableStorage();
+         await EnsureOneItemInTableStorageAsync();
 
-         var itemToUpdate = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var itemToUpdate = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          string updatedFirstTypeValue = "I am updated";
          itemToUpdate.FirstType = updatedFirstTypeValue;
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
          _tableStorageProvider.Update( _tableName, itemToUpdate, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var updatedItem = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+         var updatedItem = await _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( updatedFirstTypeValue, updatedItem.FirstType );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
+      public async Task Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
       {
          var item = new DecoratedItem
          {
@@ -1201,7 +1205,7 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          var updatedItem = new DecoratedItem
          {
@@ -1210,15 +1214,14 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 34
          };
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         updatedItem = await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "foo", "bar" );
          Assert.AreEqual( 34, updatedItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Update_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
+      public async Task Update_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
       {
          var itemToUpdate = new TypeWithStringProperty
          {
@@ -1228,14 +1231,12 @@ namespace TechSmith.Hyde.IntegrationTest
          itemToUpdate.FirstType = "Updated";
 
          _tableStorageProvider.Update( _tableName, itemToUpdate, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
 
-         Assert.Fail( "Should have thrown EntityDoesNotExistException" );
+         await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Update_ClassWithETagAttributeHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      public async Task Update_ClassWithETagAttributeHasAnOldETag_ThrowsEntityHasBeenChangedException()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1244,21 +1245,21 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var updatedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var updatedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          updatedItem.Age = 22;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await AsyncAssert.ThrowsAsync<EntityHasBeenChangedException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Update_ClassWithETagAttributeHasAnOldETagConflictHandlingOverwrite_UpdatesItem()
+      public async Task Update_ClassWithETagAttributeHasAnOldETagConflictHandlingOverwrite_UpdatesItem()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1267,25 +1268,24 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var updatedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var updatedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          updatedItem.Age = 22;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem, ConflictHandling.Overwrite );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var actualItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
          Assert.AreEqual( 33, actualItem.Age );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Update_ShouldIncludeETagWithDynamicsIsTrueAndDynamicHasAnETagMismatch_ThrowsEntityHasBeenChangedException()
+      public async Task Update_ShouldIncludeETagWithDynamicsIsTrueAndDynamicHasAnETagMismatch_ThrowsEntityHasBeenChangedException()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1294,24 +1294,24 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
 
-         var updatedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+         var updatedItem = await _tableStorageProvider.GetAsync( _tableName, "foo", "bar" );
 
          updatedItem.Age = 22;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await AsyncAssert.ThrowsAsync<EntityHasBeenChangedException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Update_ShouldIncludeETagWithDynamicsIsFalseAndDynamicHasAnETagMismatch_SuccessfullyExecutesBothUpdates()
+      public async Task Update_ShouldIncludeETagWithDynamicsIsFalseAndDynamicHasAnETagMismatch_SuccessfullyExecutesBothUpdates()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1320,63 +1320,61 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.ShouldIncludeETagWithDynamics = false;
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
 
-         var updatedItem = _tableStorageProvider.Get( _tableName, "foo", "bar" );
+         var updatedItem = await _tableStorageProvider.GetAsync( _tableName, "foo", "bar" );
 
          updatedItem.Age = 22;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
          Assert.AreEqual( 22, storedItem.Age );
 
          updatedItem.Age = 33;
          _tableStorageProvider.Update( _tableName, updatedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
          Assert.AreEqual( 33, storedItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
+      public async Task Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
       {
          _tableStorageProvider.Merge( _tableName, new TypeWithBooleanProperty
          {
             FirstType = true
          }, "not", "found" );
-         _tableStorageProvider.Save();
+         await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Merge_ItemExistsAndOnePropertyOverwritten_WrittenPropertyHasNewValueAndUnwrittenPropertiesRetainValues()
+      public async Task Merge_ItemExistsAndOnePropertyOverwritten_WrittenPropertyHasNewValueAndUnwrittenPropertiesRetainValues()
       {
          dynamic item = new ExpandoObject();
          item.Height = 50;
          item.Name = "Bill";
 
          _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          dynamic update = new ExpandoObject();
          update.Height = 60;
          _tableStorageProvider.Merge( _tableName, update, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         dynamic updatedItem = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+         dynamic updatedItem = await _tableStorageProvider.GetAsync( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( 60, updatedItem.Height );
          Assert.AreEqual( item.Name, updatedItem.Name );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Merge_ClassHasAnOldETag_ThrowsEntityHasBeenChangedException()
+      public async Task Merge_ClassHasAnOldETag_ThrowsEntityHasBeenChangedException()
       {
          var decoratedItem = new DecoratedItemWithETag
          {
@@ -1386,23 +1384,21 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, decoratedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          storedItem.Age = 44;
          _tableStorageProvider.Merge( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          storedItem.Age = 59;
          _tableStorageProvider.Merge( _tableName, storedItem );
-         _tableStorageProvider.Save();
-
-         Assert.Fail( "Should have thrown an EntityHasBeenChangedException" );
+         await AsyncAssert.ThrowsAsync<EntityHasBeenChangedException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Merge_ClassHasAnOldETagConflictHandlingOverwrite_MergesItem()
+      public async Task Merge_ClassHasAnOldETagConflictHandlingOverwrite_MergesItem()
       {
          var decoratedItem = new DecoratedItemWithETag
          {
@@ -1412,24 +1408,24 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, decoratedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var storedItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var storedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
 
          storedItem.Age = 44;
          _tableStorageProvider.Merge( _tableName, storedItem );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          storedItem.Age = 59;
          _tableStorageProvider.Merge( _tableName, storedItem, ConflictHandling.Overwrite );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var actualItem = _tableStorageProvider.Get<DecoratedItemWithETag>( _tableName, "foo", "bar" );
+         var actualItem = await _tableStorageProvider.GetAsync<DecoratedItemWithETag>( _tableName, "foo", "bar" );
          Assert.AreEqual( 59, actualItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Add_ItemWithNotSerializedProperty_DoesntSerializeThatProperty()
+      public async Task Add_ItemWithNotSerializedProperty_DoesntSerializeThatProperty()
       {
          var newItem = new SimpleItemWithDontSerializeAttribute
          {
@@ -1438,16 +1434,16 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, newItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var resultItem = _tableStorageProvider.Get<SimpleItemWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
+         var resultItem = await _tableStorageProvider.GetAsync<SimpleItemWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( resultItem.SerializedString, newItem.SerializedString );
          Assert.AreEqual( null, resultItem.NotSerializedString );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void Add_ClassWithPropertyOfTypeThatHasDontSerializeAttribute_DoesNotSerializeThatProperty()
+      public async Task Add_ClassWithPropertyOfTypeThatHasDontSerializeAttribute_DoesNotSerializeThatProperty()
       {
          var newItem = new SimpleClassContainingTypeWithDontSerializeAttribute
          {
@@ -1459,9 +1455,9 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, newItem, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var resultItem = _tableStorageProvider.Get<SimpleClassContainingTypeWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
+         var resultItem = await _tableStorageProvider.GetAsync<SimpleClassContainingTypeWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( null, resultItem.ThingWithDontSerializeAttribute );
          Assert.AreEqual( newItem.StringWithoutDontSerializeAttribute, resultItem.StringWithoutDontSerializeAttribute );
@@ -1478,7 +1474,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Insert_ItemWithDateTimeField_DateTimeFieldStaysUtc()
+      public async Task Insert_ItemWithDateTimeField_DateTimeFieldStaysUtc()
       {
          const string partitionKey = "DONTCARE1";
          const string rowKey = "DONTCARE2";
@@ -1487,54 +1483,61 @@ namespace TechSmith.Hyde.IntegrationTest
          itemWithDateTime.DateTimeField = DateTime.UtcNow;
 
          _tableStorageProvider.Add( _tableName, itemWithDateTime, partitionKey, rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedItem = _tableStorageProvider.Get<SimpleDataItemWithDateTime>( _tableName, partitionKey, rowKey );
+         var retrievedItem = await _tableStorageProvider.GetAsync<SimpleDataItemWithDateTime>( _tableName, partitionKey, rowKey );
 
          Assert.IsTrue( DateTimesPrettyMuchEqual( itemWithDateTime.DateTimeField, retrievedItem.DateTimeField ) );
          Assert.AreEqual( DateTimeKind.Utc, retrievedItem.DateTimeField.Kind );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
+      public async Task GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
       {
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals(   _partitionKey ).RowKeyFrom(   "hi" ).Inclusive().RowKeyTo(   "hj" ).Inclusive().Async();
 
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
+      public async Task GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
       {
          var item = new TypeWithStringProperty
          {
             FirstType = "a"
          };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "there" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).RowKeyFrom( "hi" ).Inclusive().RowKeyTo( "hj" ).Inclusive().Async();
 
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
+      public async Task GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
       {
          var item = new TypeWithStringProperty
          {
             FirstType = "a"
          };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "hithere" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+         var result =
+            await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName )
+               .PartitionKeyEquals( _partitionKey )
+               .RowKeyFrom( "hi" )
+               .Inclusive()
+               .RowKeyTo( "hj" )
+               .Inclusive()
+               .Async();
 
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void GetRangeByRowKey_ManyItemsInStore_EnumerableWithAppropriateItemsReturned()
+      public async Task GetRangeByRowKey_ManyItemsInStore_EnumerableWithAppropriateItemsReturned()
       {
          var item1 = new TypeWithStringProperty
          {
@@ -1557,15 +1560,15 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Add( _tableName, item2, _partitionKey, "hithere" );
          _tableStorageProvider.Add( _tableName, item3, _partitionKey, "jklh" );
          _tableStorageProvider.Add( _tableName, item4, _partitionKey, "hi" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).RowKeyFrom( "hi" ).Inclusive().RowKeyTo( "hj" ).Inclusive().Async();
 
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
+      public async Task Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
       {
          var item = new DecoratedItem
          {
@@ -1574,7 +1577,7 @@ namespace TechSmith.Hyde.IntegrationTest
             Age = 42
          };
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          var updatedItem = new DecoratedItem
          {
@@ -1590,15 +1593,15 @@ namespace TechSmith.Hyde.IntegrationTest
          updatedItem.Age = 22;
          _tableStorageProvider.Update( _tableName, updatedItem );
 
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         updatedItem = await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "foo", "bar" );
          Assert.AreEqual( 22, updatedItem.Age );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
+      public async Task Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1615,7 +1618,7 @@ namespace TechSmith.Hyde.IntegrationTest
             Id = "123",
             Name = "three"
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          // We can tell the last operation was executed last by
          // setting it up to fail and then verifying that the other two completed.
@@ -1638,22 +1641,22 @@ namespace TechSmith.Hyde.IntegrationTest
 
          try
          {
-            _tableStorageProvider.Save();
+            await _tableStorageProvider.SaveAsync();
             Assert.Fail( "Should have thrown exception" );
          }
          catch ( EntityAlreadyExistsException )
          {
          }
 
-         var results = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+         var results = ( await _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).PartitionKeyEquals( "123" ).Async() ).ToList();
          Assert.AreEqual( 2, results.Count() );
-         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
+         Assert.AreEqual( 42, ( await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "123", "one" ) ).Age );
          Assert.IsFalse( results.Any( i => i.Name == "three" ) );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void SaveAsync_MultipleOperationsIndividually_AllOperationsExecuted()
+      public async Task SaveAsync_MultipleOperationsIndividually_AllOperationsExecuted()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1670,17 +1673,15 @@ namespace TechSmith.Hyde.IntegrationTest
             Id = "123",
             Name = "three"
          } );
-         var task = _tableStorageProvider.SaveAsync();
+         await _tableStorageProvider.SaveAsync();
 
-         task.Wait();
-
-         var results = _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).ToList();
+         var results = ( await _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).Async() ).ToList();
          Assert.AreEqual( 3, results.Count );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void SaveAsync_MultipleOperationsIndividuallyAndSecondFails_FollwingOperationsNotExecuted()
+      public async Task SaveAsync_MultipleOperationsIndividuallyAndSecondFails_FollwingOperationsNotExecuted()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1697,7 +1698,7 @@ namespace TechSmith.Hyde.IntegrationTest
             Id = "123",
             Name = "three"
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          // We can tell the last operation was executed last by
          // setting it up to fail and then verifying that the other two completed.
@@ -1718,25 +1719,24 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "two"
          } );
 
-         var task = _tableStorageProvider.SaveAsync();
          try
          {
-            task.Wait();
+            await _tableStorageProvider.SaveAsync();
             Assert.Fail( "Should have thrown exception" );
          }
-         catch ( AggregateException e )
+         catch ( EntityAlreadyExistsException )
          {
          }
 
-         var results = _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).ToList();
+         var results = ( await _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).Async() ).ToList();
          Assert.AreEqual( 2, results.Count() );
-         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
+         Assert.AreEqual( 42, ( await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "123", "one" ) ).Age );
          Assert.IsFalse( results.Any( i => i.Name == "three" ) );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void GetCollection_ManyItemsInStore_TopMethodReturnsProperAmount()
+      public async Task GetCollection_ManyItemsInStore_TopMethodReturnsProperAmount()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -1750,15 +1750,15 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, _partitionKey, "c" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Top( 2 );
+         var result = ( await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Top( 2 ).Async() );
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void CreateQueryWithTopAsync_ManyItemsInStore_TopMethodReturnsProperAmount()
+      public async Task CreateQueryWithTopAsync_ManyItemsInStore_TopMethodReturnsProperAmount()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -1772,16 +1772,16 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, _partitionKey, "c" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Top( 2 ).Async().Result;
+         var result = ( _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Top( 2 ).Async().Result ).ToList();
          Assert.AreEqual( 2, result.Count() );
          Assert.AreEqual( "a", result.First().FirstType );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void GetCollection_ManyItemsInStore_MaxKeyValueAllowsUnboundedRangeQuery()
+      public async Task GetCollection_ManyItemsInStore_MaxKeyValueAllowsUnboundedRangeQuery()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -1795,9 +1795,16 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, _partitionKey, "\uFFFF\uFFFF\uFFFF" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "\uFFFF\uFFFF", _tableStorageProvider.MaximumKeyValue );
+         var result =
+            await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName )
+               .PartitionKeyEquals( _partitionKey )
+               .RowKeyFrom( "\uFFFF\uFFFF" )
+               .Inclusive()
+               .RowKeyTo( _tableStorageProvider.MaximumKeyValue )
+               .Inclusive()
+               .Async();
 
          Assert.AreEqual( 2, result.Count() );
       }
@@ -1806,7 +1813,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       // This test fails on a local emulator but passes against an actual azure storage account.  The correct query is sent by the client, 
       // but incorrect results are received from the emulator.
-      public void GetCollection_ManyItemsInStore_MinKeyValueAllowsUnboundedRangeQuery()
+      public async Task GetCollection_ManyItemsInStore_MinKeyValueAllowsUnboundedRangeQuery()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -1820,25 +1827,32 @@ namespace TechSmith.Hyde.IntegrationTest
          {
             FirstType = "c"
          }, _partitionKey, "\u0020\u0020\u0020" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, _tableStorageProvider.MinimumKeyValue, "\u0020\u0020" );
+         var result =
+            await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName )
+               .PartitionKeyEquals( _partitionKey )
+               .RowKeyFrom( _tableStorageProvider.MinimumKeyValue )
+               .Inclusive()
+               .RowKeyTo( "\u0020\u0020" )
+               .Inclusive()
+               .Async();
 
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void Get_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
+      public async Task Get_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithNullableProperty
          {
             Id = "0",
             Name = "1"
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get( _tableName, "0", "1" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "0", "1" );
          var asDict = result as IDictionary<string, object>;
          Assert.AreEqual( 3, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
@@ -1849,16 +1863,16 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void Get_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
+      public async Task Get_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
             Id = "0",
             Name = "1"
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get( _tableName, "0", "1" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "0", "1" );
          var asDict = result as IDictionary<string, object>;
          Assert.AreEqual( 4, asDict.Count() );
 
@@ -1870,46 +1884,45 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void Get_EntityIsSerialized_ResponseContainsValidTimestampProperty()
+      public async Task Get_EntityIsSerialized_ResponseContainsValidTimestampProperty()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
             Id = "0",
             Name = "1"
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get<DecoratedItemWithTimestamp>( _tableName, "0", "1" );
+         var result = await _tableStorageProvider.GetAsync<DecoratedItemWithTimestamp>( _tableName, "0", "1" );
          Assert.IsNotNull( result.Timestamp );
          Assert.IsTrue( result.Timestamp > DateTimeOffset.MinValue );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      [ExpectedException( typeof( EntityHasBeenChangedException ) )]
-      public void Set_EntityHasETagAndTimestampAndEtagIsInvalid_Throws()
+      public async Task Set_EntityHasETagAndTimestampAndEtagIsInvalid_Throws()
       {
          _tableStorageProvider.Add( _tableName, new { Id = "0", Name = "1" }, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.ShouldIncludeETagWithDynamics = true;
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
-         var dataWithETagAndTimstamp = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var dataWithETagAndTimstamp = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
          Assert.IsTrue( dataWithETagAndTimstamp.Timestamp > DateTimeOffset.MinValue, "The Timestamp should have been set on the object when it was retrieved" );
 
 
          _tableStorageProvider.Update( _tableName, new { Id = "1", Name = "2" }, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
 
          dataWithETagAndTimstamp.Id = "newId";
          _tableStorageProvider.Update( _tableName, dataWithETagAndTimstamp );
-         _tableStorageProvider.Save();
+         await AsyncAssert.ThrowsAsync<EntityHasBeenChangedException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
+      public async Task WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
          {
@@ -1935,15 +1948,15 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "another blah",
             CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 )
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
          Assert.AreEqual( ( DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year, retrievedItem.CreationDate.Year );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
+      public async Task WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
          {
@@ -1969,15 +1982,15 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "another blah",
             CreationDate = DateTime.MinValue
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
          Assert.AreEqual( DateTime.MinValue, retrievedItem.CreationDate );
       }
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public void WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
+      public async Task WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime()
          {
@@ -2003,14 +2016,14 @@ namespace TechSmith.Hyde.IntegrationTest
             Name = "another blah",
             CreationDate = DateTime.MaxValue
          } );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
          Assert.AreEqual( DateTime.MaxValue, retrievedItem.CreationDate );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void CreateQueryAsync_MultipleBatches_ContinuationsAreHidden()
+      public async Task CreateQueryAsync_MultipleBatches_ContinuationsAreHidden()
       {
          for ( int i = 0; i < 1100; i++ )
          {
@@ -2019,14 +2032,14 @@ namespace TechSmith.Hyde.IntegrationTest
                FirstType = i
             }, _partitionKey, i.ToString() );
          }
-         _tableStorageProvider.Save( Execute.InBatches );
+         await _tableStorageProvider.SaveAsync( Execute.InBatches );
 
          var result = _tableStorageProvider.CreateQuery<TypeWithIntProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).Async().Result;
          Assert.AreEqual( 1100, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void CreateQueryPartialAsync_MultipleBatches_ContinuationsAreExposed()
+      public async Task CreateQueryPartialAsync_MultipleBatches_ContinuationsAreExposed()
       {
          for ( int i = 0; i < 1100; i++ )
          {
@@ -2035,7 +2048,7 @@ namespace TechSmith.Hyde.IntegrationTest
                FirstType = i
             }, _partitionKey, i.ToString() );
          }
-         _tableStorageProvider.Save( Execute.InBatches );
+         await _tableStorageProvider.SaveAsync( Execute.InBatches );
 
          var result = _tableStorageProvider.CreateQuery<TypeWithIntProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).PartialAsync().Result;
          Assert.AreEqual( 1000, result.Count() );
@@ -2043,7 +2056,7 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 100, continuation.Count() );
       }
 
-      private void EnsureOneItemInTableStorage()
+      private Task EnsureOneItemInTableStorageAsync()
       {
          var item = new TypeWithStringProperty
          {
@@ -2051,7 +2064,7 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+         return _tableStorageProvider.SaveAsync();
       }
 
       private static bool DateTimesPrettyMuchEqual( DateTime dt1, DateTime dt2 )

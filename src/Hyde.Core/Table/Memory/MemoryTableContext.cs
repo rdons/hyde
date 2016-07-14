@@ -146,15 +146,6 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public Task DeleteCollectionAsync( string tableName, string partitionKey )
-      {
-         foreach ( var entity in _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll() )
-         {
-            DeleteItem( tableName, partitionKey, entity.RowKey );
-         }
-         return Task.FromResult( 0 );
-      }
-
       public Task SaveAsync( Execute executeMethod )
       {
          var pendingActions = _pendingActions.ToArray();

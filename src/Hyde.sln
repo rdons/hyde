@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyde.IntegrationTest", "Hyde.IntegrationTest\Hyde.IntegrationTest.csproj", "{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}"
-EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Core", "Hyde.Core\Hyde.Core.xproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Test.Core", "Hyde.Test.Core\Hyde.Test.Core.xproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.IntegrationTest.Core", "Hyde.IntegrationTest.Core\Hyde.IntegrationTest.Core.xproj", "{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,10 +22,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9504FBE5-895B-4745-B13B-470664A670B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9504FBE5-895B-4745-B13B-470664A670B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9504FBE5-895B-4745-B13B-470664A670B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -34,6 +30,10 @@ Global
 		{D7FB6E33-201D-4D20-B663-09D72C100FA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7FB6E33-201D-4D20-B663-09D72C100FA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7FB6E33-201D-4D20-B663-09D72C100FA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

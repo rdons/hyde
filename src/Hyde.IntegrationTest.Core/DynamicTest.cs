@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Configuration;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -12,7 +12,8 @@ namespace TechSmith.Hyde.IntegrationTest
    [TestClass]
    public class DynamicTest
    {
-      readonly ICloudStorageAccount _storageAccount = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
+
+      private readonly ICloudStorageAccount _storageAccount = Configuration.GetTestStorageAccount();
       private static readonly string _baseTableName = "DynamicIntegrationTest";
 
       private TableStorageProvider _tableStorageProvider;
@@ -27,26 +28,32 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var client = new CloudTableClient( new Uri( _storageAccount.TableEndpoint ),
                                          _storageAccount.Credentials );
-         client.GetTableReference( _tableName ).Create();
+         client.GetTableReference( _tableName ).CreateAsync().Wait();
       }
 
       [ClassCleanup]
       public static void ClassCleanup()
       {
-         var storageAccountProvider = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
+         var storageAccountProvider = Configuration.GetTestStorageAccount();
 
          var client = new CloudTableClient( new Uri( storageAccountProvider.TableEndpoint ),
                                          storageAccountProvider.Credentials );
 
-         var orphanedTables = client.ListTables( _baseTableName );
-         foreach ( var orphanedTableName in orphanedTables )
+         TableContinuationToken token = new TableContinuationToken();
+         do
          {
-            client.GetTableReference( orphanedTableName.Name ).DeleteIfExists();
+            var orphanedTables = client.ListTablesSegmentedAsync( _baseTableName, token ).Result;
+            token = orphanedTables.ContinuationToken;
+            foreach ( CloudTable orphanedTableName in orphanedTables.Results )
+            {
+               client.GetTableReference( orphanedTableName.Name ).DeleteIfExistsAsync().Wait();
+            }
          }
+         while ( token != null );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      public async Task Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
       {
          dynamic item = new DynamicPropertyBag();
          item.Foo = "test";
@@ -55,16 +62,16 @@ namespace TechSmith.Hyde.IntegrationTest
          string partitionKey = "partitionKey";
          string rowKey = "rowKey";
          _tableStorageProvider.Add( _tableName, item, partitionKey, rowKey );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         dynamic result = _tableStorageProvider.Get( _tableName, partitionKey, rowKey );
+         dynamic result = await _tableStorageProvider.GetAsync( _tableName, partitionKey, rowKey );
 
          Assert.AreEqual( item.Foo, result.Foo );
          Assert.AreEqual( item.Bar, result.Bar );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Get_ObjectInsertedContainsDateTimeOutOfEdmRange_DateTimePropretyIsRetrievedDynamicallyAsDateTime()
+      public async Task Get_ObjectInsertedContainsDateTimeOutOfEdmRange_DateTimePropretyIsRetrievedDynamicallyAsDateTime()
       {
          var item = new DecoratedItemWithDateTime()
          {
@@ -74,14 +81,14 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, item );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedObject = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var retrievedObject = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
          Assert.AreEqual( new DateTime( 1000, 1, 1, 1, 1, 1, 1, DateTimeKind.Local ), retrievedObject.CreationDate.ToLocalTime() );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Get_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
+      public async Task Get_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
       {
          var simpleEntity = new DecoratedItem
          {
@@ -91,9 +98,9 @@ namespace TechSmith.Hyde.IntegrationTest
          };
 
          _tableStorageProvider.Add( _tableName, simpleEntity );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var retrievedObject = _tableStorageProvider.Get( _tableName, simpleEntity.Id, simpleEntity.Name );
+         var retrievedObject = await _tableStorageProvider.GetAsync( _tableName, simpleEntity.Id, simpleEntity.Name );
 
          Assert.AreEqual( simpleEntity.Age, (int) retrievedObject.Age );
          Assert.AreEqual( simpleEntity.Id, retrievedObject.PartitionKey );
@@ -101,9 +108,9 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void GetRange_RetrievingObjectViaDynamic_ShouldHydrateEntitiesWithAllProperties()
+      public async Task GetRange_RetrievingObjectViaDynamic_ShouldHydrateEntitiesWithAllProperties()
       {
-         Enumerable.Range( 0, 10 ).ToList().ForEach( i =>
+         foreach(int i in Enumerable.Range( 0, 10 ) )
          {
             var simpleEntity = new DecoratedItem
             {
@@ -113,17 +120,17 @@ namespace TechSmith.Hyde.IntegrationTest
             };
 
             _tableStorageProvider.Add( _tableName, simpleEntity );
-            _tableStorageProvider.Save();
-         } );
+            await _tableStorageProvider.SaveAsync();
+         }
 
-         var result = _tableStorageProvider.GetRangeByPartitionKey( _tableName, "Dynamic_2", "Dynamic_6" );
+         var result = await _tableStorageProvider.CreateQuery( _tableName ).PartitionKeyFrom( "Dynamic_2" ).Inclusive().PartitionKeyTo( "Dynamic_6" ).Inclusive().Async();
 
          Assert.AreEqual( 5, result.Count() );
          Assert.AreEqual( 1, (int) result.First().Age );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
+      public async Task Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
       {
          dynamic dyn = new ExpandoObject();
 
@@ -132,56 +139,54 @@ namespace TechSmith.Hyde.IntegrationTest
 
          _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
 
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
 
          Assert.AreEqual( "this is the first item.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void Get_ObjectDoesNotExist_ThrowsEntityDoesNotExistException()
+      public async Task Get_ObjectDoesNotExist_ThrowsEntityDoesNotExistException()
       {
-         _tableStorageProvider.Get( _tableName, "not", "found" );
+         await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync( _tableName, "not", "found" ) );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void UpsertDynamic_ItemDoesNotExist_DynamicIsInserted()
+      public async Task UpsertDynamic_ItemDoesNotExist_DynamicIsInserted()
       {
          dynamic dyn = new ExpandoObject();
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
          _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
          Assert.AreEqual( "this is the first item.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void UpsertDynamic_ItemExistsAndNeedsToBeUpdated_DynamicIsUpdated()
+      public async Task UpsertDynamic_ItemExistsAndNeedsToBeUpdated_DynamicIsUpdated()
       {
          dynamic dyn = new ExpandoObject();
          dyn.FirstItem = "this is the first item.";
          dyn.SecondItem = 2;
 
          _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
          dyn.FirstItem = "this text is changed.";
          _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
-         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
          Assert.AreEqual( "this text is changed.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      [ExpectedException( typeof( InvalidEntityException ) )]
       public void Add_ItemHasTimeStampPropertyAndThrowForReservedNamesIsOn_ExceptionIsThrown()
       {
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = true;
@@ -189,12 +194,11 @@ namespace TechSmith.Hyde.IntegrationTest
          dyn.FirstItem = "this is the first item.";
          dyn.Timestamp = new DateTimeOffset( DateTime.UtcNow );
 
-         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
-         _tableStorageProvider.Save();
+         Assert.ThrowsException<InvalidEntityException>( (Action) ( () => _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" ) ) );
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public void Add_ItemHasTimeStampPropertyAndThrowForReservedNamesIsOff_PropertyIsIgnored()
+      public async Task Add_ItemHasTimeStampPropertyAndThrowForReservedNamesIsOff_PropertyIsIgnored()
       {
          _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
          dynamic dyn = new ExpandoObject();
@@ -203,10 +207,10 @@ namespace TechSmith.Hyde.IntegrationTest
          dyn.Timestamp = manualTimestampValue;
 
          _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
-         _tableStorageProvider.Save();
+         await _tableStorageProvider.SaveAsync();
 
 
-         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         var result = await _tableStorageProvider.GetAsync( _tableName, "pk", "rk" );
          Assert.IsTrue( result.Timestamp != manualTimestampValue, "Timestamp value should've been overwritten with accurate timestamp" );
       }
    }
