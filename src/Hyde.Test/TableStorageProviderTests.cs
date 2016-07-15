@@ -545,6 +545,27 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public async Task GetRangeByPartitionKey_OneItemsInStoreWithinRange_EnumerableWithOneItemReturned()
+      {
+         _tableStorageProvider.Add( _tableName, new SimpleDataItem
+         {
+            FirstType = "a",
+            SecondType = 1
+         }, _partitionKeyForRangeLow, _rowKey );
+         await _tableStorageProvider.SaveAsync();
+
+         var result =
+            await _tableStorageProvider.CreateQuery<SimpleDataItem>( _tableName )
+               .PartitionKeyFrom( _partitionKeyForRangeLow )
+               .Inclusive()
+               .PartitionKeyTo( _partitionKeyForRangeHigh )
+               .Inclusive()
+               .Async();
+
+         Assert.AreEqual( 1, result.Count() );
+      }
+
+      [TestMethod]
       public async Task Add_InsertingTypeWithNullableProperty_ShouldSucceed()
       {
          _tableStorageProvider.Add( _tableName, new NullableSimpleType

@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Core", "Hyde.Core\Hyde.Core.xproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde", "Hyde\Hyde.xproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Test.Core", "Hyde.Test.Core\Hyde.Test.Core.xproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Test", "Hyde.Test\Hyde.Test.xproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.IntegrationTest.Core", "Hyde.IntegrationTest.Core\Hyde.IntegrationTest.Core.xproj", "{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.IntegrationTest", "Hyde.IntegrationTest\Hyde.IntegrationTest.xproj", "{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

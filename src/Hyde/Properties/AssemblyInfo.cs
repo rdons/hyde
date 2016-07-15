@@ -10,4 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyTrademark( "" )]
 
 [assembly: InternalsVisibleTo( "TechSmith.Hyde.Test" )]
-[assembly: InternalsVisibleTo( "Hyde.Test.Core" )]
+[assembly: InternalsVisibleTo( "Hyde.Test" )]

@@ -1,12 +1,14 @@
 {
-   "title": "TechSmith.Hyde.Test",
+   "title": "TechSmith.Hyde.IntegrationTest",
   "version": "1.0.0-*",
 
   "testRunner": "mstest",
 
    "dependencies": {
       "dotnet-test-mstest": "1.0.1-preview",
-      "Hyde.Core": "8.4.2-*",
+      "Hyde": "8.4.2-*",
+      "Microsoft.Extensions.Configuration": "1.0.0",
+      "Microsoft.Extensions.Configuration.Json": "1.0.0",
       "Moq": "4.6.25-alpha",
       "MSTest.TestFramework": "1.0.0-preview",
       "System.Diagnostics.TraceSource": "4.0.0"
