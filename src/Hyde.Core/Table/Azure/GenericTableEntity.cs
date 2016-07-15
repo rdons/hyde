@@ -171,7 +171,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          SetAzureTableConstantsOnObject( newItem );
 
-         objectType.GetProperties().Where( p => p.ShouldSerialize() )
+         objectType.GetTypeInfo().GetProperties().Where( p => p.ShouldSerialize() )
                                    .Where( p => _properties.ContainsKey( p.Name ) )
                                    .ToList()
                                    .ForEach( p => SetPropertyOnObject( p, newItem ) );

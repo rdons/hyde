@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace TechSmith.Hyde.Common
 {
-   [Serializable]
    public class InvalidEntityException : Exception
    {
       public InvalidEntityException()
@@ -17,11 +15,6 @@ namespace TechSmith.Hyde.Common
 
       public InvalidEntityException( string message, Exception inner )
          : base( message, inner )
-      {
-      }
-
-      protected InvalidEntityException( SerializationInfo info, StreamingContext context )
-         : base( info, context )
       {
       }
    }

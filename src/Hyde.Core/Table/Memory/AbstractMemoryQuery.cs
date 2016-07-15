@@ -44,7 +44,7 @@ namespace TechSmith.Hyde.Table.Memory
 
          public IEnumerator<T> GetEnumerator()
          {
-            return _parent.GetEnumerator();
+            return _parent.ExecuteQuery().GetEnumerator();
          }
 
          IEnumerator IEnumerable.GetEnumerator()
@@ -53,11 +53,6 @@ namespace TechSmith.Hyde.Table.Memory
          }
 
          public Task<IPartialResult<T>> GetNextAsync()
-         {
-            throw new InvalidOperationException();
-         }
-
-         public IPartialResult<T> GetNext()
          {
             throw new InvalidOperationException();
          }
@@ -73,11 +68,6 @@ namespace TechSmith.Hyde.Table.Memory
             result = result.Take( _query.TopCount.Value );
          }
          return result.Select( Convert );
-      }
-
-      public override IEnumerator<T> GetEnumerator()
-      {
-         return ExecuteQuery().GetEnumerator();
       }
 
       private static Func<GenericTableEntity, bool> FilterByKeyRange( Func<GenericTableEntity,string> getKey, KeyRange keyRange )

@@ -86,16 +86,6 @@ namespace TechSmith.Hyde.Table
          _context.AddNewItem( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
-      public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
-      {
-         var result = _context.CreateQuery<T>( tableName ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
-         if ( result.Length == 0 )
-         {
-            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
-         }
-         return result[0];
-      }
-
       public Task<T> GetAsync<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
          return _context.CreateQuery<T>( tableName )
@@ -124,51 +114,6 @@ namespace TechSmith.Hyde.Table
          return result[0];
       }
 
-      public dynamic Get( string tableName, string partitionKey, string rowKey )
-      {
-         var result = _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
-         if ( result.Length == 0 )
-         {
-            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
-         }
-         return result[0];
-      }
-
-      [Obsolete( "Use CreateQuery<T>" )]
-      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
-      {
-         return _context.CreateQuery<T>( tableName ).PartitionKeyEquals( partitionKey );
-      }
-
-      [Obsolete( "Use CreateQuery" )]
-      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
-      {
-         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics ).PartitionKeyEquals( partitionKey );
-      }
-
-      /// <summary>
-      /// Return the entire contents of tableName.
-      /// </summary>
-      /// <typeparam name="T">type of the instances to return</typeparam>
-      /// <param name="tableName">name of the table</param>
-      /// <returns>all rows in tableName</returns>
-      [Obsolete( "Use CreateQuery<T>" )]
-      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
-      {
-         return _context.CreateQuery<T>( tableName );
-      }
-
-      /// <summary>
-      /// Return the entire contents of tableName.
-      /// </summary>
-      /// <param name="tableName">name of the table</param>
-      /// <returns>all rows in tableName</returns>
-      [Obsolete( "Use CreateQuery" )]
-      public IQuery<dynamic> GetCollection( string tableName )
-      {
-         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
-      }
-
       /// <summary>
       /// Create a query object that allows fluent filtering on partition and row keys.
       /// </summary>
@@ -190,51 +135,6 @@ namespace TechSmith.Hyde.Table
          return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
-      [Obsolete( "Use CreateQuery<T>" )]
-      public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
-      }
-
-      [Obsolete( "Use CreateQuery<T>" )]
-      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return _context.CreateQuery<T>( tableName )
-                        .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-                        .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      [Obsolete( "Use CreateQuery" )]
-      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
-      {
-         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
-                        .PartitionKeyFrom( partitionKeyLow ).Inclusive()
-                        .PartitionKeyTo( partitionKeyHigh ).Inclusive();
-      }
-
-      [Obsolete( "Use CreateQuery<T>" )]
-      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
-      {
-         return _context.CreateQuery<T>( tableName )
-                        .PartitionKeyEquals( partitionKey )
-                        .RowKeyFrom( rowKeyLow ).Inclusive()
-                        .RowKeyTo( rowKeyHigh ).Inclusive();
-      }
-
-      [Obsolete( "Use CreateQuery" )]
-      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
-      {
-         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
-                        .PartitionKeyEquals( partitionKey )
-                        .RowKeyFrom( rowKeyLow ).Inclusive()
-                        .RowKeyTo( rowKeyHigh ).Inclusive();
-      }
-
-      public void Save()
-      {
-         Save( Execute.Individually );
-      }
-
       public Task SaveAsync()
       {
          return SaveAsync( Execute.Individually );
@@ -243,11 +143,6 @@ namespace TechSmith.Hyde.Table
       public Task SaveAsync( Execute executeMethod )
       {
          return _context.SaveAsync( executeMethod );
-      }
-
-      public void Save( Execute executeMethod )
-      {
-         _context.Save( executeMethod );
       }
 
       /// <summary>
@@ -310,18 +205,6 @@ namespace TechSmith.Hyde.Table
       public void Delete( string tableName, string partitionKey, string rowKey )
       {
          _context.DeleteItem( tableName, partitionKey, rowKey );
-      }
-
-      /// <summary>
-      /// Remove all entities with specified partition key
-      /// </summary>
-      /// <param name="tableName">Name of the table</param>
-      /// <param name="partitionKey">The partition key to use when deleting a collection of entities</param>
-      [Obsolete("Using this method is discouraged and may not behave as expected, especially with an InMemoryTableStorageProvider. "
-              + "As an alternative, prefer to query the entities you wish to delete and execute delete operations manually.")]
-      public void DeleteCollection( string tableName, string partitionKey )
-      {
-         _context.DeleteCollection( tableName, partitionKey );
       }
 
       /// <summary>

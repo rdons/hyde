@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
+using TechSmith.Hyde.Dynamics;
 
 namespace TechSmith.Hyde.Table
 {
@@ -125,10 +126,10 @@ namespace TechSmith.Hyde.Table
       private static TableItem CreateFromDynamicMetaObject( IDynamicMetaObjectProvider entity, bool throwOnReservedPropertyName )
       {
          var properties = new Dictionary<string, Tuple<object, Type>>();
-         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( entity );
+         IEnumerable<string> memberNames = Dynamic.GetMemberNames( entity );
          foreach ( var memberName in memberNames )
          {
-            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( entity, memberName );
+            dynamic result = Dynamic.InvokeGet( entity, memberName );
             properties[memberName] = new Tuple<object, Type>( (object) result, result.GetType() );
          }
 
@@ -152,7 +153,7 @@ namespace TechSmith.Hyde.Table
          var properties = new Dictionary<string, Tuple<object, Type>>();
 
          var allInstancePropertiesFlag = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-         foreach ( var property in entity.GetType().GetProperties( allInstancePropertiesFlag ) )
+         foreach ( var property in entity.GetType().GetTypeInfo().GetProperties( allInstancePropertiesFlag ) )
          {
             properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
          }
@@ -163,7 +164,7 @@ namespace TechSmith.Hyde.Table
       private static TableItem CreateFromStaticType( object entity, bool throwOnReservedPropertyName )
       {
          var properties = new Dictionary<string, Tuple<object, Type>>();
-         foreach ( var property in entity.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         foreach ( var property in entity.GetType().GetTypeInfo().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
             properties[property.Name] = new Tuple<object, Type>( property.GetValue( entity, null ), property.PropertyType );
          }
@@ -190,10 +191,12 @@ namespace TechSmith.Hyde.Table
       private static bool IsAnonymousType( object entity )
       {
          Type type = entity.GetType();
-         return Attribute.IsDefined( type, typeof( CompilerGeneratedAttribute ), false )
+         var typeInfo = type.GetTypeInfo();
+
+         return typeInfo.IsDefined( typeof( CompilerGeneratedAttribute ), false )
                  && type.Name.Contains( "AnonymousType" )
                  && ( type.Name.StartsWith( "<>" ) || type.Name.StartsWith( "VB$" ) )
-                 && ( type.Attributes & TypeAttributes.NotPublic ) == TypeAttributes.NotPublic;
+                 && ( typeInfo.Attributes & TypeAttributes.NotPublic ) == TypeAttributes.NotPublic;
       }
    }
 }

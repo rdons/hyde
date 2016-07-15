@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace TechSmith.Hyde.Common
 {
-   [Serializable]
    public class EntityHasBeenChangedException : Exception
    {
       public EntityHasBeenChangedException()
@@ -22,11 +20,6 @@ namespace TechSmith.Hyde.Common
 
       public EntityHasBeenChangedException( string message, Exception inner )
          : base( message, inner )
-      {
-      }
-
-      protected EntityHasBeenChangedException( SerializationInfo info, StreamingContext context )
-         : base( info, context )
       {
       }
    }

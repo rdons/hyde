@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace TechSmith.Hyde.Common
 {
-   [Serializable]
    public class EntityAlreadyExistsException : Exception
    {
       public EntityAlreadyExistsException()
@@ -22,11 +20,6 @@ namespace TechSmith.Hyde.Common
 
       public EntityAlreadyExistsException( string message, Exception inner )
          : base( message, inner )
-      {
-      }
-
-      protected EntityAlreadyExistsException( SerializationInfo info, StreamingContext context )
-         : base( info, context )
       {
       }
    }

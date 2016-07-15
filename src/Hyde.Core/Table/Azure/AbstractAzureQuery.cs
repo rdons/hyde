@@ -22,26 +22,16 @@ namespace TechSmith.Hyde.Table.Azure
          _table = previous._table;
       }
 
-      public override IEnumerator<T> GetEnumerator()
-      {
-         var query = CreateTableQuery();
-         return _table.ExecuteQuery( query ).Select( ConvertResult ).GetEnumerator();
-      }
-
       public override Task<IPartialResult<T>> PartialAsync()
       {
          return GetPartialResultAsync( CreateTableQuery(), new TableContinuationToken() );
       }
 
-      private Task<IPartialResult<T>> GetPartialResultAsync( TableQuery<GenericTableEntity> query,
+      private async Task<IPartialResult<T>> GetPartialResultAsync( TableQuery<GenericTableEntity> query,
                                            TableContinuationToken token )
       {
-         var asyncResult = _table.BeginExecuteQuerySegmented( query, token, ar => { }, null );
-         return Task.Factory.FromAsync( asyncResult, r =>
-         {
-            var segment = _table.EndExecuteQuerySegmented<GenericTableEntity>( r );
-            return (IPartialResult<T>)new PartialResult( this, query, segment );
-         } );
+         TableQuerySegment<GenericTableEntity> result = await _table.ExecuteQuerySegmentedAsync( query, token ).ConfigureAwait( false );
+         return new PartialResult( this, query, result );  
       }
 
       private class PartialResult : IPartialResult<T>
@@ -70,16 +60,6 @@ namespace TechSmith.Hyde.Table.Azure
                throw new InvalidOperationException( "Cannot get next when there are no more results" );
             }
             return _parent.GetPartialResultAsync( _query, _segment.ContinuationToken );
-         }
-
-         public IPartialResult<T> GetNext()
-         {
-            if ( !HasMoreResults )
-            {
-               throw new InvalidOperationException( "Cannot get next when there are no more results" );
-            }
-            var nextSegment = _parent._table.ExecuteQuerySegmented( _query, _segment.ContinuationToken );
-            return new PartialResult( _parent, _query, nextSegment );
          }
 
          public IEnumerator<T> GetEnumerator()

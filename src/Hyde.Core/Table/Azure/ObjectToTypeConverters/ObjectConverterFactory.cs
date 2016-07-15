@@ -12,7 +12,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
       public static IObjectToTypeConverter GetConverterFor( Type type )
       {
-         if ( type.IsEnum )
+         if ( type.GetTypeInfo().IsEnum )
          {
             return new EnumConverter();
          }
@@ -27,9 +27,17 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
       private static ConcurrentDictionary<Type, IObjectToTypeConverter> GetObjectToTypeConverters()
       {
-         var basicDictionaryPairs = Assembly.GetAssembly( typeof( ObjectConverterFactory ) )
+         TypeInfo objectToTypeConverterInterfaceTypeInfo = typeof( IObjectToTypeConverter ).GetTypeInfo();
+
+         Type objectConverterFactoryType = typeof( ObjectConverterFactory );
+         Assembly assembly = objectConverterFactoryType.GetTypeInfo().Assembly;
+         var basicDictionaryPairs = assembly
                                        .GetTypes()
-                                       .Where( t => typeof( IObjectToTypeConverter ).IsAssignableFrom( t ) && !t.IsInterface && !t.IsAbstract )
+                                       .Where( t =>
+                                       {
+                                          TypeInfo typeInfo = t.GetTypeInfo();
+                                          return objectToTypeConverterInterfaceTypeInfo.IsAssignableFrom( t ) && !typeInfo.IsInterface && !typeInfo.IsAbstract;
+                                       } )
                                        .SelectMany( GetTypesSupportedByTypeConverter );
 
          return new ConcurrentDictionary<Type, IObjectToTypeConverter>( basicDictionaryPairs );

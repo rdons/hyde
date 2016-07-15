@@ -3,7 +3,6 @@ using System.Runtime.Serialization;
 
 namespace TechSmith.Hyde.Common
 {
-   [Serializable]
    public class EntityDoesNotExistException : Exception
    {
       public EntityDoesNotExistException()
@@ -22,11 +21,6 @@ namespace TechSmith.Hyde.Common
 
       public EntityDoesNotExistException( string message, Exception inner )
          : base( message, inner )
-      {
-      }
-
-      protected EntityDoesNotExistException( SerializationInfo info, StreamingContext context )
-         : base( info, context )
       {
       }
    }
