@@ -3,13 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A975622-5F1E-48AA-9DEE-12FC1183D3A6}"
-	ProjectSection(SolutionItems) = preProject
-		Hyde.vsmdi = Hyde.vsmdi
-		Local.testsettings = Local.testsettings
-		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
-	EndProjectSection
-EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde", "Hyde\Hyde.xproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Test", "Hyde.Test\Hyde.Test.xproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
