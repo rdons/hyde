@@ -2,6 +2,10 @@
    "title": "TechSmith.Hyde",
    "version": "8.4.2-*",
 
+   "buildOptions": {
+      "warningsAsErrors": true
+   },
+
    "dependencies": {
       "Microsoft.Data.Edm": "5.7.0",
       "Microsoft.Data.OData": "5.7.0",
