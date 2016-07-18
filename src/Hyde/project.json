@@ -1,7 +1,7 @@
 {
    "title": "TechSmith.Hyde",
    "name":  "TechSmith.Hyde",
-   "version": "8.4.2-*",
+   "version": "9.0.0-alpha001",
    "description": "Object to Entity mapper for Windows Azure",
    "copyright": "Copyright TechSmith Corporation 2016",
    "authors": [ "TechSmith Corporation" ],
