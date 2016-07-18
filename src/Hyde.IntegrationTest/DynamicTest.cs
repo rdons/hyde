@@ -12,7 +12,6 @@ namespace TechSmith.Hyde.IntegrationTest
    [TestClass]
    public class DynamicTest
    {
-
       private readonly ICloudStorageAccount _storageAccount = Configuration.GetTestStorageAccount();
       private static readonly string _baseTableName = "DynamicIntegrationTest";
 
@@ -110,7 +109,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public async Task GetRange_RetrievingObjectViaDynamic_ShouldHydrateEntitiesWithAllProperties()
       {
-         foreach(int i in Enumerable.Range( 0, 10 ) )
+         foreach ( int i in Enumerable.Range( 0, 10 ) )
          {
             var simpleEntity = new DecoratedItem
             {

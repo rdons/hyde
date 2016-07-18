@@ -611,7 +611,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }, _partitionKey, "a" );
          await _tableStorageProvider.SaveAsync();
 
-         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyFrom(   _partitionKey ).Inclusive().PartitionKeyTo(   _partitionKeyForRange ).Inclusive().Async();
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyFrom( _partitionKey ).Inclusive().PartitionKeyTo( _partitionKeyForRange ).Inclusive().Async();
          Assert.AreEqual( 1, result.Count() );
       }
 
@@ -1044,7 +1044,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public async Task Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlSaved()
+      public async Task Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1494,7 +1494,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public async Task GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
       {
-         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals(   _partitionKey ).RowKeyFrom(   "hi" ).Inclusive().RowKeyTo(   "hj" ).Inclusive().Async();
+         var result = await _tableStorageProvider.CreateQuery<TypeWithStringProperty>( _tableName ).PartitionKeyEquals( _partitionKey ).RowKeyFrom( "hi" ).Inclusive().RowKeyTo( "hj" ).Inclusive().Async();
 
          Assert.AreEqual( 0, result.Count() );
       }

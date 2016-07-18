@@ -339,7 +339,7 @@ namespace TechSmith.Hyde.Test
 
          try
          {
-           await firstTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+            await firstTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
             instanceOneExisted = true;
          }
          catch ( EntityDoesNotExistException )
@@ -348,7 +348,7 @@ namespace TechSmith.Hyde.Test
 
          try
          {
-           await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+            await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
             instanceTwoExisted = true;
          }
          catch ( EntityDoesNotExistException )
@@ -368,7 +368,7 @@ namespace TechSmith.Hyde.Test
          await _tableStorageProvider.SaveAsync();
 
          _tableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
-         var instance =await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+         var instance = await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.IsNotNull( instance );
       }
@@ -486,7 +486,7 @@ namespace TechSmith.Hyde.Test
          firstTableStorageProvider.Add( _tableName, expectedItem, _partitionKey, _rowKey );
          await firstTableStorageProvider.SaveAsync();
 
-         var item =await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+         var item = await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( expectedItem.FirstType, item.FirstType );
          Assert.AreEqual( expectedItem.SecondType, item.SecondType );
@@ -511,7 +511,7 @@ namespace TechSmith.Hyde.Test
          bool hasThrown = false;
          try
          {
-           await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+            await secondTableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
          }
          catch ( EntityDoesNotExistException )
          {
@@ -528,17 +528,17 @@ namespace TechSmith.Hyde.Test
          var firstContext = new InMemoryTableStorageProvider();
 
          var expectedItem = new SimpleDataItem
-                              {
-                                 FirstType = "a",
-                                 SecondType = 1
-                              };
+         {
+            FirstType = "a",
+            SecondType = 1
+         };
 
          firstContext.Add( _tableName, expectedItem, _partitionKey, _rowKey );
          await firstContext.SaveAsync();
 
          new InMemoryTableStorageProvider();
 
-         var item =await firstContext.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+         var item = await firstContext.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( expectedItem.FirstType, item.FirstType );
          Assert.AreEqual( expectedItem.SecondType, item.SecondType );
@@ -669,7 +669,7 @@ namespace TechSmith.Hyde.Test
          item.FirstType = "second";
          _tableStorageProvider.Update( _tableName, item, _partitionKey, _rowKey );
 
-         var result =await secondStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+         var result = await secondStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( "first", result.FirstType );
       }
@@ -970,7 +970,7 @@ namespace TechSmith.Hyde.Test
          item.FirstType = "second";
          _tableStorageProvider.Upsert( _tableName, item, _partitionKey, _rowKey );
 
-         var result =await secondStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
+         var result = await secondStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( "first", result.FirstType );
       }
@@ -1148,10 +1148,10 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public async Task WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
-         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) }); 
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
-         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) } );
          await _tableStorageProvider.SaveAsync();
 
          var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
@@ -1162,10 +1162,10 @@ namespace TechSmith.Hyde.Test
       [TestCategory( "Integration" )]
       public async Task WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
-         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); 
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
-         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue } );
          await _tableStorageProvider.SaveAsync();
 
          var retrievedItem = await _tableStorageProvider.GetAsync<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );

@@ -65,7 +65,7 @@ namespace TechSmith.Hyde.Test
       public async Task GetCollection_ObjectInsertedWithClassAndRetrievedViaDynamic_ShouldReturnFullyHydratedObjects()
       {
          string partitionKey = "Test";
-         foreach( var i in Enumerable.Range( 0, 10 ) )
+         foreach ( var i in Enumerable.Range( 0, 10 ) )
          {
             var simpleEntity = new DecoratedItem
             {
