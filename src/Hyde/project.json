@@ -1,6 +1,18 @@
 {
    "title": "TechSmith.Hyde",
+   "name":  "TechSmith.Hyde",
    "version": "8.4.2-*",
+   "description": "Object to Entity mapper for Windows Azure",
+   "copyright": "Copyright TechSmith Corporation 2016",
+   "authors": [ "TechSmith Corporation" ],
+   "packOptions": {
+      "owners": [ "TechSmith Corporation" ],
+      "licenseUrl": "https://raw.github.com/TechSmith/hyde/master/LICENSE.txt",
+      "projectUrl": "http://techsmith.github.com/hyde",
+      "tags": [ "TechSmith", "Azure", "Storage", "Table Storage", "Azure Table" ],
+      "files": [ "..\\..\\LICENSE.txt" ],
+      "releaseNotes": "* (9.0.0-alpha001) Added .net core 1.0 support. Lowest .net framework supported is now .net 4.5. Removed methods previously marked as obsolete and removed all synchronous methods."
+   },
 
    "buildOptions": {
       "warningsAsErrors": true
