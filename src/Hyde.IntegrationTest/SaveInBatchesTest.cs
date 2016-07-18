@@ -237,7 +237,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsExecutedInSameEGT()
+      public async Task SaveAsync_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsExecutedInSameEGT()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 9 } );
          await _tableStorageProvider.SaveAsync();

@@ -324,13 +324,13 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public async Task Get_NoItemsInStore_EntityDoesNotExistExceptionThrown()
+      public async Task GetAsync_NoItemsInStore_EntityDoesNotExistExceptionThrown()
       {
          await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey ) );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public async Task Get_ItemInStore_ItemReturned()
+      public async Task GetAsync_ItemInStore_ItemReturned()
       {
          var dataItem = new TypeWithStringProperty
          {
@@ -345,7 +345,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public async Task Get_DecoratedItemWithETag_RetreivedItemHasValidETag()
+      public async Task GetAsync_DecoratedItemWithETag_RetreivedItemHasValidETag()
       {
          var item = new DecoratedItemWithETag
          {
@@ -1601,7 +1601,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
+      public async Task SaveAsync_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1843,7 +1843,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Get_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
+      public async Task GetAsync_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItemWithNullableProperty
          {
@@ -1863,7 +1863,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Get_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
+      public async Task GetAsync_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {
@@ -1884,7 +1884,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Get_EntityIsSerialized_ResponseContainsValidTimestampProperty()
+      public async Task GetAsync_EntityIsSerialized_ResponseContainsValidTimestampProperty()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem
          {

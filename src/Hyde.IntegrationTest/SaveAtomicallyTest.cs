@@ -61,7 +61,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_TooManyOperationsForEGT_ThrowsInvalidOperationException()
+      public async Task SaveAsync_TooManyOperationsForEGT_ThrowsInvalidOperationException()
       {
          string partitionKey = "123";
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = partitionKey, Name = "200" } );
@@ -90,7 +90,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_OperationsInDifferentPartitions_ThrowsInvalidOperationException()
+      public async Task SaveAsync_OperationsInDifferentPartitions_ThrowsInvalidOperationException()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Ed" } );
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "345", Name = "Eve" } );
@@ -107,7 +107,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_OperationsWithSamePartitionKeyInDifferentTables_ThrowsInvalidOperationException()
+      public async Task SaveAsync_OperationsWithSamePartitionKeyInDifferentTables_ThrowsInvalidOperationException()
       {
          var newTableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
          await _client.GetTableReference( newTableName ).CreateAsync();
@@ -133,21 +133,6 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_MultipleOperationTypesOnSamePartitionAndNoConflicts_OperationsSucceed()
-      {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 34 } );
-         await _tableStorageProvider.SaveAsync();
-
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Ed", Age = 7 } );
-         _tableStorageProvider.Upsert( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 42 } );
-         await _tableStorageProvider.SaveAsync( Execute.Atomically );
-
-         Assert.AreEqual( 7, ( await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "123", "Ed" ) ).Age );
-         Assert.AreEqual( 42, ( await _tableStorageProvider.GetAsync<DecoratedItem>( _tableName, "123", "Eve" ) ).Age );
-      }
-
-      [TestMethod]
-      [TestCategory( "Integration" )]
       public async Task SaveAsync_MultipleOperationTypesOnSamePartitionAndNoConflicts_OperationsSucceed()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 34 } );
@@ -163,7 +148,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
-      public async Task Save_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
+      public async Task SaveAsync_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
       {
          // Inserting the same row twice in the same EGT causes Table Storage to return 400 Bad Request.
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc" } );

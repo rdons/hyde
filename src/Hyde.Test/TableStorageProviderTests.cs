@@ -396,7 +396,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_OneItemInStore_HydratedItemIsReturned()
+      public async Task GetAsync_OneItemInStore_HydratedItemIsReturned()
       {
          var dataItem = new SimpleDataItem
          {
@@ -411,13 +411,13 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_NoItemsInStore_EntityDoesNotExistExceptionThrown()
+      public async Task GetAsync_NoItemsInStore_EntityDoesNotExistExceptionThrown()
       {
          await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync<SimpleDataItem>( _tableName, _partitionKey, _rowKey ) );
       }
 
       [TestMethod]
-      public async Task Get_ManyItemsInStore_HydratedItemIsReturned()
+      public async Task GetAsync_ManyItemsInStore_HydratedItemIsReturned()
       {
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
                                    {
@@ -593,7 +593,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_InsertingTypeWithNullableProperty_ShouldSucceed()
+      public async Task GetAsync_InsertingTypeWithNullableProperty_ShouldSucceed()
       {
          var expected = new NullableSimpleType
                                   {
@@ -675,7 +675,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_AddingItemWithNotSerializedProperty_RetrievedItemMissingProperty()
+      public async Task GetAsync_AddingItemWithNotSerializedProperty_RetrievedItemMissingProperty()
       {
          var dataItem = new SimpleItemWithDontSerializeAttribute
                         {
@@ -693,7 +693,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_ItemWithETagPropertyInStore_ItemReturnedWithETag()
+      public async Task GetAsync_ItemWithETagPropertyInStore_ItemReturnedWithETag()
       {
          var decoratedETagItem = new DecoratedItemWithETag
          {
@@ -710,7 +710,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_RetreiveAsDynamic_DynamicItemHasETagProperty()
+      public async Task GetAsync_RetreiveAsDynamic_DynamicItemHasETagProperty()
       {
          var decoratedItem = new DecoratedItem
          {
@@ -766,7 +766,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Save_TwoTablesHaveBeenWrittenTo_ShouldSaveBoth()
+      public async Task SaveAsync_TwoTablesHaveBeenWrittenTo_ShouldSaveBoth()
       {
          var simpleItem = new SimpleDataItem
          {
@@ -787,7 +787,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_AddItemToOneTableAndReadFromAnother_ItemIsNotReturnedFromSecondTable()
+      public async Task GetAsync_AddItemToOneTableAndReadFromAnother_ItemIsNotReturnedFromSecondTable()
       {
          var simpleItem = new SimpleDataItem
          {
@@ -1186,7 +1186,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_ItemWithTimestmapPropertyInStore_ItemReturnedWithTimestamp()
+      public async Task GetAsync_ItemWithTimestmapPropertyInStore_ItemReturnedWithTimestamp()
       {
          var decoratedTimestampItem = new DecoratedItemWithTimestamp
          {
@@ -1204,7 +1204,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_RetreiveAsDynamic_DynamicItemHasTimestampProperty()
+      public async Task GetAsync_RetreiveAsDynamic_DynamicItemHasTimestampProperty()
       {
          var decoratedItem = new DecoratedItem
          {

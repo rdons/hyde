@@ -53,7 +53,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public async Task Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      public async Task GetAsync_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
       {
          dynamic item = new DynamicPropertyBag();
          item.Foo = "test";
@@ -71,7 +71,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public async Task Get_ObjectInsertedContainsDateTimeOutOfEdmRange_DateTimePropretyIsRetrievedDynamicallyAsDateTime()
+      public async Task GetAsync_ObjectInsertedContainsDateTimeOutOfEdmRange_DateTimePropretyIsRetrievedDynamicallyAsDateTime()
       {
          var item = new DecoratedItemWithDateTime()
          {
@@ -88,7 +88,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public async Task Get_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
+      public async Task GetAsync_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
       {
          var simpleEntity = new DecoratedItem
          {
@@ -130,7 +130,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public async Task Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
+      public async Task GetAsync_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
       {
          dynamic dyn = new ExpandoObject();
 
@@ -148,7 +148,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
-      public async Task Get_ObjectDoesNotExist_ThrowsEntityDoesNotExistException()
+      public async Task GetAsync_ObjectDoesNotExist_ThrowsEntityDoesNotExistException()
       {
          await AsyncAssert.ThrowsAsync<EntityDoesNotExistException>( () => _tableStorageProvider.GetAsync( _tableName, "not", "found" ) );
       }

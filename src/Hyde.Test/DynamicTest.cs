@@ -23,7 +23,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      public async Task GetAsync_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
       {
          dynamic item = new DynamicPropertyBag();
          item.Foo = "test";
@@ -41,7 +41,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_ObjectInsertedWithClassAndRetrievedViaDynamic_ShouldReturnFullyHydratedObject()
+      public async Task GetAsync_ObjectInsertedWithClassAndRetrievedViaDynamic_ShouldReturnFullyHydratedObject()
       {
          var simpleEntity = new DecoratedItem
          {
@@ -86,7 +86,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
+      public async Task GetAsync_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
       {
          dynamic dyn = new ExpandoObject();
 

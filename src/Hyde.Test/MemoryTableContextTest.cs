@@ -34,7 +34,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Save_ItemAdded_QueryReturnsTheItem()
+      public async Task SaveAsync_ItemAdded_QueryReturnsTheItem()
       {
          var item = new DecoratedItem
          {
@@ -776,7 +776,7 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public async Task Save_ItemAdded_QueryReturnsTheItem()
+      public async Task SaveAsync_ItemAdded_QueryReturnsTheItem()
       {
          var item = new DecoratedItem
          {
