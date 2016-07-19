@@ -13,7 +13,7 @@ namespace TechSmith.Hyde.Dynamics
    // borrowed from https://github.com/ekonbenefits/dynamitey
    // License: DynamicsLicense.txt
    // Modifications made to work with dotnet core
-   public class Dynamic
+   internal class Dynamic
    {
       public static IEnumerable<string> GetMemberNames( object target, bool dynamicOnly = false )
       {
@@ -633,7 +633,7 @@ namespace TechSmith.Hyde.Dynamics
    /// <summary>
    /// Specific version of InvokeContext which declares a type to be used to invoke static methods.
    /// </summary>
-   public class StaticContext : InvokeContext
+   internal class StaticContext : InvokeContext
    {
       /// <summary>
       /// Performs an explicit conversion from <see cref="System.Type"/> to <see cref="Dynamitey.StaticContext"/>.
@@ -657,7 +657,7 @@ namespace TechSmith.Hyde.Dynamics
    /// <summary>
    /// Object that stores a context with a target for dynamic invocation
    /// </summary>
-   public class InvokeContext
+   internal class InvokeContext
    {
       /// <summary>
       /// Gets or sets the target.
