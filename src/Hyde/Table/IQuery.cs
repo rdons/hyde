@@ -30,7 +30,7 @@ namespace TechSmith.Hyde.Table
       IQueryAsync<T> Top( int count );
    }
 
-   public interface IQueryAsync<T> : IEnumerable<T>
+   public interface IQueryAsync<T>
    {
       /// <summary>
       /// Asynchrononusly returns an enumerable of all objects satisfying the query.
@@ -49,7 +49,6 @@ namespace TechSmith.Hyde.Table
    public interface IPartialResult<T> : IEnumerable<T>
    {
       Task<IPartialResult<T>> GetNextAsync();
-      IPartialResult<T> GetNext();
       bool HasMoreResults { get; }
       QueryDescriptor Query { get; }
    }

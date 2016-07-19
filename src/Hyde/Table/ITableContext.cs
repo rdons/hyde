@@ -17,8 +17,6 @@ namespace TechSmith.Hyde.Table
       void Merge( string tableName, TableItem tableItem, ConflictHandling conflictHandling );
       void DeleteItem( string tableName, string partitionKey, string rowKey );
       void DeleteItem( string tableName, TableItem tableItem, ConflictHandling conflictHandling );
-      void DeleteCollection( string tableName, string partitionKey );
-      void Save( Execute executeMethod );
       Task SaveAsync( Execute executeMethod );
    }
 }

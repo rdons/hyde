@@ -339,7 +339,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
       public override bool CanConvertType( Type type )
       {
-         return type.IsEnum;
+         return type.GetTypeInfo().IsEnum;
       }
 
       public override IEnumerable<Type> GetSupportedTypes()

@@ -15,3 +15,5 @@ testimpactdata.sdf
 
 #Ignore packages
 [Pp]ackages/
+.vs/
+project.lock.json

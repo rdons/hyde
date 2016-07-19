@@ -146,28 +146,13 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void DeleteCollection( string tableName, string partitionKey )
-      {
-         foreach ( var entity in _tables.GetTable( tableName ).GetPartition( partitionKey ).GetAll() )
-         {
-            DeleteItem( tableName, partitionKey, entity.RowKey );
-         }
-      }
-
-      public void Save( Execute executeMethod )
-      {
-         var pendingActions = _pendingActions.ToArray();
-         _pendingActions = new ConcurrentQueue<TableAction>();
-
-         SaveInternal( executeMethod, pendingActions );
-      }
-
       public Task SaveAsync( Execute executeMethod )
       {
          var pendingActions = _pendingActions.ToArray();
          _pendingActions = new ConcurrentQueue<TableAction>();
 
-         return Task.Factory.StartNew( () => SaveInternal( executeMethod, pendingActions ) );
+         SaveInternal( executeMethod, pendingActions );
+         return Task.FromResult( 0 );
       }
 
       private void SaveInternal( Execute executeMethod, TableAction[] actions )

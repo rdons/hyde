@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
@@ -106,17 +105,10 @@ namespace TechSmith.Hyde.Table
          return result;
       }
 
-      public abstract IEnumerator<T> GetEnumerator();
-
       public Task<IEnumerable<T>> Async()
       {
          return PartialAsync().FlattenAsync();
       }
       public abstract Task<IPartialResult<T>> PartialAsync();
-
-      IEnumerator IEnumerable.GetEnumerator()
-      {
-         return GetEnumerator();
-      }
    }
 }

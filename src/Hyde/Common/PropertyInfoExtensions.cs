@@ -12,7 +12,7 @@ namespace TechSmith.Hyde.Common
 
          shouldSerialize &= (property.CanWrite);
          shouldSerialize &= (property.CanRead);
-         shouldSerialize &= !property.PropertyType.GetCustomAttributes( typeof( DontSerializeAttribute ), inherit: true ).Any();
+         shouldSerialize &= !property.PropertyType.GetTypeInfo().GetCustomAttributes( typeof( DontSerializeAttribute ), inherit: true ).Any();
 
          return shouldSerialize;
       }

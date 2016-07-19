@@ -85,44 +85,33 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( InvalidEntityException ) )]
       public void CreateAndThrowOnReservedProperty_KeysProvidedAndHasReservedProperty_ThrowsInvalidEntityException()
       {
-         TableItem.Create( new ClassWithTimestamp { Name = "Joe", Timestamp = DateTime.Now }, "pk", "rk" );
+         Assert.ThrowsException<InvalidEntityException>( (Action) ( () => TableItem.Create( new ClassWithTimestamp { Name = "Joe", Timestamp = DateTime.Now }, "pk", "rk" ) ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( InvalidEntityException ) )]
       public void CreateAndIgnoreReservedProperty_HasTimestampProperty_IgnoresTimestampValue()
       {
-         TableItem tableItem = TableItem.Create( new ClassWithTimestamp { Timestamp = DateTime.Now }, "pk", "rk" );
-
-         Assert.IsFalse( tableItem.Properties.ContainsKey( "Timestamp" ), "Serialized TableItem properties should not contain Timestamp" );
+         Assert.ThrowsException<InvalidEntityException>( (Action) ( () => TableItem.Create( new ClassWithTimestamp { Timestamp = DateTime.Now }, "pk", "rk" ) ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperty_KeysProvidedAndHasADifferentParitionKeyProperty_ThrowsArgumentException()
       {
-         var item = TableItem.Create( new ClassWithUndecoratedPartitionKey { Name = "Joe", PartitionKey = "should be ignored" }, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
-
-         Assert.AreEqual( 1, item.Properties.Count );
-         Assert.AreEqual( "Joe", item.Properties["Name"].Item1 );
-         Assert.AreEqual( "pk", item.PartitionKey );
+         Assert.ThrowsException<ArgumentException>( (Action) ( () => TableItem.Create( new ClassWithUndecoratedPartitionKey { Name = "Joe", PartitionKey = "should be ignored" }, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore ) ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysProvidedAndEntityHasDecoratedPartitionKeyPropertyWithDifferentValue_ThrowsArgumentException()
       {
-         TableItem.Create( new DecoratedItem { Id = "pk1", Name = "rk", Age = 34 }, "pk2", "rk" );
+         Assert.ThrowsException<ArgumentException>( () => TableItem.Create( new DecoratedItem { Id = "pk1", Name = "rk", Age = 34 }, "pk2", "rk" ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysProvidedAndEntityHasDecoratedRowKeyPropertyWithDifferentValue_ThrowsArgumentException()
       {
-         TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk1", Age = 34 }, "pk", "rk2" );
+         Assert.ThrowsException<ArgumentException>( () => TableItem.Create( new DecoratedItem { Id = "pk", Name = "rk1", Age = 34 }, "pk", "rk2" ) );
       }
 
       [TestMethod]
@@ -135,17 +124,15 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysNotProvidedAndEntityHasNoPartitionKey_ThrowsArgumentException()
       {
-         TableItem.Create( new ClassWithoutDecoratedPartitionKey { Name = "Joe" } );
+         Assert.ThrowsException<ArgumentException>( () => TableItem.Create( new ClassWithoutDecoratedPartitionKey { Name = "Joe" } ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void Create_KeysNotProvidedAndEntityHasNoRowKey_ThrowsArgumentException()
       {
-         TableItem.Create( new ClassWithoutDecoratedRowKey { Name = "Joe" } );
+         Assert.ThrowsException<ArgumentException>( () => TableItem.Create( new ClassWithoutDecoratedRowKey { Name = "Joe" } ) );
       }
 
       [TestMethod]
@@ -182,25 +169,23 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( InvalidEntityException ) )]
       public void CreateAndThrowOnReservedProperties_DynamicEntityWithReservedPropertiesAndKeysProvided_ThrowsInvalidEntityException()
       {
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
          entity.PartitionKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk" );
+         Assert.ThrowsException<InvalidEntityException>( (Action) ( () => TableItem.Create( entity, "pk", "rk" ) ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperties_DynamicEntityWithKeysProvidedAndConflictingPartitionKeyProperty_ThrowsArgumentException()
       {
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
          entity.PartitionKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
+         Assert.ThrowsException<ArgumentException>( (Action) ( () => TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore ) ) );
       }
 
       [TestMethod]
@@ -216,14 +201,13 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperties_DynamicEntityWithKeysProvidedAndConflictingRowKeyProperty_ThrowsArgumentException()
       {
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
          entity.RowKey = "foo";
 
-         TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
+         Assert.ThrowsException<ArgumentException>( (Action) ( () => TableItem.Create( entity, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore ) ) );
       }
 
       [TestMethod]
@@ -239,7 +223,6 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( InvalidEntityException ) )]
       public void CreateAndThrowOnReservedProperties_DynamicEntityWithKeyProperties_ThrowsInvalidEntityException()
       {
          dynamic entity = new ExpandoObject();
@@ -247,7 +230,7 @@ namespace TechSmith.Hyde.Test
          entity.PartitionKey = "pk";
          entity.RowKey = "rk";
 
-         TableItem.Create( entity );
+         Assert.ThrowsException<InvalidEntityException>( (Action) ( () => TableItem.Create( entity ) ) );
       }
 
       [TestMethod]
@@ -265,25 +248,23 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperties_DynamicEntityWithoutRowKey_ThrowsArgumentException()
       {
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
          entity.PartitionKey = "pk";
 
-         TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore );
+         Assert.ThrowsException<ArgumentException>( (Action) ( () => TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore ) ) );
       }
 
       [TestMethod]
-      [ExpectedException( typeof( ArgumentException ) )]
       public void CreateAndIgnoreReservedProperties_DynamicEntityWithoutPartitionKey_ThrowsArgumentException()
       {
          dynamic entity = new ExpandoObject();
          entity.Name = "Joe";
          entity.RowKey = "rk";
 
-         TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore );
+         Assert.ThrowsException<ArgumentException>( (Action) ( () => TableItem.Create( entity, TableItem.ReservedPropertyBehavior.Ignore ) ) );
       }
    }
 

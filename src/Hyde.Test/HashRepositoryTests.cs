@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
@@ -7,7 +8,7 @@ namespace TechSmith.Hyde.Test
    public class HashRepositoryTests
    {
       [TestMethod]
-      public void GetHash_HashToRetrieveIsInRepository_ExpectHashIsReturned()
+      public async Task GetHash_HashToRetrieveIsInRepository_ExpectHashIsReturned()
       {
          InMemoryTableStorageProvider.ResetAllTables();
          var hashRepository = new HashRepository( new InMemoryTableStorageProvider() );
@@ -15,9 +16,9 @@ namespace TechSmith.Hyde.Test
          {
             Url = "a"
          } );
-         hashRepository.SaveChanges();
+         await hashRepository.SaveChangesAsync();
 
-         var result = hashRepository.GetHash( "a" );
+         var result = await hashRepository.GetHash( "a" );
 
          Assert.AreEqual( "a", result.Url );
       }
@@ -47,14 +48,14 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Add( string.Empty, hashToAdd, _hashPartitionKey, hashToAdd.Url );
       }
 
-      public Hash GetHash( string hashUrl )
+      public Task<Hash> GetHash( string hashUrl )
       {
-         return _tableStorageProvider.Get<Hash>( string.Empty, _hashPartitionKey, hashUrl );
+         return _tableStorageProvider.GetAsync<Hash>( string.Empty, _hashPartitionKey, hashUrl );
       }
 
-      public void SaveChanges()
+      public Task SaveChangesAsync()
       {
-         _tableStorageProvider.Save();
+         return _tableStorageProvider.SaveAsync();
       }
    }
 }
