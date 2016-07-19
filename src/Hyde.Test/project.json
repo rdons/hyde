@@ -6,7 +6,7 @@
 
    "dependencies": {
       "dotnet-test-mstest": "1.0.1-preview",
-      "Hyde": "8.4.2-*",
+      "Hyde": { "version": "*", "target" : "project" },
       "Moq": "4.6.25-alpha",
       "MSTest.TestFramework": "1.0.0-preview",
       "System.Diagnostics.TraceSource": "4.0.0"
