@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Object to Entity mapper for Windows Azure</Description>
+    <Copyright>Copyright TechSmith Corporation 2016</Copyright>
+    <AssemblyTitle>TechSmith.Hyde</AssemblyTitle>
+    <VersionPrefix>9.0.0-alpha001</VersionPrefix>
+    <Authors>TechSmith Corporation</Authors>
+    <TargetFrameworks>net45;netstandard1.6</TargetFrameworks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>TechSmith.Hyde</AssemblyName>
+    <PackageId>Hyde</PackageId>
+    <PackageTags>TechSmith;Azure;Storage;Table Storage;Azure Table</PackageTags>
+    <PackageReleaseNotes>* (9.0.0-alpha001) Added .net core 1.0 support. Lowest .net framework supported is now .net 4.5. Removed methods previously marked as obsolete and removed all synchronous methods.</PackageReleaseNotes>
+    <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.github.com/TechSmith/hyde/master/LICENSE.txt</PackageLicenseUrl>
+    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);dnxcore50;portable-net451+win8</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="..\..\LICENSE.txt">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Edm" Version="5.7.0" />
+    <PackageReference Include="Microsoft.Data.OData" Version="5.7.0" />
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="System.Spatial" Version="5.7.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="7.2.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+    <Reference Include="System.Xml" />
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.0.11" />
+    <PackageReference Include="System.Linq.Expressions" Version="4.1.0" />
+    <PackageReference Include="System.Runtime" Version="4.1.0" />
+    <PackageReference Include="System.Runtime.Extensions" Version="4.1.0" />
+    <PackageReference Include="System.Runtime.InteropServices.PInvoke" Version="4.0.0-rc2-24027" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.2.0" />
+  </ItemGroup>
+
+</Project>
