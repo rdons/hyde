@@ -6,7 +6,7 @@
     <AssemblyTitle>TechSmith.Hyde</AssemblyTitle>
     <VersionPrefix>9.0.0-alpha001</VersionPrefix>
     <Authors>TechSmith Corporation</Authors>
-    <TargetFrameworks>netstandard1.6</TargetFrameworks>
+    <TargetFramework>netstandard1.5</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>TechSmith.Hyde</AssemblyName>
     <PackageId>TechSmith.Hyde</PackageId>
