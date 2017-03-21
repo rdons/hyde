@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde", "Hyde\Hyde.xproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyde", "Hyde\Hyde.csproj", "{9504FBE5-895B-4745-B13B-470664A670B4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.Test", "Hyde.Test\Hyde.Test.xproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyde.Test", "Hyde.Test\Hyde.Test.csproj", "{D7FB6E33-201D-4D20-B663-09D72C100FA4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Hyde.IntegrationTest", "Hyde.IntegrationTest\Hyde.IntegrationTest.xproj", "{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyde.IntegrationTest", "Hyde.IntegrationTest\Hyde.IntegrationTest.csproj", "{764D4E97-3FB1-48EE-A89A-19F6C831ECC8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

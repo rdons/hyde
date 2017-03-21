@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Object to Entity mapper for Windows Azure</Description>
+    <Copyright>Copyright TechSmith Corporation 2016</Copyright>
+    <AssemblyTitle>TechSmith.Hyde</AssemblyTitle>
+    <VersionPrefix>9.0.0-alpha001</VersionPrefix>
+    <Authors>TechSmith Corporation</Authors>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>TechSmith.Hyde</AssemblyName>
+    <PackageId>TechSmith.Hyde</PackageId>
+    <PackageTags>TechSmith;Azure;Storage;Table Storage;Azure Table</PackageTags>
+    <PackageReleaseNotes>* (9.0.0-alpha001) Added .net core 1.0 support. Lowest .net framework supported is now .net 4.5. Removed methods previously marked as obsolete and removed all synchronous methods.</PackageReleaseNotes>
+    <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.github.com/TechSmith/hyde/master/LICENSE.txt</PackageLicenseUrl>
+    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="..\..\LICENSE.txt">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Edm" Version="5.8.2" />
+    <PackageReference Include="Microsoft.Data.OData" Version="5.8.2" />
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.1" />
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
+    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.0" />
+    <PackageReference Include="System.Spatial" Version="5.8.2" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+  </ItemGroup>
+</Project>
