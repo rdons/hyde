@@ -9,7 +9,7 @@
     <TargetFrameworks>netstandard1.6</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>TechSmith.Hyde</AssemblyName>
-    <PackageId>Hyde</PackageId>
+    <PackageId>TechSmith.Hyde</PackageId>
     <PackageTags>TechSmith;Azure;Storage;Table Storage;Azure Table</PackageTags>
     <PackageReleaseNotes>* (9.0.0-alpha001) Added .net core 1.0 support. Lowest .net framework supported is now .net 4.5. Removed methods previously marked as obsolete and removed all synchronous methods.</PackageReleaseNotes>
     <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
