@@ -1,3 +1,4 @@
+using Hyde;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       {
          if ( _objectToTypeConverters.ContainsKey( type ) )
          {
-            throw new NotSupportedException( string.Format( "For type {0} already exists a converter", type.Name ) );
+            throw new ConverterAlreadyRegisteredException( string.Format("Converter already registered for type {0}", type.Name ) );
          }
 
          _objectToTypeConverters[type] = converter;

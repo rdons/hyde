@@ -21,7 +21,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    }
 
    /// <summary>
-   /// Defines an abstract base-class for all Ref Type converters.
+   /// Defines an abstract base-class for all Reference Type converters.
    /// </summary>
    public abstract class ReferenceTypeConverter<T> : IObjectToTypeConverter
    {
@@ -68,7 +68,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    }
 
    /// <summary>
-   /// Defines an abstract base-class for all Val Type converters.
+   /// Defines an abstract base-class for all Value Type converters.
    /// </summary>
    public abstract class ValueTypeConverter<T> : IObjectToTypeConverter where T : struct
    {
